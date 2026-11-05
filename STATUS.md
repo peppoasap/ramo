@@ -1,0 +1,391 @@
+# Project status
+
+Updated: 2026-11-05 (Europe/Madrid). Source candidate:0.2.0-beta.2.
+The owner authorized publication to https://github.com/peppoasap/ramo and public
+beta build downloads. Initial import is being prepared from an explicit192-file
+allowlist; local caches/settings, real repositories and private reference screenshots
+are excluded. CI will build/test macOS, Windows and Linux; version-matching beta
+tags may publish installers only after all jobs pass. No stable-release claim.
+Historical entries below describe the evidence at the time they were recorded.
+
+## Implemented
+
+Functional Tauri/React/Rust desktop app with actual Git, no demo data. Native folder opening/recents, reviewed repository cloning, topology-based paginated history with bounded viewport rendering and keyboard/search navigation, refs/worktrees (including creation on new or available local branches, reviewed lock/unlock and guarded inactive checkout removal), commit/file diffs, explicit revision comparisons, status, staging/unstaging, commits, branch creation/switch/rename/merged deletion/local merge, tracking checkout, selected-commit branch/tag creation, detached checkout, single-parent cherry-pick/revert, stash save/inspect/apply/pop/drop and selected saved untracked-file recovery, fetch, fast-forward pull and explicit active-branch push/publish. Mutations/network require session trust and reviewed-snapshot checks. Commit drafts are saved locally per canonical repository/worktree identity and restored on reopen; failed commits preserve them and successful commits do not erase a newer draft.
+
+Contextual AI preview, commit drafting, diff/conflict explanation and structured merge-proposal adapters. Merge proposals are inserted only by user action into the editable result; save/stage/commit remain separate. Codex CLI 0.166.0 uses its own sign-in with model tools disabled; a native picker validates and atomically saves its executable path. Provider/model preferences remain separate. Claude CLI/API-key and loopback Ollama routes exist but live inference is unverified. Explicit Stop cancels running provider processes/local HTTP work, discards late answers and retains manual drafts/results; fresh input review is required before retry. No automatic inference, CLI installation, login, fallback, commit or push.
+
+Apache-2.0 for original source/docs. Independent identity; selected graphite/mint design retained. Mockup history and native screenshots are separate.
+
+## Verified evidence
+
+- Virtual history: native pagination loads all5,011 commits from a real synthetic merge/branch/tag fixture while exposing about30–31 commit buttons per viewport. Home/End/PageDown selection/focus, keyboard commit menu/Escape, offscreen search to commit02500, branch/tag labels, branch menu trigger retention through scrolling and refresh from5,011 to300 without stale-index crashes are verified. HEAD/tree/count/clean status remain unchanged. Pure geometry/component tests cover bounds through100,000 rows, retained focus, shrinking lists and topology under search. Actual static component render uses21 rows for300/5,000/50,000 linear synthetic commits; timings are separately scoped and do not measure native FPS or a baseline speed-up. Benchmark disables watchers/websockets/dependency discovery; final run has empty stderr. `docs/verification/history-virtualization.json`, `history-render-performance.json`, ADR0018.
+
+- AI cancellation: shared one-use native preview/job registry and renderer request lifecycle, cooperative process/version-probe cancellation with descendant cleanup, and cancellable async loopback HTTP retaining proxy/redirect/size/deadline boundaries. Native synthetic Stop preserves a multiline Unicode commit draft through restart, requires fresh review, and permits a new fixed-response review without insertion. Merge result edits made while waiting survive Stop and local draft closure. Both Git fixtures retain exact HEAD/index stages/status/file bytes. Final build repeats commit Stop and verifies the next preview clears old status. Original Codex provider/model preference restored; synthetic server stopped and port checked closed. No live inference. `docs/verification/ai-cancellation.json`, ADR 0017.
+
+- Worktree management: native reviewed lock/unlock, review retained through session trust, locked-removal refusal, open-tab protection and actual tab closure/unregistration followed by clean removal. Branch retained and source HEAD/index/dirty/untracked bytes unchanged. Ignored-data removal refused with a visible dialog error; exact bytes retained. Primary checkout actions refused. Nine additional real-Git workflows cover cleanliness/ignored/hidden index flags, nested/empty directories, symlink and canonical boundaries, open/untrusted/primary/detached/active operation gates, stale reviews and branch retention. Final index.lock guard has a targeted passing regression after the complete run. `docs/verification/worktree-management.json`, ADR 0016.
+
+- Selected stash-file recovery: native restoration of a missing saved untracked file during a real marker-free stash conflict, with exact saved bytes, unchanged index/conflict/HEAD/stash objects, and a repeated attempt refused without overwrite. Selection/review survives session trust. Six real-Git checks cover binary/Unicode/newline paths, deleted tracked parents, CRLF/no EOF newline, source identity/stale reviews, symlink/executable/size guards and active-sequence refusal. `docs/verification/stash-file-recovery.json`, ADR 0015.
+
+- Repository cloning: native parent/local-source pickers, immutable exact-source/destination review, approval-gated execution, local bare clone and automatic clean checkout opening without automatic write trust. Source dirty/staged sentinels stay unchanged; tag and origin/main are retained. HTTPS preview was reviewed without executing a network request. Six real-Git fixtures cover grants, exclusive new destinations/late collision, symlink-parent replacement, empty clone, failure preservation and one-use review; URL checks reject unsafe/custom transports and embedded credentials. `docs/verification/clone.json`, ADR 0014.
+
+- Multi-step native cherry-pick acceptance: first conflict is resolved/staged, Continue commits its recorded message and pauses at a second file with updated history and disabled Continue. Reviewed Abort restores exact pre-sequence HEAD/tree/both files. In another fixture, reviewed Skip discards a saved/staged second resolution while retaining the successful first commit. Both flows remove sequence markers and preserve unrelated untracked work. The extended `create-sequence-fixture.py --multi` records pre-state and ordered targets; existing single cherry-pick/revert modes were regression-checked. Runtime/installer unchanged in this verification slice. `docs/verification/multi-sequence.json`.
+
+- Stash-conflict completion: native unmerged files with no active operation show ordinary resolve/review/commit guidance, not external continue/abort. The same editor saves the reviewed exact result through trust, then the ordinary composer creates a single-parent commit of README only. Both saved stash objects and saved untracked contents remain intact; the tree is clean. Four rendered guide checks preserve rebase/unknown fallback and real merge/sequencer controls. A new Git workflow also preserves unrelated untracked work. `docs/verification/stash-resolution.json`.
+
+- Revision comparison: native branch menu and history-toolbar entry, direct pair/swap with three changed files, common-ancestor mode with only two target files, visible effective object hashes, read-only use without trust and exclusion of dirty/staged work. External branch movement leaves the displayed pair pinned; invalid expressions clear old results; full hashes outside loaded history and identical-tree empty state work. Backend checks cover unrelated/multiple ancestors, literal paths, binary/deletion handling and preview bounds. `docs/verification/comparison.json`, ADR 0013.
+
+- Stash inspection and reviewed Apply/Pop/Drop: native read-only tracked/untracked previews, review retained through trust, Pop restores exact files and removes only the chosen entry, Drop preserves exact HEAD/index/file bytes with dirty and staged work present. A conflicting native Pop retains both stash entries and all three unmerged index stages, opens Changes and blocks further stash writes. Git may leave saved untracked files only in the stash after a conflict. Object identity protects same-subject replacement and stack shifts. A local Apple Git 2.54 literal-mode cleanup issue is fixed only for path-free stash subcommands. `docs/verification/stashes.json`, ADR 0012.
+
+- Conflict navigation: native verification on a 320-line TypeScript file with conflicts at source lines 127 and 302 covers active highlighting, linked Previous/Next, independent reading with Follow off, explicit Locate, clearing old line picks, one-line resolution of only the second block, undo/redo and reviewed save through trust. Exact expected file bytes are staged, and the completed two-parent merge is clean. Pure tests cover CRLF, Unicode, EOF, diff3 base and ambiguous matches. `docs/verification/conflict-navigation.json`, ADR 0011.
+
+- Worktree creation: native macOS acceptance covers a new branch at reviewed HEAD and a context-menu existing branch, native parent picker, form retention through trust, refreshed list and explicit open. A commit in the linked checkout changes only its own index; source HEAD, staged tree and file bytes remain unchanged. Six real-Git checks cover destination non-overwrite/traversal, branch/tag ambiguity, repository-scoped picker grants, parent replacement and stale occupancy. `docs/verification/worktree-creation.json`, ADR 0010.
+
+- Native hunk staging: stage only the second block, unstage it back to an empty index, then commit only the first block and leave the second unstaged. Exact working-file bytes remain unchanged throughout; history updates to the new commit. Backend checks bind a selected index to the displayed native patch hash and cover CRLF, missing final newline, literal filenames, custom diff settings, worktree isolation, unsupported modes/binary data and size limits. `docs/verification/hunk-staging.json`.
+
+- Resolution recovery: native normal restart restores exact multiline Unicode text without modifying the Git file; an external file edit requires explicit saved-result review before Save; Keep local draft and close restores on reopening; explicit discard removes only its recovery entry. Eight storage tests cover context separation, changed fingerprints, detected competing writes, cleanup, quota/size/corruption and sensitive filenames. `docs/verification/resolution-recovery.json`.
+
+- Sequencer recovery: typed cherry-pick/revert continue/skip/abort, conflict/unstaged/wrong-kind guards and review hashes of pending todo/head/abort-safety/options. Real Git checks cover a second conflict and full-sequence abort, plus explicit skip for empty resolutions. Native cherry-pick resolution/continue preserves the recorded message and updates history/selection to the new commit with a clean tree. `docs/verification/sequences.json`.
+
+- Branch tips have a dedicated graph column and shared branch context menus. Commit menus expose inspect/copy/create branch/tag/detach/cherry-pick/revert; branch menus include rename and tracking checkout. Real Git fixtures cover new operations, non-overwrite/dirty-work guards and merge abort.
+- Full-space CodeMirror merge editor native acceptance: sources/result, accept-both, undo/redo, unresolved-save guard, retained buffer through trust, reviewed save-and-stage and two-parent completion. A TypeScript fixture with two conflict blocks verifies selecting only source line 7 replaces just its active conflict and keeps the other unresolved. Native commit-menu tag creation updates graph labels. AI merge preview shows only the selected file’s 235-byte synthetic versions and requires a separate generation click; no live merge-generation call was made. `docs/verification/merge-editor.json`.
+
+- TypeScript and production Vite build pass. **51 frontend tests pass:** graph topology, draft recovery, conflict eligibility/choices, AI proposal validation, context-action policy, unified/combined diffs cancellation/late-response/IPC-retry/status lifecycle cases, and virtual-history geometry/component rendering.
+- Latest complete backend run: **114 tests** (22 unit/transport, 86 real Git fixtures, 6 process), four workers with unchanged ordinary Git deadlines. Cancellation checks cover one-use preview/race/cleanup, synthetic CLI probe and generation termination, running/orphaned descendants, HTTP header/body disconnect, response caps and proxy/redirect refusal. An early adapter test caught cancellation being rewritten as a sign-in error; cancellation is now preserved and the full run passes. At that backend run, frontend47 tests passed. Latest history slice: frontend51 tests and TypeScript/Vite build pass; backend unchanged and not rerun. Hosted CI remains configured but unrun; native runtime evidence remains scoped to macOS Apple Silicon.
+
+- App-initiated merge backend checks: clean fast-forward targets the explicit local branch even when a same-named tag exists; squash/no-commit configuration cannot change the requested behavior; divergent clean branches create a two-parent commit; dirty work is refused unchanged; a conflict leaves the index available for explicit resolution. History reloads after history-changing actions and selects the resulting HEAD.
+- Native app-initiated merge acceptance: first click opens the reviewed confirmation; trust precedes writes; a real conflict opens Changes, preserves the index and blocks incompatible operations; explicit resolution and Complete merge create two parents. History automatically changes from 3 to 4 commits and selects the new HEAD. `docs/verification/start-merge.json`.
+- Conflict acceptance: separate unresolved-file list; Stage all/Unstage cannot silently resolve files; explicit Mark resolved after external edit; incompatible branch/stash/sync actions blocked; merge completion allowed with no staged tree difference. Actual native merge created two parents while retaining the first-parent tree. Rebase ordinary commit is rejected in real Git tests. Merge file lists explicitly compare the same first parent as their file diffs, including zero-tree-change merges on Git 2.33.1. Diff loading clears when no file remains. `docs/verification/conflicts.json`.
+- Native draft recovery acceptance: a controlled synthetic pre-commit hook rejected a commit; the exact multiline message survived app quit/restart. After a successful one-file commit, the draft was empty both immediately and after restart; unstaged README/test file remained. `docs/verification/draft-recovery.json`.
+- Native macOS UI initial acceptance: synthetic history/merge, diff, trust, staging, AI input preview/provider settings, manual composition and real two-file commit, leaving unstaged README intact. `docs/verification/desktop-changes.png`.
+- Codex 0.166.0 installed only under ignored `releases/local/tools/` with explicit user authorization. System CLI 0.139.0 remains untouched. Inference is pinned to the version checked by the adapter; older versions fail before receiving a diff.
+- **One newly authorized live generation succeeded:** gpt-6.1-sol, 284 bytes from synthetic staged `src/search.ts` only; output: “Extract normalized search query into a local variable”. `docs/verification/ai-smoke-0.166.json`. No Git write or additional inference. The earlier 0.139.0 failure is preserved in `ai-smoke.json`.
+- Actual adapter arguments were sent to a synthetic loopback server using an empty, credential-free CODEX_HOME: **zero model tools**. Server rejects all requests; no inference. Reproduce with `python3 scripts/check-codex-contract.py`; evidence `docs/verification/codex-contract.json`.
+- Performance fixture: 5,000 commits / 2,000 files, seven warm samples; adaptive polling improved local snapshot/history medians. `npm run bench:git`, raw data and limits in `docs/verification/PERFORMANCE.md`. This is backend timing, not a universal UI speed claim.
+- Generated 20 MiB binary exceeds the old buffered patch cap; incremental fingerprint hashing supports staged/unstaged snapshots and rejects stale content. Preview/output caps and timeouts remain. `docs/verification/large-binary.json`.
+- Local Apple Silicon app/DMG: ad-hoc signature and image checksum checked, mounted read-only to verify app and license resources. No Developer ID or notarization. Latest artifact/checksum: `docs/verification/local-build.json`; installer `releases/local/0.1.0/Ramo_0.1.0_macos-arm64.dmg`.
+- `npm run package:mac:local` reproduces the local DMG without publication. A new HFS+ image is verified before replacing the installer; the final image was mounted read-only, checked and detached. Bundling generates 352 target dependency notices on macOS. CI matrix exists but has not run; no Git repository or remote was initialized.
+
+## Limits
+
+Windows/Linux runtime and installers are **deferred by the user until a machine/runner is available**. Configuration is not proof of support. Windows npm `.cmd` wrappers, older macOS, hosted remote credential UX, very large/merge-heavy repositories and managed Codex environments remain unverified. Non-UTF-8 paths are unsupported.
+
+Cloning supports configured HTTPS/SSH and picker-selected local sources. Actual native clone acceptance is local-only; hosted clone authentication is unverified. Large clones have a 120-second deadline and no exposed cancellation. Failed clones may leave partial output requiring inspection; no automatic Ramo deletion/retry.
+
+Native Codex selection, version validation and persistence after application restart were exercised successfully without inference. The successful AI generation exercises the actual Rust adapter, not a second UI-button inference. Token refresh/revocation, every model/account, Claude and Ollama live inference remain unverified. No additional billable test is authorized by these records. Other Codex versions require contract verification before compatibility is expanded.
+
+Text conflict editing is integrated using CodeMirror: read-only source panes, optional base, editable result, conflict choices/navigation, individual source-line selection, active range highlighting, linked conflict navigation, syntax, search and undo/redo. Reviewed save stages the result; the merge can complete or abort in Ramo. Cherry-pick/revert can continue, skip or abort through reviewed operation controls. Binary/symlink/submodule conflicts, rebase and mixed/unknown sequencer instructions still use Git outside Ramo. Edited resolution buffers have local recovery, with explicit review when Git changed. Normal restart is verified; survival of every OS/disk failure and atomic multi-window coordination are not established. Known sensitive filenames opt out with a visible message. Whole-hunk staging supports ordinary modified tracked text patches up to 256 KiB while no Git operation/conflicts are active. Individual line staging, partial new/deleted/renamed or mode changes, worktree move/prune, AI shutdown/crash recovery and file watching remain follow-up work. Core refresh occurs on focus/timer. A timed-out write may already be applied: refresh before retrying.
+
+The three reported Vitest development-tooling findings were remediated by pinning Vitest 5.1.0 while retaining Vite 6.4.5. At the tooling update, a clean `npm ci`, the then-current 30 tests, TypeScript/Vite production build and `npm run audit:dependencies` pass with Node 22.13.0. npm currently reports zero known vulnerabilities; this is not a general security audit. The audit command is added to the configured CI matrix, which remains unrun. `docs/verification/dependency-audit.json`.
+
+No public remote, deployment, release, verified security contact or naming review. Public source/binary publication requires separate authorization. Test tool installations are not bundled.
+
+- Source-line selection discoverability: primary clicks on source line numbers now toggle the same accessible + selections. A visible hint and permanent disabled-until-selected action expose the workflow before interaction. Native rebuilt-app acceptance selects/deselects ours line 7, applies only that row to the active block, retains the other conflict and unresolved-save gate, then verifies undo/redo; original disk markers remain intact. Picking is disabled while saving. 43 frontend tests and TypeScript/Vite build pass. Local DMG rebuilt, verified, mounted read-only, signature/executable/license resources checked and mount detached. Backend unchanged; 94 backend checks above are prior evidence, not rerun for this UI-only slice. `docs/verification/line-selection.json`.
+
+## Compact graph and reviewed gestures — 2026-11-04
+
+Implemented one prioritized reference per 48px graph row with +N overflow menus for all other branches/tags. Current local branch wins priority; labels truncate with full titles and no per-row horizontal scrollbar. Sidebar merge shortcuts appear on hover/focus. Reference menu → branch action menu retains keyboard focus. Pointer gestures use a six-pixel threshold, pointer capture and an overlay toolbar so rows do not move while dragging; native HTML text/file dragging does not own the gesture.
+
+Drop branch/commit onto a commit for immutable read-only comparison. Drop another local branch or a non-merge commit onto the current branch label/named overlay target to open merge/cherry-pick review. Drops do not execute Git. Existing trust/fingerprint/clean-tree/operation guards remain; review now survives a session trust grant and still requires a second Continue. Context menus remain the keyboard alternative. No AI inference, new dependency, project repository initialization or publication.
+
+Evidence: `npm test` passes 56 checks in12 files; TypeScript and Vite build pass in `npm run package:mac:local`. Native Apple Silicon acceptance verifies +N with three branches/two tags, correct nested branch menu/focus, actual pointer comparison with pinned SHAs, reviewed merge/cherry-pick, cancellation preserving the original clean HEAD, trust preserving merge review, and a completed synthetic two-parent merge with both files retained and a clean tree. The development-only `scripts/graph-preview.html` harness also verifies pointer comparison/current-branch callbacks and a simple click without accidental drag; it imports no native bridge and is not part of the production entry. `scripts/create-graph-fixture.py` creates the disposable actual Git fixture. Prior114 backend tests were not rerun because native Git action code is unchanged. See `docs/verification/graph-interactions.json` and ADR0019.
+
+Local ad-hoc DMG rebuilt, image checksum verified, mounted read-only, bundled executable/license/notices and ad-hoc signature checked, own volume detached. No Developer ID/notarization or public release. Windows/Linux pointer and installer acceptance remain pending. Sources are visible graph labels/subjects only; no sidebar dragging, multi-commit drag, arbitrary branch targets or automatic graph scrolling yet. Ordinary scrolling remains necessary for long histories or very wide topologies; the removed scroll is inside reference rows.
+
+## First shareable preview and performance report — 2026-11-04
+
+User authorized preparing version0.1.0 for friends/colleagues. The local DMG is frozen into a private macOS Apple Silicon preview with installation notes, Apache-2.0/notices, feedback template, offline Italian HTML/Markdown performance report, raw JSON and a portable source snapshot. This authorizes local delivery files, not uploading/public publication. `scripts/package-preview.py` verifies the existing installer hash, exports a deliberate source allowlist (no build caches, provider settings, credentials, private repositories or design captures), writes manifests/checksums and refuses overwriting an existing frozen version. `scripts/report-preview.py` derives the report from captured evidence. Source README/agent entry point and a local-build hash excerpt are made portable; code and lockfiles are retained.
+
+Fresh checks actually run: `npm test`56 passed; full offline backend suite114 passed (22unit/transport,86Git,6process; four workers), `npm run audit:dependencies`0 known npm vulnerabilities. Current native runtime code and verified DMG are unchanged since the graph acceptance. `hdiutil verify`, read-only mounting, exact app version, executable/LICENSE/NOTICE/third-party notices/Applications shortcut and `codesign --verify --deep --strict` pass; own mount detached. `spctl --assess --type execute` rejects this ad-hoc build (exit3). Developer ID/notarization and downloaded first launch on a second Mac remain missing; the tester guide states this and links official Apple instructions. No new AI inference.
+
+New release-profile benchmark `src-tauri/examples/delivery_performance.rs` / `npm run bench:delivery`: actual temporary Git fixture,5000commits/2000files,100modified files, one discarded warm-up plus9observations for each of13metrics. Typed mutations include native review/result snapshots. Asserted unstage state, distinct commit messages retaining99other changed files, and divergent two-parent clean merge. Final medians: history300 53.01ms, commit diff36.15ms, clean snapshot288.66ms, dirty100 snapshot204.79ms, commit450.13ms, stage100 446.10ms, unstage100 444.00ms, same-tree branch switch447.51ms, three-way merge486.07ms. Not UI/IPC/cold launch/network/AI/FPS timing. Prior two diagnostic runs are preserved and not pooled into final metrics. `node scripts/benchmark-history-render.mjs` also rerun: bounded21initial rows at300/5000/50000loaded commits; static SSR only.
+
+Installed GitKraken12.6.1 loads the same5011-commit native acceptance fixture. No comparable instrumented end-to-end speed measurements exist, so no speed percentage is claimed. Local arm64 bundle logical bytes: Ramo16957306, GitKraken659694283 (97.4% fewer bytes; system WebKit versus bundled Electron, different feature scope). This is disk footprint, not RAM/CPU/speed. Machine: M1Pro/16GiB/macOS26.6.2/AppleGit2.54.0. Evidence: `docs/verification/delivery-performance.json`, preliminary runs, `delivery-history-render.json`, `delivery-environment.json`, `distribution-footprint.json`, `preview-validation.json`; readable report under `docs/distribution/`.
+
+Preview archive completed: `releases/preview/0.1.0/Ramo-0.1.0-preview-macos-arm64.zip`,7182259bytes, SHA256 `f2dd14a4ec2a909236ca46e3ffa85b1438d26eb6396ee9ed60c7a5ba0be70e7d`. Outer ZIP integrity,17payload checksums and170exported source manifest hashes pass;171source files including the manifest. Report HTML browser-read and visually inspected. Frozen source status was captured immediately before export; the final archive receipt is deliberately outside the frozen source/ZIP to avoid self-referential hashes. `docs/verification/preview-archive.json` records receipt. No upload or message was sent to third parties.
+
+## Daily-client and GitKraken gap audit — 2026-11-05
+
+Read current menus, graph gesture policy, sidebar/inspector/native action contract,
+README/FEATURES/ROADMAP and preview evidence; checked official GitKraken Desktop
+documentation. Added `docs/GITKRAKEN-GAP-AUDIT.md`: actual feature/menu inventory,
+implementation vs acceptance gaps, proposed macOS daily-base completion criteria
+and five work packages. No arbitrary completion percentage or feature-parity claim.
+Corrected stale FEATURES next-slice text and ROADMAP worktree-removal backlog;
+prior51-test entry is explicitly historical (latest recorded56frontend/114backend).
+No runtime changes, test rerun, live inference, installer rebuild or frozen ZIP
+modification. This is an audit/proposal, not authorization to publish or evidence
+that missing features have been implemented.
+
+## Workbench UX and shared sidebar gestures — 2026-11-05
+
+Implemented first local UI pass preserving the graphite/mint target: sidebar
+branch filter with Escape clearing, collapsible named sections, empty remote/stash
+groups initially closed, a single ellipsis per branch instead of merge/delete
+hover buttons, inspection-only branch clicks, actual branch switcher with reviewed
+checkout and disabled current/no-local choices. History/Changes lead the mode bar;
+Compare is secondary. No-upstream transport says Publish with an accurate tooltip.
+Provider settings are no longer duplicated in the sidebar. History inspector no
+longer labels an unrelated selected commit with the current working branch.
+
+App owns one typed pointer gesture session shared by Sidebar/History. Sidebar
+branch sources and current-branch targets now work with the same pinned comparison
+and reviewed merge/cherry-pick policy; no implicit checkout. Only threshold crossing
+updates session UI, not every move within a target. No new native operation,
+dependency, live inference or external publication. ADR0020 and UI-CONVENTIONS.md
+record the maintainable interaction contract.
+
+Checks actually run:56frontend tests pass; TypeScript/Vite production build and
+local ad-hoc DMG packaging pass. Native synthetic review verifies branch inspection
+without checkout, filter/Escape, worktree collapse/reopen, ellipsis/keyboard access,
+branch-selector checkout review/Cancel, sidebar→current-branch merge review/Cancel,
+sidebar→graph pinned comparison and graph→sidebar cherry-pick review/Cancel.
+HEAD/branch/index tree/status are unchanged from the pre-check proof. Before/after
+history screenshots share2880×1898; later flows reflect window resize to3024×1898.
+Saved captures were inspected. No WCAG/FPS/all-platform claim. Native Git code is
+unchanged; the114backend checks remain prior2026-11-04 evidence, not rerun here.
+
+Final local DMG image verified; mounted read-only to check executable, license,
+notices and ad-hoc signature; own volume detached. Latest artifact hash/size in
+local-build.json and ux-order.json. No Developer ID/notarization or second-Mac
+acceptance. The7.18MB frozen tester ZIP still has its original checksum and prior
+UI; it was not silently replaced. Full scoped audit/evidence:
+`docs/verification/ux-order/README.md`, `docs/verification/ux-order.json`.
+
+## Reviewed amend and beta preparation — 2026-11-05
+
+Current source version is 0.2.0-beta.1 across npm, both lockfiles, Cargo and Tauri.
+The UI reads its version from package metadata. No public Git repository, remote,
+tag or GitHub Release has been created. The 0.1.0 tester archive is unchanged.
+
+Implemented a separate full-message Amend last commit dialog and native typed
+Amend action. Message-only correction and index-only content updates preserve
+original author and unstaged/untracked work. Expected HEAD, fingerprint, trust,
+attached non-merge HEAD, no active operations/conflicts and absence from locally
+known remote reachability are checked. Local refs cannot prove no prior sharing;
+fetch before review. An original-commit recovery ref is retained before invoking
+Git, including on hook failure, and excluded from ordinary history. Recovery is
+currently external Git; no Undo/reflog GUI is claimed. The persistent normal commit
+draft is untouched; amend failure text is retained only in the open dialog.
+
+Added CHANGELOG.md, .gitignore, release metadata gate, portable beta source exporter,
+installer-only CI artifact/checksum collector, issue/PR templates, BETA-CHECKLIST.md,
+RELEASING.md and ADR0021. CI uses Rust1.95 and read-only permissions; it does not
+publish. Source export is selected explicitly and omits historical private/local
+captures and build/settings/CLI folders. Pattern scanning is not exhaustive secret
+proof. Export adapts README and AGENTS only; archive contents still require review.
+
+Fresh checks:56 frontend tests; full offline backend118 (22unit/transport,90realGit,
+6process). After native acceptance exposed recovery refs in --all history, added
+an exclusion and regression; all4amend cases rerun and pass. TypeScript/Vite,
+release-profile Tauri app,352dependency notices and local ad-hoc DMG build pass.
+Fresh npm audit:0known vulnerabilities (registry access; no AI inference). No new
+backend performance or comparative GitKraken speed claims.
+
+Native macOS synthetic acceptance: complete original message/body; cancel leaves
+HEAD/index/status unchanged; trust before execution; successful index-only amend
+preserves working/untracked bytes and normal message draft; rejected commit-msg
+hook leaves HEAD/index/working sentinels intact and amend text visible. Normal
+draft survives app restart. Final build verifies one ordinary history commit despite
+recovery refs, full-width message editor and trust return without false error.
+No real repositories mutated. Synthetic rejecting hook removed after verification.
+Screenshots and scoped evidence: docs/verification/beta-amend/ and beta-build.json.
+
+Candidate DMG is under releases/local/0.2.0-beta.1/. Image verification, read-only
+mount, exact app version/executable/license/notices/Applications shortcut and
+codesign strict verification pass; own mount detached. It remains ad-hoc, without
+Developer ID/notarization. Second-Mac downloaded launch, hosted transport acceptance,
+public security channel and hosted CI/platform runtime gates remain open. This is
+an installable local candidate, not an accepted public/stable release.
+
+## Direct checkout and opening trust — 2026-11-05
+
+User requested double-click checkout and fewer confirmations. Local branch labels
+in Sidebar/History now inspect on single click and invoke the shared Checkout menu
+policy on double click. Contextual Checkout and the branch selector invoke typed
+Switch directly. Current/busy/active-operation/conflict gates remain; remote refs
+keep the tracking-branch form. Right-click/Shift+F10 menus and reviewed merge/delete
+remain. No force, discard or auto-stash was added; native Git refuses overwrites.
+
+Trust previously lasted for the open repository but appeared on first mutation.
+It now appears once at opening. A per-open renderer record prevents prompting
+again on tab activation even after declining; explicit write attempts can request
+trust again in read-only mode. Native trust remains in memory per canonical checkout,
+retained across refresh/register/branch switching, cleared on close or app restart.
+No persistent trust policy or automatic operation after trust was introduced.
+
+Checks:57frontend tests, TypeScript/Vite and release Tauri app build pass. Two new
+real-Git tests pass: trust lifetime/reopen/restart, and compatible checkout plus
+refused overwrite retaining HEAD/index/working bytes. Full118backend suite from
+the prior slice is not relabelled as a full120-test rerun. Native synthetic opening
+shows trust immediately; after acceptance sidebar double-click→topic and graph
+double-click→main perform direct checkout without another trust or confirmation.
+Round trip preserves original HEAD/index/untracked sentinel. No real repo writes,
+AI request, external publication or replacement of frozen candidate archives.
+The running local app includes this revision; prior DMG/ZIP candidates do not.
+See ADR0022 and UI-CONVENTIONS.md. Next task remains below.
+
+## Hosting shortcuts, GitHub catalog and remote configuration — 2026-11-05
+
+Implemented provider-based Clone navigation using the existing workbench palette:
+raw URL, GitHub/Enterprise, GitLab, Bitbucket, Azure DevOps, self-hosted and local
+picker. HTTPS/SSH templates suggest a destination name without replacing manual
+folder edits. No provider is labelled Connected without actual account behavior.
+GitHub/Enterprise support explicit paginated listing via installed official gh,
+optional organization and filtering loaded repositories. No auto-load/login/install,
+token import or new dependency. A typed native endpoint fixes the GET API paths,
+validates host/scope/page and bounded returned metadata, runs from a temporary
+non-repository folder and sanitizes failures. Other provider account catalogs are
+not implemented; their clone URL paths are functional. See HOSTING.md/ADR0023.
+
+Remotes toolbar panel lists safe fetch/push endpoints even without fetched branches.
+Add/change an ordinary HTTPS/SSH URL uses trust, snapshot freshness and endpoint
+review. Saving is local configuration only. Endpoint output enters fingerprints.
+Explicit push URLs, multiple URLs, local/custom transports and embedded-credential
+URLs are not edited; sensitive/unsupported URL values are hidden. No remote removal,
+rename, upstream editor, auto-fetch or OAuth credential storage is claimed.
+
+Checks:60frontend tests; full offline backend125passed (25unit/transport,94realGit,
+6process), after fixing two new test comparisons to trim Git's trailing newline.
+Then tightened catalog host/name validation; its3synthetic adapter cases rerun and
+pass. TypeScript/Vite and release Tauri app builds pass;352notices, no dependency
+changes. No GitHub account API, hosted clone, new AI inference or live provider auth
+request was made by the agent. API docs were checked against official GitHub docs.
+
+Native synthetic acceptance: provider navigation, GitHub URL/folder suggestions,
+HTTPS→SSH changes and manually edited folder preservation. Added origin with an
+invalid-example HTTPS domain then changed to SSH through the reviewed Remotes UI;
+actual config, HEAD/index/untracked sentinel checked outside UI. No network action.
+Before/after captures under docs/verification/hosting/. Final native build verifies
+compact helper copy, wrapped provider labels, destination fields, unused default
+remote name (upstream) and local rejection of an Enterprise hostname containing
+a scheme before any CLI/account access. The frozen0.1.0 and beta.1
+archives/installers remain unchanged; current source/native app is a later local
+revision. Windows/Linux and real hosted account flows remain unverified.
+
+## Clone UI simplicity pass — 2026-11-05
+
+User requested less rounding, clearer spacing/icons and a less technical workflow.
+Kept graphite/mint and the real Clone behavior. Shared buttons/inputs now use3px
+corners and dialogs6px. Clone has quiet icon-and-label provider rows (existing
+Phosphor library), a plain-language introduction, grouped destination/folder fields,
+one primary review action and source/destination review in ordinary readable text.
+GitHub catalog and connection settings use native details/summary, collapsed until
+requested; no automatic account query. Full address remains available in options
+and review. Metadata IDs/backend contracts are unchanged. Added an optional dialog
+className for scoped layout rather than another modal framework/dependency.
+
+Checks:60frontend tests pass; TypeScript/Vite and final release Tauri app build pass,
+352dependency notices. Native synthetic checks at2880x1898 and1922x1280 capture sizes
+(about1440x949 and961x640logical) confirm the main form without scrolling. Search
+and connection disclosures expand; HTTPS→SSH updates the reviewed address; native
+destination picker works; reviewed source/destination and trust checkbox remain;
+Back and invalid input retain manual folder text and disable an invalid review.
+No clone/network/account/AI request executed; reviewed temporary destination was
+not created. Final single correction batch widens the provider rail so long labels
+fit, then both widths confirmed. Captures in docs/verification/clone-simplicity/.
+No formal usability/WCAG certification or Windows/Linux UI acceptance claim.
+
+Native Git code is unchanged; prior125backend pass remains historical evidence,
+not a rerun for this visual slice. The running app/source include this revision;
+frozen beta ZIP/DMG/source snapshots remain unchanged. Updated DESIGN.md,
+UI-CONVENTIONS.md, clone surface brief and changelog for future maintainers.
+
+## Compact toolbar and AI settings — 2026-11-05
+
+Implemented compact48px tab/command strips, fixed30px top actions and consistent
+margins. Clone no longer stretches to the header height. New LocalActions component
+exposes real create-and-switch Branch, Stash and reviewed latest-stash Pop shortcuts.
+The shared keyboard/pointer overflow menu opens remotes, worktree creation and revision
+comparison. Existing native trust/fingerprint checks and operation/conflict guards
+remain. Stash is unavailable without changes/HEAD; Pop without saved stashes.
+Operation forms use narrower440px dialogs and preserve entered values when trust
+is requested; trusting does not auto-submit. AI settings use quiet provider rows,
+requirements of the selected provider, collapsed Codex installation controls and
+busy feedback/locking for CLI selection and local-model discovery. Provider config,
+credentials and inference contracts are unchanged; no new dependencies.
+
+Evidence:60frontend tests/13files pass; TypeScript, Vite, release metadata gate and
+final Tauri release app build pass (352dependency notices). npm/npx links in the
+Node22 installation were broken, so equivalent scripts ran directly via Node22:
+vitest/vitest.mjs run, typescript/bin/tsc --noEmit, vite/bin/vite.js build and
+scripts/check-release.mjs. Tauri build used the same direct-node beforeBuildCommand.
+Native Git backend unchanged; prior125backend result was not rerun for this slice.
+
+Native macOS synthetic acceptance created feat/toolbar, reviewed/popped a stash,
+then saved it again via the toolbar. Disk checks confirm clean worktree, two saved
+stashes and exact tracked/untracked contents preserved. Decline-trust → enter branch
+name → submit → trust retained the name and required explicit resubmission. Keyboard
+Down/Return in overflow opened the worktree form. AI selection changes requirements;
+Ollama without model disables Save. No settings saved, hosted account, clone, network
+Git operation or inference executed. Clone form still opens with its existing flow.
+
+Inspected at2880x1898 and1922x1280 capture sizes (about1440x949 and961x640logical).
+Initial settings overflow at minimum height was corrected once by showing only the
+selected provider requirements; final default settings and branch form fit without
+scroll. Advanced installation disclosure may scroll. Toolbar stays on one line at
+both widths. Captures and synthetic disk receipt:docs/verification/toolbar/.
+No formal usability/accessibility certification or Windows/Linux acceptance claim.
+Current source and rebuilt local app include this slice; frozen beta installers,
+source snapshots and preview archives remain unchanged. No publication performed.
+
+## Beta.2 distribution refresh — 2026-11-05
+
+Version0.2.0-beta.2 synchronized across npm/Cargo locks and Tauri. Previous beta.1
+archives preserved. Built the latest toolbar/settings source as a new Apple Silicon
+macOS DMG with ad-hoc signature. DMG checksum verification, read-only mounted bundle
+version, signature integrity, Applications shortcut and all three license/notice
+resources pass. Native launch shows beta.2 and loads synthetic history/toolbar in
+read-only mode. First downloaded launch on another Mac, Intel Mac, Developer ID
+and Apple notarization remain unverified/unavailable.
+
+Windows has no available native host/runner here (only the macOS Rust target is
+installed). Added a fail-fast PowerShell packaging command and prerequisites/smoke
+check guide, included in portable source exports. The script runs locked dependency
+installation, frontend/native tests and NSIS build, refuses existing output and
+collects a version-matching installer plus checksums/notices. It has not been
+executed on Windows; the Windows build kit is source, NOT an installer or verified
+platform support. Existing GitHub Actions matrix is prepared but not dispatched;
+no Git repository/remote created or source uploaded/published.
+
+Checks:60frontend tests and version metadata pass; production TypeScript/Vite and
+Tauri macOS bundle pass; current npm audit reports0vulnerabilities (registry access
+needed a host retry after sandbox DNS failure). Full backend regression passes:125tests
+(25unit/transport,94real-Git fixtures,6process). Share packages contain only
+application/source, notices, checksums and tester guidance; no account settings,
+provider CLIs, personal repositories or private screenshots.
+
+Share-ready Mac ZIP is releases/share/0.2.0-beta.2/Ramo-0.2.0-beta.2-macos-arm64.zip
+(7,258,628bytes; SHA256 in adjacent .sha256 and SHA256SUMS). The separately labelled
+Windows source build kit is in the same folder; no setup.exe is included. Outer ZIP
+integrity and181portable source manifest entries verified. Source export was frozen
+before this final result annotation; its earlier STATUS refers to the bundled report.
+
+Next distribution gate: use an explicitly authorized Windows runner/repository to
+execute the build, download the setup.exe and perform synthetic install/Git/runtime
+acceptance. A Windows source ZIP must not be given to friends as an installer.
+For macOS, perform downloaded first-launch acceptance on a second Apple Silicon Mac.
+
+## Public repository preparation — 2026-11-05
+
+README rewritten for GitHub with a real synthetic desktop screenshot, feature
+coverage, provider prerequisites, source/build instructions, platform limitations
+and a short three-step roadmap. Contributor/security guidance now references the
+real repository without inventing a private contact address. Original generated
+mockups remain labelled and separate from actual application screenshots. CI keeps
+read-only permissions for build/test; only the tag-gated prerelease job can write
+release assets. Existing releases are never replaced. Runtime acceptance remains
+separate from a hosted build result. Current frontend60tests and metadata gate pass.
+
+## Exact next task
+
+For hosting: verify the explicit GitHub catalog and a clone/fetch/push on a hosted
+synthetic repository using an authorized account, then add the GitLab catalog adapter
+or decide owned OAuth/native credential storage. Keep provider metadata unpersisted.
+For the daily-client base, implement individual-line staging with native-generated
+patch identity, index-only application, CRLF/EOF and staged+unstaged preservation
+fixtures. Keep whole-hunk/file fallbacks. Next add reviewed discard with recoverable
+backup and file context menus/history; then reflog/reset recovery and guided rebase.
+Before public beta: review portable source, establish owner/name/private security
+reporting, run CI and downloaded second-Mac workflow acceptance; decide Developer
+ID/notarization. Windows/Linux remain deferred without runners. Preserve the full
+daily-client gap inventory; this candidate is not GitKraken parity.

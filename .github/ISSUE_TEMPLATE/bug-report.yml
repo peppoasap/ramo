@@ -1,0 +1,35 @@
+name: Bug report
+description: Report a reproducible problem using synthetic data.
+body:
+  - type: markdown
+    attributes:
+      value: "Do not attach private diffs, credentials, customer paths or repository archives. Use SECURITY.md for security issues."
+  - type: input
+    id: build
+    attributes:
+      label: Ramo version and artifact checksum
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: OS version, architecture and Git version
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps with a disposable synthetic repository
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Expected and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: recovery
+    attributes:
+      label: Git state and recovery
+      description: Was work preserved? Include only sanitized status/error text; do not retry an uncertain mutation automatically.

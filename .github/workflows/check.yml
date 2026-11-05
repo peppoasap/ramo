@@ -1,0 +1,80 @@
+name: Build and check Ramo
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@1.95.0
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+      - name: Linux desktop prerequisites
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf
+      - run: npm ci
+      - run: npm run check:release
+      - run: npm run audit:dependencies
+      - run: npm run build
+      - run: npm test
+      - run: npm run test:git
+      - run: npm run bundle
+      - run: python3 scripts/collect-installers.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ramo-${{ runner.os }}
+          path: releases/ci/
+          retention-days: 14
+          if-no-files-found: error
+
+
+  prerelease:
+    name: Publish tagged beta installers
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: desktop
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Match the tag to the source version
+        shell: bash
+        run: |
+          version=$(node -p "require('./package.json').version")
+          test "$GITHUB_REF_NAME" = "v$version"
+          case "$version" in *-beta.*) ;; *) echo "Only beta versions can use this job"; exit 1 ;; esac
+      - uses: actions/download-artifact@v4
+        with:
+          path: installers
+      - name: Publish immutable beta assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release already exists; refusing to replace frozen assets."
+            exit 1
+          fi
+          mkdir release-assets
+          find installers -type f ! -name SHA256SUMS -exec cp -n {} release-assets/ \;
+          test "$(find release-assets -type f | wc -l)" -gt 0
+          (cd release-assets && sha256sum * > SHA256SUMS)
+          gh release create "$GITHUB_REF_NAME" release-assets/* --verify-tag --prerelease \
+            --title "Ramo ${GITHUB_REF_NAME#v}" --notes-file docs/BETA-RELEASE-NOTES.md
