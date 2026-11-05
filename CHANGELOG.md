@@ -3,7 +3,15 @@
 User-visible changes are recorded here. Versions describe source milestones;
 only a published GitHub Release establishes an external release.
 
-## [0.2.0-beta.3] - Public beta candidate, 2026-11-05
+## [0.2.0-beta.4] - Public beta candidate, 2026-11-05
+
+- Explicitly ad-hoc sign the macOS application bundle before creating its DMG.
+- Mount the final CI DMG read-only and require strict signature, version and bundled
+  notice checks before uploading any Mac installer. No Developer ID/notarization.
+- Supersedes the beta.3 Mac artifact, whose linker-only signature failed strict
+  bundle/resource verification after public download. Frozen assets are retained.
+
+## [0.2.0-beta.3] - 2026-11-05
 
 - Publish project sources, README with a short roadmap, contributor/security guidance
   and a real synthetic desktop screenshot at peppoasap/ramo.

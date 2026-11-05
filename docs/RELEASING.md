@@ -1,6 +1,6 @@
 # Release runbook
 
-Current beta line: **0.2.0-beta.3**. Stable-release validation is outstanding.
+Current beta line: **0.2.0-beta.4**. Stable-release validation is outstanding.
 The 0.1.0 private tester archive is immutable. Never replace its installer or hashes.
 
 ## Local candidate preparation

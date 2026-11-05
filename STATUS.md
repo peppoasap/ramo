@@ -1,6 +1,6 @@
 # Project status
 
-Updated: 2026-11-05 (Europe/Madrid). Source candidate:0.2.0-beta.3.
+Updated: 2026-11-05 (Europe/Madrid). Source candidate:0.2.0-beta.4.
 The owner authorized publication to https://github.com/peppoasap/ramo and public
 beta build downloads. Initial192-file import published as b4f30fb; a follow-up includes supplemental
 upstream license texts and standalone-export completeness. Local caches/settings, real repositories and private reference screenshots
@@ -405,6 +405,21 @@ the exact-revision MIT text is included and the355-entry inventory passes on mac
 using Windows dependency metadata (not a Windows build claim). CI now performs
 this source-license preflight before expensive compilation. No failed platform
 installer is published.
+
+## Public beta.3 verification and Mac packaging correction — 2026-11-05
+
+Tag v0.2.0-beta.3 at5f8cfff passed all hosted jobs and published three installers
+plus SHA256SUMS. Anonymous downloads and all three hashes passed. Backend counts:
+macOS/Linux127 each (27unit/transport+94Git+6process); Windows110 (24unit/transport+
+86Git, Unix process fixtures excluded). Each platform passed60frontend tests and
+npm audit. Inventories:352Mac,355Windows,442Linux notices.
+
+Post-download Mac verification caught a linker-only ad-hoc signature without a
+sealed bundle/resource envelope: strict codesign failed. Do not promote beta.3
+Mac as verified. Beta.4 explicitly configures Tauri signingIdentity="-" and adds a
+read-only mounted-DMG signature/version/notices gate before CI artifact upload.
+No signing account, credential or notarization is used. Old assets remain frozen;
+release notes will point away from the beta.3 Mac download when beta.4 publishes.
 
 ## Exact next task
 

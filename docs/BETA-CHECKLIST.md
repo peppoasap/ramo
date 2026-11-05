@@ -1,4 +1,4 @@
-# Beta acceptance — 0.2.0-beta.3 candidate
+# Beta acceptance — 0.2.0-beta.4 candidate
 
 This is a release gate, not a parity percentage. Record exact platform, candidate
 checksum, command results and synthetic fixture state. Passing source tests alone

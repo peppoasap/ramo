@@ -45,6 +45,9 @@ jobs:
       - run: npm test
       - run: npm run test:git
       - run: npm run bundle -- --bundles ${{ matrix.bundle }}
+      - name: Verify the final macOS disk image
+        if: runner.os == 'macOS'
+        run: bash scripts/verify-macos-package.sh
       - run: python3 scripts/collect-installers.py
       - uses: actions/upload-artifact@v4
         with:
@@ -84,6 +87,9 @@ jobs:
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             echo "Release already exists; refusing to replace frozen assets."
             exit 1
+          fi
+          if [ "$GITHUB_REF_NAME" = "v0.2.0-beta.4" ]; then
+            gh release edit v0.2.0-beta.3 --notes-file docs/BETA3-KNOWN-ISSUES.md
           fi
           mkdir release-assets
           find installers -type f ! -name SHA256SUMS -exec cp -n {} release-assets/ \;

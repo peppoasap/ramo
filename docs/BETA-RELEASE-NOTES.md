@@ -1,8 +1,9 @@
-# Ramo beta.3
+# Ramo beta.4
 
 A focused graphical Git client with contextual AI assistance. Apache-2.0.
 
-This beta fixes Windows native path handling for clone/worktree operations and
+This beta adds explicit ad-hoc sealing of the macOS app and a mounted-DMG signature
+gate before upload. It supersedes the beta.3 Mac package. It also fixes Windows native path handling for clone/worktree operations and
 keeps platform-specific fixture line endings explicit. It also includes a compact toolbar with Branch, Stash and reviewed Pop;
 branch/commit context menus and drag gestures; text-hunk staging; an editable
 merge resolver with individual source-line selection; stashes/worktrees;
