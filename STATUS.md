@@ -391,7 +391,10 @@ normal drive/UNC forms and refuses other device namespaces. Worktree membership,
 canonical/symlink/common-directory and open-tab removal guards remain. Fixtures
 set core.autocrlf=false locally rather than altering user/global Git configuration;
 Windows uses legal Unicode/bracket filenames, Unix retains newline cases. Two
-portable path regression tests pass; full fresh checks are required before tagging.
+portable path regression tests and the full127backend suite pass on macOS. Linux
+packaging exposed three missing upstream license files; exact-revision MIT texts
+for dlopen2/dlopen2_derive and libappindicator-sys are included as fallbacks. Hosted
+Windows fixes and Linux packaging must pass before tagging.
 
 ## Exact next task
 

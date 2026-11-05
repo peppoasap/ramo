@@ -54,7 +54,11 @@ for (const p of metadata.packages
           ? "alloc-BSD-3-Clause.txt"
           : p.name === "selectors"
             ? "MPL-2.0.txt"
-            : null;
+            : ["dlopen2", "dlopen2_derive"].includes(p.name)
+              ? "dlopen2-MIT.txt"
+              : p.name === "libappindicator-sys"
+                ? "libappindicator-MIT.txt"
+                : null;
     if (fallback) texts = [readFileSync(join("licenses", fallback), "utf8")];
   }
   if (!texts.length) missing.push(`${p.name}@${p.version}`);

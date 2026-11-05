@@ -9,3 +9,9 @@ generator uses these upstream texts for those crates; no upstream code is vendor
 
 Retrieved 2026-11-03. Exact dependency versions and source archives are listed in
 the generated `THIRD_PARTY_NOTICES.txt`. Generate notices on each target platform.
+
+Linux target texts added2026-11-05 from the exact revisions recorded in the
+published crates' .cargo_vcs_info.json:
+
+- `dlopen2-MIT.txt`: https://github.com/OpenByteDev/dlopen2/blob/cc80e4a0a90d499b677fdf7743699b4b3a43a989/LICENSE — dlopen2 0.8.2 and dlopen2_derive 0.4.3.
+- `libappindicator-MIT.txt`: https://github.com/tauri-apps/libappindicator-rs/blob/eafd1e3682a1247f595410266091e9684021cb6f/LICENSE-MIT — libappindicator-sys 0.9.0, selecting its MIT option.
