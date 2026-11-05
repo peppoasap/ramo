@@ -29,7 +29,7 @@ Buffered process streams are each limited to 16 MiB, previews and AI input have 
 
 ## Verification and limits
 
-Real Git fixtures cover unborn repositories, staged-only commits, renames, hostile pathspecs, topology, linked worktrees, detached HEAD, stale snapshots and local bare-remote operations. Process tests cover output limits and descendants retaining output pipes. Native macOS UI acceptance uses only synthetic repositories. There is no evidence yet for Windows/Linux builds, large-repository performance, older macOS versions or public distribution signing.
+Real Git fixtures cover unborn repositories, staged-only commits, renames, hostile pathspecs, topology, linked worktrees, detached HEAD, stale snapshots and local bare-remote operations. Process tests cover output limits and descendants retaining output pipes. Native macOS UI acceptance uses only synthetic repositories. Hosted Windows/Linux builds and backend tests pass for beta.4; see [build verification](BUILD-VERIFICATION.md). Windows/Linux GUI installation acceptance, older macOS versions and public publisher signing remain unverified. Large-repository performance evidence is scoped in STATUS.md and does not establish a GitKraken speed comparison.
 
 Backend process polling is adaptive for short commands; measured local results and reproducible fixture commands are in `verification/PERFORMANCE.md`. This is not a measured UI or cross-platform speed claim.
 

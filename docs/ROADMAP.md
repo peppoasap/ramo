@@ -10,7 +10,7 @@ The user requested functional, installable software rather than a simulated prot
 | Clone/fetch/pull/push/publish | Implemented; native local bare clone and disposable local remote tests pass; hosted clone/credential UX unverified |
 | Contextual AI | Codex 0.166.0: zero-tools contract and one live synthetic generation verified; native CLI selection implemented; Claude/Ollama live unverified |
 | Installable macOS | Local Apple Silicon app/DMG; no Developer ID or notarization |
-| Windows/Linux | First hosted build/test matrix running; installation/runtime acceptance pending |
+| Windows/Linux | Beta.4 installers published after passing hosted builds/tests; GUI acceptance pending |
 | Public OSS source | Published at peppoasap/ramo; beta installers are gated on CI, stable release/platform gates remain |
 
 Detailed daily-client coverage and gaps: [FEATURES.md](FEATURES.md).
@@ -21,7 +21,7 @@ The graph branch column, branch/commit context menus and full-space merge editor
 
 Merge AI preview and structured proposal validation are locally verified; live merge inference was not executed. Codex's earlier authorized commit-generation evidence does not establish live merge proposal quality. Preserve manual results and staged input on every failure.
 
-Hosted Windows/Linux builds are now running. Record build results separately from install/open/stage/commit acceptance. Windows npm-installed CLI wrappers need explicit validation.
+Hosted Windows/Linux builds now pass; beta.4 installers are public. See [build verification](BUILD-VERIFICATION.md). Record build results separately from install/open/stage/commit acceptance. Windows npm-installed CLI wrappers need explicit validation.
 
 ## Later daily-use improvements
 

@@ -27,7 +27,7 @@ leaving the graph. Core Git works locally, with no Ramo account or AI subscripti
 
 > **Early beta · 0.2.0-beta.4.** Ramo performs real Git operations. Start with a
 > test repository or a backed-up copy. macOS Apple Silicon has local build and
-> runtime evidence; Windows and Linux are CI targets awaiting platform acceptance.
+> runtime evidence; Windows and Linux builds pass CI; GUI installation acceptance remains pending.
 > Public source availability does not mean a stable or signed desktop release.
 
 ## Your everyday Git work
@@ -68,25 +68,28 @@ usage already processed by a provider. See [AI setup and boundaries](docs/AI.md)
 
 ### Try a build
 
-Open [Actions](https://github.com/peppoasap/ramo/actions/workflows/check.yml), select a
-**successful** run for the revision you want, and download its `ramo-macOS`,
-`ramo-Windows` or `ramo-Linux` artifact. Artifacts appear only after their platform
-job passes; downloading them may require signing in to GitHub. Each includes
-installer checksums. An artifact is an unsigned test candidate, not runtime
-acceptance of that platform.
+Download **[0.2.0-beta.4](https://github.com/peppoasap/ramo/releases/tag/v0.2.0-beta.4)** — no GitHub account required:
 
-Official release assets, when published, will appear under
-[Releases](https://github.com/peppoasap/ramo/releases). No automatic updater is configured.
+| Platform | Download |
+| --- | --- |
+| **macOS · Apple Silicon** | [DMG](https://github.com/peppoasap/ramo/releases/download/v0.2.0-beta.4/Ramo_0.2.0-beta.4_aarch64.dmg) |
+| **Windows · x64** | [Installer](https://github.com/peppoasap/ramo/releases/download/v0.2.0-beta.4/Ramo_0.2.0-beta.4_x64-setup.exe) |
+| **Linux · x64** | [DEB](https://github.com/peppoasap/ramo/releases/download/v0.2.0-beta.4/Ramo_0.2.0-beta.4_amd64.deb) |
 
-- **macOS Apple Silicon:** local beta packaging has been exercised. Ad-hoc signing
-  is not Developer ID signing or Apple notarization. First downloaded launch on a
-  second Mac remains unverified. See [Apple's guidance](https://support.apple.com/102445)
+[SHA-256 checksums](https://github.com/peppoasap/ramo/releases/download/v0.2.0-beta.4/SHA256SUMS) · [Build verification and limits](docs/BUILD-VERIFICATION.md)
+
+- **Early beta:** all three hosted build/test jobs passed. Windows/Linux GUI
+  installation and first downloaded launch on a second Mac remain unverified.
+- **macOS:** the DMG's application has a verified ad-hoc bundle signature, without
+  Developer ID or Apple notarization. See [Apple's guidance](https://support.apple.com/102445)
   if macOS blocks an app; do not disable system protections globally.
-- **Windows / Linux / Intel Mac:** build and installation/runtime acceptance must
-  be recorded separately. A green CI build alone does not establish support.
+- **Windows:** the installer is unsigned; publisher authentication is unavailable.
 - **Git must be installed.** Packaged users do not need Node or Rust. Existing Git
   credential helpers and SSH agent handle remote credentials; hosted authentication
-  still needs broader testing.
+  still needs broader testing. No automatic updater is configured.
+
+For newer development revisions, [successful Actions runs](https://github.com/peppoasap/ramo/actions/workflows/check.yml)
+provide temporary platform artifacts. Downloading those may require GitHub sign-in.
 
 ### Build from source
 
@@ -132,10 +135,12 @@ system temporary directories; they do not mutate your own repositories.
 
 ## Where the beta stands
 
-Local macOS verification for beta.2: **60 frontend tests**, **125 backend tests**,
-production build, DMG integrity/signature/resource checks and native app launch.
-The npm audit on 2026-11-05 reported no known vulnerabilities. These results do
-not certify security or substitute for platform installation tests.
+Beta.4 passed **60 frontend tests per platform**, **127 backend tests on macOS
+and Linux**, and **110 backend tests on Windows**, plus production builds and npm
+audits. Unix-only fixtures explain the Windows count difference. Public installer
+downloads and checksums were verified; the mounted Mac DMG also passed strict
+bundle-signature, version and notice checks. See the [dated build report](docs/BUILD-VERIFICATION.md).
+These checks do not certify security or replace GUI installation/runtime acceptance.
 
 The main gaps are individual-line **staging**, reviewed discard with recovery,
 file history/blame, reflog/reset recovery and guided rebase. Individual-line
@@ -154,7 +159,7 @@ measured speed advantage. See the [roadmap](docs/ROADMAP.md),
 | --- | --- |
 | **Finish the daily essentials** | Individual-line staging, reviewed discard with a recoverable backup, file history and blame. |
 | **Make recovery easier** | Reflog browsing, reviewed reset/recovery and guided rebase with conflict continuation. |
-| **Broaden integration and delivery** | More provider catalogs, smoother hosted authentication, file watching and verified Windows/Linux installers. |
+| **Broaden integration and delivery** | More provider catalogs, smoother hosted authentication, file watching and Windows/Linux installation acceptance. |
 
 These are planned slices, not completed features or dated commitments. Each ships
 with preservation tests and documented limits. The [full roadmap](docs/ROADMAP.md)

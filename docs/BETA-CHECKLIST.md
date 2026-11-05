@@ -1,4 +1,4 @@
-# Beta acceptance — 0.2.0-beta.4 candidate
+# Beta acceptance — 0.2.0-beta.4 prerelease
 
 This is a release gate, not a parity percentage. Record exact platform, candidate
 checksum, command results and synthetic fixture state. Passing source tests alone
@@ -30,10 +30,11 @@ is insufficient for a stable desktop release.
 
 - [x] Authorize public repository peppoasap/ramo; import only reviewed portable sources.
 - [ ] Set and verify a real private security reporting channel.
-- [ ] Run hosted CI; record target architecture and installation/runtime evidence.
+- [x] Run hosted CI and record target architectures/build evidence in [BUILD-VERIFICATION.md](BUILD-VERIFICATION.md).
+- [ ] Record downloaded Windows/Linux GUI installation/runtime acceptance.
 - [ ] Developer ID signing/notarization for normal macOS distribution, or explicitly
       scope any unsigned technical preview and document actual installation limits.
-- [ ] Inspect draft pre-release, attach verified assets/checksums and authorize publish.
+- [x] Publish owner-authorized beta.4 with verified downloadable assets/checksums.
 
 Hosted Windows/Linux runners are now available. Build/test results and GUI
 installation/runtime acceptance must be recorded separately. Intel Mac runtime
@@ -47,7 +48,7 @@ reflog/reset recovery and guided rebase remain important functional gaps. Then
 remote/upstream management and file watching. Maintain the full inventory in
 `GITKRAKEN-GAP-AUDIT.md`; beta does not mean GitKraken feature parity.
 
-2026-11-05 evidence:56frontend/118backend checks,4amend regressions rerun after
+Historical beta.1 evidence (2026-11-05):56frontend/118backend checks,4amend regressions rerun after
 history exclusion; TypeScript/Vite/Tauri build and fresh npm audit pass. Native
 synthetic amend/cancel/hook-failure and final trust/history/layout checks pass.
 Installer mount/signature/hash evidence is in `verification/beta-build.json`.

@@ -1,11 +1,11 @@
 # Project status
 
-Updated: 2026-11-05 (Europe/Madrid). Source candidate:0.2.0-beta.4.
+Updated: 2026-11-05 (Europe/Madrid). Published prerelease:0.2.0-beta.4.
 The owner authorized publication to https://github.com/peppoasap/ramo and public
 beta build downloads. Initial192-file import published as b4f30fb; a follow-up includes supplemental
 upstream license texts and standalone-export completeness. Local caches/settings, real repositories and private reference screenshots
-are excluded by the explicit source allowlist. Hosted CI is running macOS, Windows and Linux builds/tests; version-matching beta
-tags may publish installers only after all jobs pass. No stable-release claim.
+are excluded by the explicit source allowlist. Hosted macOS, Windows and Linux builds/tests passed; beta.4 installers and checksums are public.
+See docs/BUILD-VERIFICATION.md for the exact source, CI run and artifact checks. No stable-release claim.
 Historical entries below describe the evidence at the time they were recorded.
 
 ## Implemented
@@ -421,16 +421,28 @@ read-only mounted-DMG signature/version/notices gate before CI artifact upload.
 No signing account, credential or notarization is used. Old assets remain frozen;
 release notes will point away from the beta.3 Mac download when beta.4 publishes.
 
+## Public beta.4 — 2026-11-05
+
+Published tag v0.2.0-beta.4 at f0cd98eedb69f9c7133c53c3d5422932b677022c;
+CI run42084594499 passed all platform checks and published DMG/NSIS/DEB plus
+SHA256SUMS. All three anonymously downloaded installers match their published
+hashes. The actual mounted DMG passes strict deep codesign, version, architecture,
+notices and Applications-shortcut checks. Mac signing is ad-hoc, not Developer ID
+or notarization. Windows is unsigned. Windows/Linux GUI installation and a second
+Mac's downloaded first launch remain unverified. Beta.3 release notes now flag its
+Mac installer as superseded; frozen assets are unchanged. README includes direct
+public downloads and a brief planned-feature roadmap. No live AI inference used.
+
 ## Exact next task
 
-For hosting: verify the explicit GitHub catalog and a clone/fetch/push on a hosted
-synthetic repository using an authorized account, then add the GitLab catalog adapter
-or decide owned OAuth/native credential storage. Keep provider metadata unpersisted.
+Run downloaded install/open/stage/commit/conflict/restart acceptance with synthetic
+repositories on a second Mac and Windows/Linux machines. Verify a private security
+reporting channel; decide Developer ID/notarization and Windows signing before
+normal stable distribution. Hosted CI runners are available and their builds pass.
+For hosting, verify the explicit GitHub catalog and a hosted synthetic clone/fetch/
+push with an authorized account, then scope further provider catalogs.
 For the daily-client base, implement individual-line staging with native-generated
 patch identity, index-only application, CRLF/EOF and staged+unstaged preservation
 fixtures. Keep whole-hunk/file fallbacks. Next add reviewed discard with recoverable
 backup and file context menus/history; then reflog/reset recovery and guided rebase.
-Before public beta: review portable source, establish owner/name/private security
-reporting, run CI and downloaded second-Mac workflow acceptance; decide Developer
-ID/notarization. Windows/Linux remain deferred without runners. Preserve the full
-daily-client gap inventory; this candidate is not GitKraken parity.
+Preserve the full daily-client gap inventory; beta is not GitKraken parity.

@@ -3,7 +3,7 @@
 User-visible changes are recorded here. Versions describe source milestones;
 only a published GitHub Release establishes an external release.
 
-## [0.2.0-beta.4] - Public beta candidate, 2026-11-05
+## [0.2.0-beta.4] - 2026-11-05
 
 - Explicitly ad-hoc sign the macOS application bundle before creating its DMG.
 - Mount the final CI DMG read-only and require strict signature, version and bundled

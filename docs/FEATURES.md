@@ -30,13 +30,13 @@ source, actual menu inventory and preview evidence. It distinguishes missing
 features from dialog-only access and unverified runtime behavior. Its completion
 contract and milestones are proposals, not delivered functionality.
 
-The current private0.1.0preview has56frontend/114backend checks recorded on
+The frozen historical private0.1.0preview has56frontend/114backend checks recorded on
 2026-11-04. Worktree lock/removal, stash recovery, AI Stop, virtual history and
 reviewed graph gestures are implemented. For core Git completion, the proposed
 next implementation is reviewed last-commit amend, followed by file actions/line
 staging and history/recovery workflows. Second-Mac first-launch acceptance and
-Developer ID/notarization remain release gates. Windows/Linux remain deferred
-until runners are available. Keep the frozen preview and its manifests unchanged.
+Developer ID/notarization remain release gates. Beta.4 hosted Windows/Linux builds now pass; GUI installation acceptance remains
+pending. See [current build verification](BUILD-VERIFICATION.md). Keep the frozen preview and its manifests unchanged.
 
 Graph usability (local/native verified, 2026-11-04): prioritized reference plus +N overflow without inner row scroll; pointer drag branch/commit → commit compares pinned SHAs; branch/commit → current branch reviews merge/cherry-pick. No immediate mutation on drop. Sidebar dragging is now implemented in the local development UI; multi-select drag, arbitrary branch destinations and auto-scroll remain gaps. Evidence: [graph interactions](verification/graph-interactions.json).
 
