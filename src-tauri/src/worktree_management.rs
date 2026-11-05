@@ -10,16 +10,19 @@ pub(crate) fn target<'a>(snapshot: &'a Snapshot, path: &str) -> Result<&'a Workt
     let tree = snapshot
         .worktrees
         .iter()
-        .find(|tree| tree.path == path)
+        .find(|tree| crate::native_paths::same_path(Path::new(&tree.path), Path::new(path)))
         .ok_or("Worktree is not in the reviewed repository list.")?;
     if tree.primary {
         return Err("The primary checkout cannot be locked or removed here.".into());
     }
-    let root = Path::new(path);
+    let root = Path::new(&tree.path);
     if !fs::symlink_metadata(root)
         .map_err(|e| e.to_string())?
         .is_dir()
-        || fs::canonicalize(root).map_err(|e| e.to_string())? != root
+        || !crate::native_paths::same_path(
+            &fs::canonicalize(root).map_err(|e| e.to_string())?,
+            root,
+        )
         || !fs::symlink_metadata(root.join(".git"))
             .map_err(|e| e.to_string())?
             .is_file()
@@ -27,7 +30,7 @@ pub(crate) fn target<'a>(snapshot: &'a Snapshot, path: &str) -> Result<&'a Workt
         return Err("Worktree path or Git metadata changed. No action was taken.".into());
     }
     let top = output(root, &["rev-parse", "--show-toplevel"])?;
-    if fs::canonicalize(top).map_err(|e| e.to_string())? != root
+    if !crate::native_paths::same_path(&fs::canonicalize(top).map_err(|e| e.to_string())?, root)
         || common(root)? != common(Path::new(&snapshot.repo.path))?
     {
         return Err("Worktree no longer belongs to this repository.".into());
@@ -168,6 +171,14 @@ pub(crate) fn remove(source: &Path, tree: &Worktree) -> Result<(), String> {
         }
     }
     // No force, cleanup, prune, branch deletion or automatic retry. Git rechecks its state.
-    git(source, &["worktree", "remove", "--", &tree.path])?;
+    git(
+        source,
+        &[
+            "worktree",
+            "remove",
+            "--",
+            &crate::native_paths::git_path(root)?,
+        ],
+    )?;
     Ok(())
 }

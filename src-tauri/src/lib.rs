@@ -22,3 +22,5 @@ mod worktree_management;
 pub mod hosting;
 
 pub mod remotes;
+
+mod native_paths;

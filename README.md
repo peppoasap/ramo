@@ -25,7 +25,7 @@ Ramo brings history, branches and changes into one focused workspace. Inspect a
 commit, compare branches, resolve a conflict or prepare your next commit without
 leaving the graph. Core Git works locally, with no Ramo account or AI subscription.
 
-> **Early beta · 0.2.0-beta.2.** Ramo performs real Git operations. Start with a
+> **Early beta · 0.2.0-beta.3.** Ramo performs real Git operations. Start with a
 > test repository or a backed-up copy. macOS Apple Silicon has local build and
 > runtime evidence; Windows and Linux are CI targets awaiting platform acceptance.
 > Public source availability does not mean a stable or signed desktop release.

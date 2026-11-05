@@ -1016,17 +1016,15 @@ impl Backend {
                         "worktree",
                         if locked { "lock" } else { "unlock" },
                         "--",
-                        &target.path,
+                        &crate::native_paths::git_path(Path::new(&target.path))?,
                     ],
                 )?;
             }
             Action::RemoveWorktree { path } => {
                 let target = crate::worktree_management::target(&snapshot, &path)?;
-                if self
-                    .repositories
-                    .values()
-                    .any(|repo| repo.path == target.path)
-                {
+                if self.repositories.values().any(|repo| {
+                    crate::native_paths::same_path(Path::new(&repo.path), Path::new(&target.path))
+                }) {
                     return Err("Close this worktree's repository tab before removing it.".into());
                 }
                 crate::worktree_management::remove(root, target)?;
@@ -1077,9 +1075,7 @@ impl Backend {
                 {
                     return Err("Choose an existing local branch that is not checked out in another worktree.".into());
                 }
-                let destination = destination
-                    .to_str()
-                    .ok_or("Worktree path must be valid UTF-8")?;
+                let destination = crate::native_paths::git_path(&destination)?;
                 if create_branch {
                     git(
                         root,
@@ -1090,14 +1086,14 @@ impl Backend {
                             "-b",
                             &branch,
                             "--",
-                            destination,
+                            &destination,
                             head,
                         ],
                     )?;
                 } else {
                     git(
                         root,
-                        &["worktree", "add", "--checkout", "--", destination, &branch],
+                        &["worktree", "add", "--checkout", "--", &destination, &branch],
                     )?;
                 }
                 self.worktree_parents.remove(&selection_id);

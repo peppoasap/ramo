@@ -1,6 +1,6 @@
 # Release runbook
 
-Current source candidate: **0.2.0-beta.2**, not a public release or stable version.
+Current source candidate: **0.2.0-beta.3**, not a public release or stable version.
 The 0.1.0 private tester archive is immutable. Never replace its installer or hashes.
 
 ## Local candidate preparation

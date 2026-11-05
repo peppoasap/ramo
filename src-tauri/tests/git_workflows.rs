@@ -34,6 +34,8 @@ impl Fixture {
         g(&root, &["config", "user.name", "Demo Contributor"]);
         g(&root, &["config", "user.email", "demo@example.invalid"]);
         g(&root, &["config", "commit.gpgsign", "false"]);
+        // Fixture bytes are explicit; do not inherit the host Git checkout conversion.
+        g(&root, &["config", "core.autocrlf", "false"]);
         let mut backend = Backend::new(dir.path().join("preferences.json"));
         let snapshot = backend.register(&root).unwrap();
         Self {
@@ -1414,7 +1416,11 @@ fn unstaging_one_of_two_hunks_keeps_the_other_in_the_commit() {
 #[test]
 fn hunk_application_preserves_crlf_no_final_newline_and_literal_filenames() {
     let mut f = Fixture::new();
-    let path = "literal[1]\nè.txt";
+    let path = if cfg!(windows) {
+        "literal[1] è.txt"
+    } else {
+        "literal[1]\nè.txt"
+    };
     g(&f.root, &["config", "core.autocrlf", "false"]);
     let (before, after) = hunk_fixture(&mut f, path, true);
     let after = after.replace("Line 50", "Changed final line");
@@ -1856,7 +1862,12 @@ fn stash_preview_includes_tracked_and_saved_untracked_literal_paths_without_writ
     let mut f = Fixture::new();
     f.seed();
     f.write("README.md", "Saved tracked edit\n");
-    f.write("new folder/α\nfile.txt", "Untracked saved contents\n");
+    let saved_path = if cfg!(windows) {
+        "new folder/α[file].txt"
+    } else {
+        "new folder/α\nfile.txt"
+    };
+    f.write(saved_path, "Untracked saved contents\n");
     g(
         &f.root,
         &["stash", "push", "-u", "-m", "Preview synthetic stash"],
@@ -1867,7 +1878,7 @@ fn stash_preview_includes_tracked_and_saved_untracked_literal_paths_without_writ
     assert_eq!(details.tracked.len(), 1);
     assert_eq!(details.tracked[0].path, "README.md");
     assert_eq!(details.untracked.len(), 1);
-    assert_eq!(details.untracked[0].path, "new folder/α\nfile.txt");
+    assert_eq!(details.untracked[0].path, saved_path);
     assert!(f
         .backend
         .stash_diff(&f.id, 0, &stash.oid, "README.md", false)
@@ -1875,7 +1886,7 @@ fn stash_preview_includes_tracked_and_saved_untracked_literal_paths_without_writ
         .contains("+Saved tracked edit"));
     assert!(f
         .backend
-        .stash_diff(&f.id, 0, &stash.oid, "new folder/α\nfile.txt", true)
+        .stash_diff(&f.id, 0, &stash.oid, saved_path, true)
         .unwrap()
         .contains("+Untracked saved contents"));
     assert!(f
@@ -2158,7 +2169,12 @@ fn comparison_handles_literal_paths_binary_deletion_and_branch_moves_by_object_p
     g(&f.root, &["commit", "-m", "Base files"]);
     let base = g(&f.root, &["rev-parse", "HEAD"]).trim().to_string();
     g(&f.root, &["mv", "old.txt", "new.txt"]);
-    f.write("odd/α\nfile.txt", "Literal path contents\n");
+    let literal_path = if cfg!(windows) {
+        "odd/α[file].txt"
+    } else {
+        "odd/α\nfile.txt"
+    };
+    f.write(literal_path, "Literal path contents\n");
     fs::write(f.root.join("image.bin"), [0, 1, 2, 3]).unwrap();
     f.write("huge.txt", &"x".repeat(600 * 1024));
     g(&f.root, &["add", "."]);
@@ -2182,7 +2198,7 @@ fn comparison_handles_literal_paths_binary_deletion_and_branch_moves_by_object_p
         .any(|file| file.path == "new.txt" && file.index == "A"));
     assert!(f
         .backend
-        .comparison_diff(&f.id, &base, &target, Kind::Trees, "odd/α\nfile.txt")
+        .comparison_diff(&f.id, &base, &target, Kind::Trees, literal_path)
         .unwrap()
         .contains("+Literal path contents"));
     assert!(f
@@ -2565,7 +2581,11 @@ fn restore_saved_untracked_file_preserves_binary_bytes_and_never_changes_index_o
     let mut f = Fixture::new();
     f.seed();
     f.backend.trust(&f.id).unwrap();
-    let name = "nested/α\nimage.bin";
+    let name = if cfg!(windows) {
+        "nested/α[image].bin"
+    } else {
+        "nested/α\nimage.bin"
+    };
     fs::create_dir(f.root.join("nested")).unwrap();
     let bytes = [0, 255, 1, 13, 10, 12, 0];
     fs::write(f.root.join(name), bytes).unwrap();

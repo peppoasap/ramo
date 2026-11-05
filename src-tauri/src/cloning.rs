@@ -251,6 +251,12 @@ impl Grants {
         };
         let https_policy = format!("protocol.https.allow={network_policy}");
         let ssh_policy = format!("protocol.ssh.allow={network_policy}");
+        let source_argument = if let Some(source) = &pending.source {
+            crate::native_paths::git_path(source)?
+        } else {
+            pending.view.source.clone()
+        };
+        let destination_argument = crate::native_paths::git_path(&destination)?;
         let arguments = strings(&[
             "--no-pager",
             "-c",
@@ -270,8 +276,8 @@ impl Grants {
             "--no-hardlinks",
             "--no-local",
             "--",
-            &pending.view.source,
-            &pending.view.destination,
+            &source_argument,
+            &destination_argument,
         ]);
         process::run(&program, &pending.parent, &arguments, None, std::time::Duration::from_secs(120))
             .map_err(|error| format!("Clone did not complete normally. Inspect the destination before retrying; it may contain partial data. Ramo has not deleted it.\n{error}"))?;

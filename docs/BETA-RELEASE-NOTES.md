@@ -1,8 +1,9 @@
-# Ramo beta.2
+# Ramo beta.3
 
 A focused graphical Git client with contextual AI assistance. Apache-2.0.
 
-This beta includes a compact toolbar with Branch, Stash and reviewed Pop;
+This beta fixes Windows native path handling for clone/worktree operations and
+keeps platform-specific fixture line endings explicit. It also includes a compact toolbar with Branch, Stash and reviewed Pop;
 branch/commit context menus and drag gestures; text-hunk staging; an editable
 merge resolver with individual source-line selection; stashes/worktrees;
 provider-guided clone and reviewed remote URL management; optional AI with input

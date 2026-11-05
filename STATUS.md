@@ -1,6 +1,6 @@
 # Project status
 
-Updated: 2026-11-05 (Europe/Madrid). Source candidate:0.2.0-beta.2.
+Updated: 2026-11-05 (Europe/Madrid). Source candidate:0.2.0-beta.3.
 The owner authorized publication to https://github.com/peppoasap/ramo and public
 beta build downloads. Initial192-file import published as b4f30fb; a follow-up includes supplemental
 upstream license texts and standalone-export completeness. Local caches/settings, real repositories and private reference screenshots
@@ -375,6 +375,23 @@ mockups remain labelled and separate from actual application screenshots. CI kee
 read-only permissions for build/test; only the tag-gated prerelease job can write
 release assets. Existing releases are never replaced. Runtime acceptance remains
 separate from a hosted build result. Current frontend60tests and metadata gate pass.
+
+## First hosted Windows findings — 2026-11-05
+
+Hosted macOS build/tests/installers passed on c4ef795. Windows reached real-Git
+fixtures and failed21/86: inherited autocrlf changed expected fixture bytes,
+four fixtures used Unix-only newline filenames, Git for Windows refused native
+verbatim destination paths for clone/worktree, and worktree management compared
+verbatim/native and Git slash paths as unequal. No failed Windows installer was
+published. Linux build is still being observed.
+
+Beta.3 keeps beta.2 local packages immutable. native_paths.rs converts only actual
+native path arguments (not URLs, messages or arbitrary Git arguments), supports
+normal drive/UNC forms and refuses other device namespaces. Worktree membership,
+canonical/symlink/common-directory and open-tab removal guards remain. Fixtures
+set core.autocrlf=false locally rather than altering user/global Git configuration;
+Windows uses legal Unicode/bracket filenames, Unix retains newline cases. Two
+portable path regression tests pass; full fresh checks are required before tagging.
 
 ## Exact next task
 

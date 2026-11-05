@@ -3,6 +3,21 @@
 User-visible changes are recorded here. Versions describe source milestones;
 only a published GitHub Release establishes an external release.
 
+## [0.2.0-beta.3] - Public beta candidate, 2026-11-05
+
+- Publish project sources, README with a short roadmap, contributor/security guidance
+  and a real synthetic desktop screenshot at peppoasap/ramo.
+- Build macOS/Windows/Linux installers in CI; publish version-matching beta tags as
+  prereleases only after all platform checks pass.
+- Pass native Windows drive/UNC paths to Git without verbatim device prefixes for
+  clone and worktree commands. Compare reviewed native path representations without
+  bypassing symlink/common-repository/open-checkout guards.
+- Make Git fixtures independent of host autocrlf defaults and use valid Windows
+  filenames while retaining Unicode/literal-path and CRLF coverage.
+- Include supplemental dependency license texts and README images in standalone
+  source exports; normalize Windows package-lock paths for notice generation.
+- Preserve all earlier local beta installers and source snapshots unchanged.
+
 ## [0.2.0-beta.2] - Local distribution candidate, 2026-11-05
 
 - Compact top bar with fixed-height Clone and grouped Git toolbar: Branch, Stash,
