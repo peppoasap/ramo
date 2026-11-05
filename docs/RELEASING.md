@@ -1,6 +1,6 @@
 # Release runbook
 
-Current source candidate: **0.2.0-beta.3**, not a public release or stable version.
+Current beta line: **0.2.0-beta.3**. Stable-release validation is outstanding.
 The 0.1.0 private tester archive is immutable. Never replace its installer or hashes.
 
 ## Local candidate preparation
@@ -12,7 +12,8 @@ npm test
 npm run build
 npm run test:git
 npm run audit:dependencies
-npm run bundle
+# Choose the native platform: dmg, nsis or deb.
+npm run bundle -- --bundles dmg
 ```
 
 Run the Git tests only against their generated disposable fixtures. No AI inference
@@ -39,7 +40,21 @@ any later authorized public repository from the reviewed portable source snapsho
 Run checks again in its extracted root; `.github/workflows/check.yml` assumes this
 root layout. Retain an exact commit ID, manifest, build log and installer checksums.
 
-## GitHub preparation, after repository authorization
+## Public beta publication
+
+The owner authorized public source and beta builds at peppoasap/ramo. CI packages
+DMG (macOS), NSIS (Windows) and DEB (Linux). RPM is not part of this beta because
+the upstream bundler rejects the prerelease version syntax. AppImage/MSI formats
+are not promised by this workflow. Main-branch
+pushes run checks and upload short-lived workflow artifacts. After reviewing a
+successful run, pushing a version-matching v<version> beta tag is an explicit
+publication action: CI rebuilds all targets and publishes a GitHub prerelease with
+installers and combined SHA256SUMS only after every platform job passes. Existing
+releases/assets are not replaced. A failing target blocks this automated release.
+Do not push a beta tag unless public publication is authorized. Never mark it stable
+or infer GUI runtime acceptance from a green build. There is no automatic updater.
+
+## Further release preparation
 
 1. Confirm owner/repository, working name, maintainer identity, Apache notices and
    a real private security reporting channel. Update SECURITY.md; no fake contact.

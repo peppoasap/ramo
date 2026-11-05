@@ -35,8 +35,9 @@ is insufficient for a stable desktop release.
       scope any unsigned technical preview and document actual installation limits.
 - [ ] Inspect draft pre-release, attach verified assets/checksums and authorize publish.
 
-Windows/Linux and Intel Mac support remain unverified; no available runners were
-provided. Do not check them off on the strength of macOS tests. Existing private
+Hosted Windows/Linux runners are now available. Build/test results and GUI
+installation/runtime acceptance must be recorded separately. Intel Mac runtime
+acceptance is also outstanding. Do not infer these from macOS tests. Existing private
 0.1.0 preview checks are historical, not acceptance of this candidate.
 
 ## Next daily-base work

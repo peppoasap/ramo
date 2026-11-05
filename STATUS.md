@@ -393,8 +393,12 @@ set core.autocrlf=false locally rather than altering user/global Git configurati
 Windows uses legal Unicode/bracket filenames, Unix retains newline cases. Two
 portable path regression tests and the full127backend suite pass on macOS. Linux
 packaging exposed three missing upstream license files; exact-revision MIT texts
-for dlopen2/dlopen2_derive and libappindicator-sys are included as fallbacks. Hosted
-Windows fixes and Linux packaging must pass before tagging.
+for dlopen2/dlopen2_derive and libappindicator-sys are included as fallbacks. Windows rerun now passes85/86real-Git cases; the remaining assertion compared
+Git display paths to native canonical spelling after a successful lock, and now
+checks canonical identity. Linux builds and generates442notices, but the upstream
+RPM bundler rejects prerelease version syntax. CI now requests explicit DMG/NSIS/
+DEB formats, matching the published beta download scope. All jobs must pass before
+tagging; no failed platform installer is published.
 
 ## Exact next task
 

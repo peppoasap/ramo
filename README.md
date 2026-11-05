@@ -111,8 +111,15 @@ npm test
 npm run test:git
 npm run build
 npm run audit:dependencies
-npm run bundle
 ```
+
+Package the format for your target (the CI uses these same commands):
+
+| Target | Command |
+| --- | --- |
+| macOS DMG | `npm run bundle -- --bundles dmg` |
+| Windows setup.exe | `npm run bundle -- --bundles nsis` |
+| Linux DEB | `npm run bundle -- --bundles deb` |
 
 Installers are written to `src-tauri/target/release/bundle/`. On macOS,
 `npm run package:mac:local` creates an ad-hoc DMG. Windows has a

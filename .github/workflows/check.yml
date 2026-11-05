@@ -13,7 +13,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-24.04]
+        include:
+          - os: macos-latest
+            bundle: dmg
+          - os: windows-latest
+            bundle: nsis
+          - os: ubuntu-24.04
+            bundle: deb
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     steps:
@@ -26,6 +32,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri -> target
+          cache-on-failure: true
       - name: Linux desktop prerequisites
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf
@@ -35,7 +42,7 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: npm run test:git
-      - run: npm run bundle
+      - run: npm run bundle -- --bundles ${{ matrix.bundle }}
       - run: python3 scripts/collect-installers.py
       - uses: actions/upload-artifact@v4
         with:

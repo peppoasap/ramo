@@ -2925,7 +2925,7 @@ fn worktree_lock_unlock_and_stale_review_are_enforced() {
     assert!(
         next.worktrees
             .iter()
-            .find(|t| t.path == linked.to_str().unwrap())
+            .find(|t| fs::canonicalize(&t.path).ok().as_ref() == Some(&linked))
             .unwrap()
             .locked
     );

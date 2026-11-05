@@ -1,7 +1,10 @@
 # Windows build and acceptance
 
-No Windows installer has been built or tested for this candidate. The source ZIP
-is a developer build kit, not a double-click installer for end users.
+Windows CI produces installers only after its build and tests pass. Check the
+successful workflow run or a published prerelease for an actual setup.exe; a
+configured job is not proof of a completed build. GUI installation/runtime
+acceptance is still outstanding. The source ZIP is a developer build kit, not a
+double-click installer for end users.
 
 Use Windows x64 with Node22.12+ (22.x),24.x or26+, npm, Git for Windows on PATH,
 Rust1.95+ with the MSVC toolchain, Visual Studio C++ build tools and WebView2.
@@ -37,5 +40,5 @@ Before sharing a built installer, on a disposable Windows test machine:
    and CLI wrappers require separate checks. Never use personal repositories for
    mutation acceptance.
 
-The installer is unsigned. Public signing, SmartScreen reputation and runtime
+Any CI installer is unsigned. Public signing, SmartScreen reputation and runtime
 acceptance remain outstanding. Do not disable Windows security protections.
