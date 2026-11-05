@@ -30,8 +30,9 @@ resizable three regions, short toolbar controls, no card grid. Colors: graphite
 surfaces/mint selection, separate colored topology lanes and readable disabled
 network controls. Imagery: no hero/illustration substitution; real Phosphor icons
 with notices. Content: actual synthetic Git records replace generated text;
-read-only limitations visible. Focused toolbar/table/inspector regions reviewed
-from the full-resolution captures, plus source gutter/result editor capture.
+read-only limitations visible. Focused toolbar/table/inspector regions reviewed in the
+[combined detail comparison](docs/design/rust-native/native-detail-comparison.jpg),
+plus the full-resolution source gutter/result editor capture.
 No persistent controls overlap at the observed desktop viewport.
 
 ## Interaction evidence and remaining gates

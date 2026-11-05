@@ -36,3 +36,12 @@ claimed: pagination/row counts are functional evidence, not comparative timings.
 Remaining migration gates: Git write/network/AI UI parity, save/stage/complete
 merge, source-linked scrolling, language tooling, typed CRLF, large-file editor
 performance, accessibility/IME, legacy draft import and platform runtime checks.
+
+## Publication evidence
+
+Native source published as commit `e3bf258`. Hosted validation was started in
+[Native CI run42101596287](https://github.com/peppoasap/ramo/actions/runs/42101596287)
+and [existing desktop CI](https://github.com/peppoasap/ramo/actions/runs/42101596129);
+at this handoff they remain in progress, not counted as passed. A fresh temporary
+`git archive` source export included the native manifest, lockfile and editor and
+excluded target/state directories. Existing frozen release assets were untouched.

@@ -15,7 +15,7 @@ def main():
             'docs/design','docs/images','apps/native/src','apps/native/fixtures']
     files = ['README.md','WORKSPACE_GUIDELINES.md','.nvmrc','.gitattributes','package.json','package-lock.json','.npmrc','.gitignore','tsconfig.json','vite.config.ts',
              'index.html','LICENSE','NOTICE','THIRD_PARTY_NOTICES.txt','AGENTS.md','STATUS.md',
-             'SECURITY.md','CONTRIBUTING.md','CHANGELOG.md','src-tauri/Cargo.toml',
+             'SECURITY.md','CONTRIBUTING.md','CHANGELOG.md','design-qa.md','src-tauri/Cargo.toml',
              'src-tauri/Cargo.lock','src-tauri/build.rs','src-tauri/tauri.conf.json',
              'apps/native/Cargo.toml','apps/native/Cargo.lock','apps/native/README.md']
     files += [p.relative_to(ROOT).as_posix() for p in (ROOT/'docs').glob('*.md')]
