@@ -19,7 +19,7 @@ const metadata = JSON.parse(
       "--format-version",
       "1",
       "--locked",
-      "--offline",
+      ...(process.argv.includes("--fetch") ? [] : ["--offline"]),
       "--filter-platform",
       target,
     ],
@@ -58,7 +58,9 @@ for (const p of metadata.packages
               ? "dlopen2-MIT.txt"
               : p.name === "libappindicator-sys"
                 ? "libappindicator-MIT.txt"
-                : null;
+                : p.name.startsWith("webview2-com")
+                  ? "webview2-rs-MIT.txt"
+                  : null;
     if (fallback) texts = [readFileSync(join("licenses", fallback), "utf8")];
   }
   if (!texts.length) missing.push(`${p.name}@${p.version}`);

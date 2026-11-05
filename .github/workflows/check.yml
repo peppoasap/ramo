@@ -37,6 +37,8 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf
       - run: npm ci
+      - name: Check target redistribution notices before compilation
+        run: node scripts/notices.mjs --fetch
       - run: npm run check:release
       - run: npm run audit:dependencies
       - run: npm run build

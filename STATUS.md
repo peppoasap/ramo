@@ -397,8 +397,14 @@ for dlopen2/dlopen2_derive and libappindicator-sys are included as fallbacks. Wi
 Git display paths to native canonical spelling after a successful lock, and now
 checks canonical identity. Linux builds and generates442notices, but the upstream
 RPM bundler rejects prerelease version syntax. CI now requests explicit DMG/NSIS/
-DEB formats, matching the published beta download scope. All jobs must pass before
-tagging; no failed platform installer is published.
+DEB formats, matching the published beta download scope. All tag jobs must pass before
+release assets are published. Windows now passes the full backend check, including
+the final lock/unlock fixture. macOS and Linux installer jobs pass on ccfaebc.
+A Windows-target metadata preflight exposed missing webview2 crate license files;
+the exact-revision MIT text is included and the355-entry inventory passes on macOS
+using Windows dependency metadata (not a Windows build claim). CI now performs
+this source-license preflight before expensive compilation. No failed platform
+installer is published.
 
 ## Exact next task
 

@@ -46,8 +46,7 @@ The owner authorized public source and beta builds at peppoasap/ramo. CI package
 DMG (macOS), NSIS (Windows) and DEB (Linux). RPM is not part of this beta because
 the upstream bundler rejects the prerelease version syntax. AppImage/MSI formats
 are not promised by this workflow. Main-branch
-pushes run checks and upload short-lived workflow artifacts. After reviewing a
-successful run, pushing a version-matching v<version> beta tag is an explicit
+pushes run checks and upload short-lived workflow artifacts. After reviewing source and version, pushing a version-matching v<version> beta tag is an explicit
 publication action: CI rebuilds all targets and publishes a GitHub prerelease with
 installers and combined SHA256SUMS only after every platform job passes. Existing
 releases/assets are not replaced. A failing target blocks this automated release.
