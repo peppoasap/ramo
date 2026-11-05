@@ -58,3 +58,13 @@ actual synthetic file/index preview. The live merge exercise found and corrected
 a disabled Complete merge action when the reviewed result equals HEAD; the
 post-fix GUI completed that two-parent merge. Full native workflow fidelity,
 remaining dialog layouts and alternate viewport checks stay in the completion ledger.
+
+## Native diff detail iteration
+
+[Actual line selection](docs/images/native-line-selection.png) records a3024×1898
+macOS capture with only62px of OS chrome removed (3024×1836 content),2x density. Initial gutter buttons
+exceeded22px and the selected check glyph used a missing fallback; the revised
+capture uses fixed-height padding and the licensed Phosphor check icon. Original/
+new numbers align with code rows. Accessibility off/on selection and Shift range
+selection were observed, followed by exact index-content checks. These are scoped
+interaction/detail checks; six-board fidelity/cutover acceptance remains open.

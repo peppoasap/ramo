@@ -4,6 +4,7 @@ mod drafts;
 mod editor;
 mod graph;
 mod merge;
+mod patch_view;
 mod theme;
 mod worker;
 

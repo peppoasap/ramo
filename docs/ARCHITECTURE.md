@@ -102,3 +102,16 @@ bounded validated metadata, independent of Git mutation locks. `remotes.rs` list
 sanitized endpoints and adds/changes ordinary remote URLs via a typed trusted action.
 Endpoint output enters snapshot fingerprints. See ADR0023/HOSTING.md for unsupported
 provider catalogs, special remote configurations and live authentication limits.
+
+## Native partial staging
+
+`apps/native/src/patch_view.rs` displays virtual unified rows and source/target
+line gutters. It submits only changed row IDs or a hunk ID, the displayed diff
+hash and current snapshot fingerprint. `Action::Lines` reuses the ordinary-file
+checks of `Action::Hunk`. `patch::select_lines` derives a new patch from current
+Git output; unstage orients the patch from the actual index toward a selectively
+reverted result, preserving unselected additions/context. All writes use cached
+Git apply and never modify the working file. Four real-Git integration tests cover
+every subset of a replacement, multi-hunk offsets, CRLF/Unicode, empty tracked
+files, stale hashes and explicit unsupported EOF handling. Native row numbering
+has an independent fixture. No caller-authored patch reaches Git.

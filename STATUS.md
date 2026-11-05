@@ -503,16 +503,40 @@ preserved. UI blocks mutation-time editor/composer input and concurrent actions.
 Network adapters are wired through the existing core but live hosted credentials
 and native progress/cancellation remain unverified. No replacement installer.
 
+## Native precise staging — 2026-11-05
+
+The native diff now exposes whole-hunk and individual added/deleted-row staging
+and unstaging, plus Shift range selection. Original/new file line numbers use a
+fixed22px gutter. Accessibility selection state and parent-disabled state were
+checked in the actual application; the initial missing check glyph and oversized
+button padding were corrected before capture. Working/Staged labels remain
+explicit, and mutation refresh retains the appropriate selected file/version.
+
+Core `Action::Lines` accepts row IDs and displayed diff hash, not a renderer patch.
+Fresh repository snapshot, regular-file scope and complete diff are revalidated.
+Unstage derives a reverse-oriented partial patch against the actual index so
+other staged changes survive. No automatic fallback or retry changes scope.
+Missing EOF uses whole-hunk actions; complex file kinds use whole-file staging.
+
+Evidence:131 core tests (27+94+4 new real-Git selection tests+6 process) and17
+native tests passed on macOS arm64. Native clippy/fmt passed; native CI now runs core preservation tests as well.
+An additional broad
+core all-target clippy audit found pre-existing test IO-amount/style findings in
+ai.rs/local_ai.rs/process.rs, not selection failures; those remain lint debt.
+Actual GUI verified single-line stage/unstage, Shift range stage, whole-hunk
+stage/unstage and correct checkbox off/on state. Independent Git/index/working
+byte assertions confirmed the chosen subset and preservation of the second hunk.
+See NATIVE-VERIFICATION.md and docs/images/native-line-selection.png. No hosted
+credential/inference use, native release or GitKraken performance claim.
+
 ## Exact next task
 
-Use [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full objective ledger.
-Next: durable repository-scoped commit-message drafts, hunk/line staging and
-commit object menus/sequence continuation; then native comparison/drag-drop,
-clone/remotes, worktrees and contextual AI. Preserve the selected compact visual
-direction and evaluate each state against the mock. Close editor IME/accessibility,
-typed CRLF, linked scrolling and large-file gates, followed by remaining R3/R4
-features and R5 native packaging/cutover. Do not call partial R2 a full migration.
-Keep beta.4 downloads and existing storage intact during this work.
-
-Release acceptance still requires a second Mac, actual Windows/Linux GUI testing,
-a private security channel and a signing strategy. Goal remains active.
+Keep [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full objective ledger.
+Next: durable repository-scoped commit-message drafts and commit object menus /
+sequence continuation; then native comparison/drag-drop, clone/remotes, worktrees
+and contextual AI. Preserve the compact visual direction, finish remaining
+editor IME/accessibility/CRLF/linked-scroll/large-file gates, R3/R4 workflows and
+R5 packaging/cutover. The full native migration remains incomplete and active.
+Keep beta.4 downloads and existing storage intact. Close expanded core lint debt
+and observe the new hosted native/core runs before claiming cross-platform checks.
+Release acceptance still needs actual Windows/Linux GUI and second-Mac testing.

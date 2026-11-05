@@ -191,7 +191,15 @@ impl App {
                 });
             });
             if let Some(path)=&self.file {ui.label(theme::caption(format!("{} · {path}",if self.staged_view {"Staged"}else{"Working"})));}
-            render_diff(ui,&self.diff);
+            if !self.diff.is_empty() && let Some(path)=self.file.clone()
+                && let Some(event)=self.patch_view.ui(ui,&self.diff,self.staged_view,snapshot.operation.as_deref()) {
+                    let hash=git::hash(&self.diff);
+                    let action=match event {
+                        crate::patch_view::Event::Hunk(index)=>Action::Hunk{path:path.clone(),index,unstage:self.staged_view,patch_hash:hash},
+                        crate::patch_view::Event::Lines(rows)=>Action::Lines{path:path.clone(),rows,unstage:self.staged_view,patch_hash:hash},
+                    };
+                    self.request_action(action,"Update staged selection",path,false);
+            }
         });
         if let Some(path) = resolve {
             self.editor_request = self.send(Work::Conflict {

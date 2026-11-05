@@ -2,9 +2,9 @@ name: Rust native development
 on:
   push:
     branches: [main]
-    paths: ['apps/native/**', 'src-tauri/src/**', 'src-tauri/Cargo.*', 'licenses/**', 'scripts/native-notices.py', '.github/workflows/native.yml']
+    paths: ['apps/native/**', 'src-tauri/src/**', 'src-tauri/tests/**', 'src-tauri/Cargo.*', 'licenses/**', 'scripts/native-notices.py', '.github/workflows/native.yml']
   pull_request:
-    paths: ['apps/native/**', 'src-tauri/src/**', 'src-tauri/Cargo.*', 'licenses/**', 'scripts/native-notices.py', '.github/workflows/native.yml']
+    paths: ['apps/native/**', 'src-tauri/src/**', 'src-tauri/tests/**', 'src-tauri/Cargo.*', 'licenses/**', 'scripts/native-notices.py', '.github/workflows/native.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -31,13 +31,19 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libgtk-3-dev
       - name: Fetch locked native sources
-        run: cargo fetch --manifest-path apps/native/Cargo.toml --locked
+        run: |
+          cargo fetch --manifest-path apps/native/Cargo.toml --locked
+          cargo fetch --manifest-path src-tauri/Cargo.toml --locked
       - name: Native notices including bundled fonts
         run: python scripts/native-notices.py
       - name: Format
         run: cargo fmt --manifest-path apps/native/Cargo.toml --check
       - name: Native preservation and topology tests
         run: cargo test --manifest-path apps/native/Cargo.toml --locked --offline
+      - name: Core preservation tests without desktop runtime
+        env:
+          CARGO_TARGET_DIR: apps/native/target
+        run: cargo test --manifest-path src-tauri/Cargo.toml --no-default-features --locked --offline -- --test-threads=4
       - name: Native lint
         run: cargo clippy --manifest-path apps/native/Cargo.toml --locked --offline --all-targets --no-deps -- -D warnings
       - name: Build native binary

@@ -26,6 +26,10 @@ pub struct FileChange {
     pub index: String,
     pub worktree: String,
 }
+/// Shared partial-staging availability for native renderers; mutation revalidates it.
+pub fn partial_staging_available(diff: &str) -> Result<(), String> {
+    crate::patch::select_hunk(diff, 0).map(|_| ())
+}
 pub fn is_conflicted(file: &FileChange) -> bool {
     file.index == "U"
         || file.worktree == "U"
@@ -788,6 +792,14 @@ impl Backend {
         }
         let root = Path::new(&snapshot.repo.path);
         let stage = matches!(&action, Action::Stage { .. });
+        let line_rows = match &action {
+            Action::Lines { rows, .. } => Some(rows.clone()),
+            _ => None,
+        };
+        let hunk_index = match &action {
+            Action::Hunk { index, .. } => *index,
+            _ => 0,
+        };
         let action_kind = match &action {
             Action::CheckoutCommit { .. } => "checkout",
             Action::CherryPick { .. } => "cherry-pick",
@@ -798,9 +810,15 @@ impl Backend {
         match action {
             Action::Hunk {
                 path,
-                index,
+                index: _,
                 unstage,
                 patch_hash,
+            }
+            | Action::Lines {
+                path,
+                unstage,
+                patch_hash,
+                ..
             } => {
                 valid_path(&path)?;
                 let file = snapshot
@@ -816,22 +834,26 @@ impl Backend {
                         file.worktree != "M" || file.index == "?"
                     }
                 {
-                    return Err("Hunk staging requires an ordinary modified tracked file. Use whole-file staging for this change.".into());
+                    return Err("Partial staging requires an ordinary modified tracked file. Use whole-file staging for this change.".into());
                 }
                 let modes = git(root, &["ls-files", "--stage", "-z", "--", &path])?;
                 if !(modes.starts_with(b"100644 ") || modes.starts_with(b"100755 ")) {
-                    return Err("Hunk staging requires a regular tracked file.".into());
+                    return Err("Partial staging requires a regular tracked file.".into());
                 }
                 let complete = self.file_diff(id, &path, None, unstage)?;
                 if hash(complete.as_bytes()) != patch_hash {
                     return Err(
-                        "The displayed diff changed. Refresh and review the hunk before retrying."
+                        "The displayed diff changed. Refresh and review the selection before retrying."
                             .into(),
                     );
                 }
-                let patch = crate::patch::select_hunk(&complete, index)?;
+                let patch = if let Some(rows) = &line_rows {
+                    crate::patch::select_lines(&complete, rows, unstage)?
+                } else {
+                    crate::patch::select_hunk(&complete, hunk_index)?
+                };
                 let mut args = vec!["apply", "--cached", "--whitespace=nowarn"];
-                if unstage {
+                if unstage && line_rows.is_none() {
                     args.push("--reverse");
                 }
                 args.push("--");
@@ -1425,6 +1447,13 @@ pub enum Action {
         branch: String,
         #[serde(rename = "createBranch")]
         create_branch: bool,
+    },
+    Lines {
+        path: String,
+        rows: Vec<usize>,
+        unstage: bool,
+        #[serde(rename = "patchHash")]
+        patch_hash: String,
     },
     Hunk {
         path: String,

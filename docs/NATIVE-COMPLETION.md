@@ -9,7 +9,7 @@ not close it. Installed Git remains the explicitly documented initial engine.
 | Rust application/UI without WebView or JS build | egui/eframe consumer builds; initial native CI passed three OS. Core reused without desktop feature |
 | Wide, dense actual topology |5011 commits loaded,32 visible22px rows; graph parity/50k tests. Resizable panels; wider/narrower/DPI acceptance still needs more coverage |
 | Full normal merge editor |Line picks, edit, undo/redo, find, draft restore, reviewed save/stage and merge completion observed. IME, accessibility, typed CRLF, linked scroll, syntax and large files remain |
-| Fast everyday actions |File stage/unstage, commit, direct double-click checkout, branch actions, network/stash routes implemented. Hunk/line staging, amend and sequence UI missing |
+| Fast everyday actions |File stage/unstage, commit, direct double-click checkout, branch actions, network/stash routes implemented. Hunk/line staging delivered for regular modified text; no-final-newline line selection falls back to whole hunks. Amend and sequence UI missing |
 | Detailed object menus and drag/drop |Branch/stash menus partial; commit/file/ref menus, compare modes, drag intent and keyboard alternatives incomplete |
 | Clone and remote integration |Existing core/beta functionality; native UI, provider picker and credential acceptance missing |
 | Worktrees and tabs |Native listing only; open/create/manage, recent repository tabs and state restoration missing |

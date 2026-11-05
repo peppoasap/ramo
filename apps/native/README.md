@@ -44,6 +44,12 @@ installs into Applications nor publishes a release.
   Home/End/PageUp/PageDown/arrows, commit file lists and first-parent diffs.
 - History stays separate from working changes. Staged-only files use the index
   preview; mixed staged/unstaged files currently show the working diff.
+- Modified regular text files support stage/unstage of whole hunks or selected
+  added/deleted rows, including Shift range selection. Original/new line gutters
+  and explicit Working/Staged labels distinguish the two versions. Core-derived
+  patches are bound to the displayed diff hash and current repository fingerprint.
+  Partial staging is limited to256KiB diffs; missing-final-newline files use whole
+  hunks, while binary/new/deleted/renamed/mode-change files use whole-file actions.
 - Existing regular-text conflicts open a full-space two-source/result editor.
   Individual source-line picks replace one active conflict or insert at the result
   cursor after conflicts are removed. Source text also supports normal selection.
@@ -64,8 +70,7 @@ have the existing core timeouts; native progress/Stop is still missing.
 The editor has a reviewed Save and stage action; typing and local draft save do
 not change Git. The original editor fingerprint is checked before resolution.
 Git conflicts/failures refresh the authoritative snapshot and preserve the error;
-no automatic mutation retry. No native installer is published yet. Hunk/line
-staging, amend, richer menus, drag/drop, comparison, clone/remotes/worktree UI,
+no automatic mutation retry. No native installer is published yet. Amend, richer menus, drag/drop, comparison, clone/remotes/worktree UI,
 AI routes and native commit-message draft persistence remain migration tasks.
 
 Workers serialize the existing backend. Replies are scoped to repository
@@ -104,3 +109,7 @@ and real-Git read-only/conflict fixtures. Bundled font/icon licenses are include
 by the notice generator; source provenance is under `licenses/native/`.
 
 Observed local evidence and screenshots: [verification](../../docs/NATIVE-VERIFICATION.md).
+
+Native partial controls are disabled for clipped previews (over12,000 lines or
+4,096 characters per line) and during an active Git operation, with a visible
+whole-file fallback reason. Complete working files are never rewritten by staging.

@@ -63,3 +63,31 @@ New worker tests prove trust/freshness rejection, index-only commits preserving
 unstaged bytes, merge-error conflict refresh and reviewed resolution/commit while
 preserving untracked bytes. Network/stash UI is wired but has not had an end-to-end
 native hosted-authentication check. No platform GUI or performance parity is claimed.
+
+## Precise staging — 5 November 2026
+
+131 core tests and17 native tests passed locally. Added integration cases exercise
+all seven non-empty subsets of a replacement for both staging directions, CRLF,
+Unicode and literal diff-like text, independent hunk offsets, empty tracked files,
+stale hashes, metadata row refusal and missing EOF refusal. Native gutter positions
+have a fixture. Native clippy/fmt passed; optional expanded core all-target clippy
+reported existing test-read/style findings in ai.rs, local_ai.rs and process.rs.
+
+The actual macOS UI staged just `+updated02`, preserving `line02` and the later
+replacement in working data; unstaging that row returned the index to HEAD. Then
+Shift selection staged the first replacement pair, leaving the second hunk alone.
+Whole-hunk stage and unstage were also exercised. Shell assertions independently
+compared the index and working bytes. The screen-reader tree showed checkbox
+states off/on accurately after a widget metadata fix. Button padding was reduced
+to keep controls within the22px rows; Phosphor supplies the selected check icon.
+
+![Native line selection](images/native-line-selection.png)
+
+Partial staging supports modified regular text and diffs up to256KiB. No-final-
+newline line selection falls back to complete hunks; new/deleted/renamed/binary
+and mode-changing files use whole-file actions. These explicit boundaries do not
+close the full completion ledger or establish native platform GUI parity.
+
+Native partial controls are disabled for clipped previews (over12,000 lines or
+4,096 characters per line) and during an active Git operation, with a visible
+whole-file fallback reason. Complete working files are never rewritten by staging.

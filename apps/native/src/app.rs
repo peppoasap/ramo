@@ -50,6 +50,7 @@ pub struct App {
     file: Option<String>,
     staged_view: bool,
     diff: String,
+    patch_view: crate::patch_view::Selection,
     filter: String,
     branch_filter: String,
     mode: Mode,
@@ -95,6 +96,7 @@ impl App {
             file: None,
             staged_view: false,
             diff: String::new(),
+            patch_view: Default::default(),
             filter: String::new(),
             branch_filter: String::new(),
             mode: Mode::History,
@@ -307,9 +309,10 @@ impl App {
                         && let (Some(path), Some(snapshot)) = (focused_file, self.snapshot.as_ref())
                         && let Some(file) = snapshot.files.iter().find(|f| f.path == path)
                     {
-                        self.staged_view = file.worktree.trim().is_empty()
-                            && !git::is_conflicted(file)
-                            && file.index != "?";
+                        self.staged_view = !git::is_conflicted(file)
+                            && file.index != "?"
+                            && (file.worktree.trim().is_empty()
+                                || (self.staged_view && !file.index.trim().is_empty()));
                         self.file = Some(path.clone());
                         self.diff_request = self.send(Work::Diff {
                             repo: snapshot.repo.id.clone(),

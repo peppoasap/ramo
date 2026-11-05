@@ -26,6 +26,10 @@ Read WORKSPACE_GUIDELINES.md, README.md, STATUS.md and the relevant spec before 
 - An AI draft never authorizes staging, committing, pushing or running shell commands.
 - Use actual Git fixtures in disposable directories for Git behavior tests. Never use personal repositories for mutation tests.
 - Prefer pure functions for graph layout, parsing and request/result validation.
+- Partial staging must derive patches from the current Git diff in the core,
+  checking both repository fingerprint and displayed diff hash. Renderers submit
+  selected row numbers/hunk IDs, never a hand-authored patch. Preserve index-only
+  scope, line endings and the working tree; document whole-hunk/file fallbacks.
 - Do not read existing Codex/Claude credential files or import account sessions by scraping local storage.
 - Do not silently install CLIs, upgrade Git, start logins or make paid inference requests.
 

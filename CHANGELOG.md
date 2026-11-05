@@ -5,6 +5,13 @@ only a published GitHub Release establishes an external release.
 
 ## Unreleased — Rust-native development (0.3.0-dev.1)
 
+- Native diff view stages/unstages whole hunks or selected added/deleted rows,
+  with Shift range selection and original/new file line numbers. Core derives
+  the patch from the reviewed Git diff and rejects stale or unsupported selections.
+- Partial staging preserves working bytes and unrelated index changes. Missing
+  final-newline files retain whole-hunk/file staging; complex file kinds retain
+  whole-file actions.
+
 - Native daily Git actions now reuse existing trust and freshness guards: file
   staging/unstaging, index commits, branch checkout/create/merge/delete,
   fetch/pull/push and reviewed stash operations.
