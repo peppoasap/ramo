@@ -2,6 +2,19 @@
 
 The user requested functional, installable software rather than a simulated prototype. Deliver real vertical slices, keeping claims tied to evidence.
 
+## Rust-native direction — 2026-11-05
+
+Owner-requested direction: Rust application/UI with a more complete daily Git
+workflow. Current beta.4 remains Tauri/React. Proposed order: read-only Rust graph,
+editor/draft feasibility, existing workflow parity, line staging/recovery/history,
+then guided rebase and remote depth. Preserve installed Git initially; assess a
+Rust Git engine separately. See [migration and product plan](RUST-NATIVE-PLAN.md),
+[ADR0025](decisions/0025-rust-native-direction.md) and the
+[six-screen UI concept](design/rust-native/README.md). These are proposals, not
+implemented features or new release evidence.
+
+## Existing product coverage
+
 | Slice | Current state |
 | --- | --- |
 | Selected graphite/mint design and Apache-2.0 | Accepted; original mockups preserved |

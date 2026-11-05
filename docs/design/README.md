@@ -17,6 +17,11 @@ The user selected the **first displayed original result** and requested built-in
 
 ## What these images establish
 
+New exploration, 2026-11-05: [Rust-native six-screen workbench](rust-native/README.md).
+It preserves this visual identity while proposing clearer history, staging,
+merge, recovery, clone and settings workflows. It does not supersede the selected
+target or establish implemented Rust UI until reviewed and built.
+
 Hierarchy, palette, layout, density and the placement of task-specific AI actions.
 
 ## What these images do not establish

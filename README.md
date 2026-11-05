@@ -155,6 +155,13 @@ measured speed advantage. See the [roadmap](docs/ROADMAP.md),
 
 ## Next on the roadmap
 
+The next architectural direction is a **Rust application and native Rust UI**.
+The released beta still uses Tauri/React/TypeScript. The proposal evaluates egui
+first, preserves the existing Rust Git core and proves merge-editor parity before
+replacing the current UI. Installed Git initially remains a dependency; a Rust Git
+engine is a separate capability track. See the [migration plan](docs/RUST-NATIVE-PLAN.md)
+and [six-screen design concept](docs/design/rust-native/README.md).
+
 | Next step | Planned work |
 | --- | --- |
 | **Finish the daily essentials** | Individual-line staging, reviewed discard with a recoverable backup, file history and blame. |

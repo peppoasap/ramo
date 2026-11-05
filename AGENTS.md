@@ -9,6 +9,9 @@ Read WORKSPACE_GUIDELINES.md, README.md, STATUS.md and the relevant spec before 
 - Apache-2.0 is the explicit user-selected license.
 - AI assistance is included in the standard product. Provider connection and actual inference are separate from core Git availability.
 - No general chat screen or autonomous Git actions in the initial scope.
+- On 2026-11-05 the owner requested a pure-Rust application direction. Current
+  release remains Tauri/React; read docs/RUST-NATIVE-PLAN.md and ADR0025 before
+  migration work. egui is proposed, not a completed toolkit/engine replacement.
 
 ## Implementation
 

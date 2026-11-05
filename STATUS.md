@@ -433,16 +433,45 @@ Mac's downloaded first launch remain unverified. Beta.3 release notes now flag i
 Mac installer as superseded; frozen assets are unchanged. README includes direct
 public downloads and a brief planned-feature roadmap. No live AI inference used.
 
+## Rust-native direction and UI concept — 2026-11-05
+
+The owner requests a Rust application/native UI inspired by the Crafting Apps,
+plus deeper daily Git features and a single multi-board restyling image. Read the
+new docs/RUST-NATIVE-PLAN.md and ADR0025. egui/eframe is the proposed first spike,
+with Iced as an evaluated alternative if editor/accessibility gates fail. Keeping
+installed Git initially is explicit; replacing the Git engine is a separate track.
+No new framework dependency, application code, storage migration or native build
+is implemented in this design/research task. The released beta.4 remains unchanged.
+
+Research inspected official PhotoCraft, egui, Iced, gix, GitUI, Lazygit, Gittyup and
+GitButler sources. These are documented references, not hands-on competitor tests.
+GitButler's current README describes Fair Source restrictions; no code/assets are
+reused. The generated six-workflow board uses the actual synthetic Ramo screenshot
+and previously selected mock as references. Original selected mocks are preserved.
+The output is1536x1024, not the requested4096x2816. Prompt, provenance, concept vs
+implemented workflow mapping and visual inaccuracies are documented under
+`docs/design/rust-native/`. Generated code/topology is not a correctness fixture.
+
+README/roadmap link the proposed direction; the feature table now accurately
+includes delivered amend and remote URL add/edit. Only documentation and a visual
+asset changed. Relative documentation links, release metadata and whitespace are
+checked; no functional suite is rerun or claimed for this documentation-only task.
+No Codex/Claude/Ollama application inference, installer or release is produced by
+this task. The requested visual uses the built-in image-generation tool.
+
 ## Exact next task
 
-Run downloaded install/open/stage/commit/conflict/restart acceptance with synthetic
-repositories on a second Mac and Windows/Linux machines. Verify a private security
-reporting channel; decide Developer ID/notarization and Windows signing before
-normal stable distribution. Hosted CI runners are available and their builds pass.
-For hosting, verify the explicit GitHub catalog and a hosted synthetic clone/fetch/
-push with an authorized account, then scope further provider catalogs.
-For the daily-client base, implement individual-line staging with native-generated
-patch identity, index-only application, CRLF/EOF and staged+unstaged preservation
-fixtures. Keep whole-hunk/file fallbacks. Next add reviewed discard with recoverable
-backup and file context menus/history; then reflog/reset recovery and guided rebase.
-Preserve the full daily-client gap inventory; beta is not GitKraken parity.
+Review the six-screen visual direction; then deliver R0: a Rust read-only shell
+using the existing no-default-features core to open a synthetic repository and
+show actual refs/history/diff with bounded rows, worker dispatch and stale-request
+guards. Pair it with R1's native editor feasibility spike: source-line selection,
+normal selection/IME/Unicode, CRLF/EOF, undo/search/navigation and draft recovery.
+Do not replace CodeMirror or remove the old app until that proof passes. Preserve
+existing backend tests and released installers throughout. Then reach current
+workflow parity and add line staging, recoverable discard and file history/blame,
+followed by reflog/reset/rebase and deeper remote handling.
+
+Release acceptance still needs downloaded workflows on a second Mac and actual
+Windows/Linux GUI machines, a verified private security channel and a signing
+strategy. Hosted builds pass but do not close these runtime gates. Preserve the
+full gap inventory; neither this concept nor Rust adoption implies GitKraken parity.
