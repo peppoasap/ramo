@@ -13,3 +13,7 @@ __pycache__/
 *.pyc
 .codex/
 .claude/
+
+# Local historical QA/distribution evidence is not the public source tree.
+/docs/verification/
+/docs/distribution/

@@ -18,7 +18,7 @@ def main():
              'SECURITY.md','CONTRIBUTING.md','CHANGELOG.md','src-tauri/Cargo.toml',
              'src-tauri/Cargo.lock','src-tauri/build.rs','src-tauri/tauri.conf.json']
     files += [p.relative_to(ROOT).as_posix() for p in (ROOT/'docs').glob('*.md')]
-    allowed = {'.ts','.tsx','.css','.json','.rs','.py','.mjs','.sh','.md','.png','.icns','.ico','.svg','.yml','.yaml','.txt','.ps1','.html'}
+    allowed = {'.ts','.tsx','.css','.json','.rs','.py','.mjs','.sh','.md','.png','.jpg','.icns','.ico','.svg','.yml','.yaml','.txt','.ps1','.html'}
     for directory in dirs:
         files += [p.relative_to(ROOT).as_posix() for p in (ROOT/directory).rglob('*')
                   if p.is_file() and p.suffix in allowed and not any(x in {'node_modules','target','__pycache__','.git'} for x in p.parts)]
@@ -28,7 +28,7 @@ def main():
             p = ROOT/name
             if p.is_symlink(): raise RuntimeError(f'Symlink refused: {name}')
             data = p.read_bytes()
-            if p.suffix not in {'.png','.ico','.icns'}:
+            if p.suffix not in {'.png','.jpg','.ico','.icns'}:
                 if re.search(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|AKIA[A-Z0-9]{16}', data):
                     raise RuntimeError(f'Credential-like content: {name}')
                 if str(Path.home()).encode()+b'/' in data:
