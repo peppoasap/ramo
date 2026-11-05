@@ -3,9 +3,8 @@
 Updated: 2026-11-05 (Europe/Madrid). Source candidate:0.2.0-beta.2.
 The owner authorized publication to https://github.com/peppoasap/ramo and public
 beta build downloads. Initial192-file import published as b4f30fb; a follow-up includes supplemental
-upstream license texts and standalone-export completeness. The explicit source
-allowlist excludes local state; local caches/settings, real repositories and private reference screenshots
-are excluded. CI will build/test macOS, Windows and Linux; version-matching beta
+upstream license texts and standalone-export completeness. Local caches/settings, real repositories and private reference screenshots
+are excluded by the explicit source allowlist. Hosted CI is running macOS, Windows and Linux builds/tests; version-matching beta
 tags may publish installers only after all jobs pass. No stable-release claim.
 Historical entries below describe the evidence at the time they were recorded.
 

@@ -73,7 +73,7 @@ const dirs = readdirSync("node_modules")
       : [join("node_modules", n)],
   );
 for (const dir of dirs.sort()) {
-  if (lock.packages[dir]?.dev) continue;
+  if (lock.packages[dir.replaceAll("\\", "/")]?.dev) continue;
   if (!existsSync(join(dir, "package.json"))) continue;
   const p = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
   const texts = licenseTexts(dir);
