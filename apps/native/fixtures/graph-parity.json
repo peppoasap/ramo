@@ -1,0 +1,513 @@
+[
+  {
+    "commits": [
+      {
+        "oid": "a",
+        "parents": [
+          "b"
+        ],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      },
+      {
+        "oid": "b",
+        "parents": [
+          "c"
+        ],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      },
+      {
+        "oid": "c",
+        "parents": [],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      }
+    ],
+    "rows": [
+      {
+        "incoming": false,
+        "lane": 0,
+        "lanes": 1,
+        "color": 0,
+        "edges": [
+          {
+            "from": 0,
+            "to": 0,
+            "color": 0,
+            "fromNode": true
+          }
+        ]
+      },
+      {
+        "incoming": true,
+        "lane": 0,
+        "lanes": 1,
+        "color": 0,
+        "edges": [
+          {
+            "from": 0,
+            "to": 0,
+            "color": 0,
+            "fromNode": true
+          }
+        ]
+      },
+      {
+        "incoming": true,
+        "lane": 0,
+        "lanes": 1,
+        "color": 0,
+        "edges": []
+      }
+    ]
+  },
+  {
+    "commits": [
+      {
+        "oid": "merge",
+        "parents": [
+          "left",
+          "right"
+        ],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      },
+      {
+        "oid": "left",
+        "parents": [
+          "base"
+        ],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      },
+      {
+        "oid": "right",
+        "parents": [
+          "base"
+        ],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      },
+      {
+        "oid": "base",
+        "parents": [],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      }
+    ],
+    "rows": [
+      {
+        "incoming": false,
+        "lane": 0,
+        "lanes": 2,
+        "color": 0,
+        "edges": [
+          {
+            "from": 0,
+            "to": 0,
+            "color": 0,
+            "fromNode": true
+          },
+          {
+            "from": 0,
+            "to": 1,
+            "color": 1,
+            "fromNode": true
+          }
+        ]
+      },
+      {
+        "incoming": true,
+        "lane": 0,
+        "lanes": 2,
+        "color": 0,
+        "edges": [
+          {
+            "from": 1,
+            "to": 1,
+            "color": 1,
+            "fromNode": false
+          },
+          {
+            "from": 0,
+            "to": 0,
+            "color": 0,
+            "fromNode": true
+          }
+        ]
+      },
+      {
+        "incoming": true,
+        "lane": 1,
+        "lanes": 2,
+        "color": 1,
+        "edges": [
+          {
+            "from": 0,
+            "to": 0,
+            "color": 0,
+            "fromNode": false
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "color": 0,
+            "fromNode": true
+          }
+        ]
+      },
+      {
+        "incoming": true,
+        "lane": 0,
+        "lanes": 1,
+        "color": 0,
+        "edges": []
+      }
+    ]
+  },
+  {
+    "commits": [
+      {
+        "oid": "a",
+        "parents": [
+          "b",
+          "c",
+          "d"
+        ],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      },
+      {
+        "oid": "b",
+        "parents": [],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      },
+      {
+        "oid": "c",
+        "parents": [],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      },
+      {
+        "oid": "d",
+        "parents": [],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      },
+      {
+        "oid": "other",
+        "parents": [],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      }
+    ],
+    "rows": [
+      {
+        "incoming": false,
+        "lane": 0,
+        "lanes": 3,
+        "color": 0,
+        "edges": [
+          {
+            "from": 0,
+            "to": 0,
+            "color": 0,
+            "fromNode": true
+          },
+          {
+            "from": 0,
+            "to": 1,
+            "color": 1,
+            "fromNode": true
+          },
+          {
+            "from": 0,
+            "to": 2,
+            "color": 2,
+            "fromNode": true
+          }
+        ]
+      },
+      {
+        "incoming": true,
+        "lane": 0,
+        "lanes": 3,
+        "color": 0,
+        "edges": [
+          {
+            "from": 1,
+            "to": 1,
+            "color": 1,
+            "fromNode": false
+          },
+          {
+            "from": 2,
+            "to": 2,
+            "color": 2,
+            "fromNode": false
+          }
+        ]
+      },
+      {
+        "incoming": true,
+        "lane": 1,
+        "lanes": 3,
+        "color": 1,
+        "edges": [
+          {
+            "from": 2,
+            "to": 2,
+            "color": 2,
+            "fromNode": false
+          }
+        ]
+      },
+      {
+        "incoming": true,
+        "lane": 2,
+        "lanes": 3,
+        "color": 2,
+        "edges": []
+      },
+      {
+        "incoming": false,
+        "lane": 0,
+        "lanes": 1,
+        "color": 0,
+        "edges": []
+      }
+    ]
+  },
+  {
+    "commits": [
+      {
+        "oid": "a",
+        "parents": [
+          "old"
+        ],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      },
+      {
+        "oid": "other",
+        "parents": [
+          "base"
+        ],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      },
+      {
+        "oid": "old",
+        "parents": [
+          "base"
+        ],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      },
+      {
+        "oid": "base",
+        "parents": [],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      }
+    ],
+    "rows": [
+      {
+        "incoming": false,
+        "lane": 0,
+        "lanes": 1,
+        "color": 0,
+        "edges": [
+          {
+            "from": 0,
+            "to": 0,
+            "color": 0,
+            "fromNode": true
+          }
+        ]
+      },
+      {
+        "incoming": false,
+        "lane": 1,
+        "lanes": 2,
+        "color": 1,
+        "edges": [
+          {
+            "from": 0,
+            "to": 0,
+            "color": 0,
+            "fromNode": false
+          },
+          {
+            "from": 1,
+            "to": 1,
+            "color": 1,
+            "fromNode": true
+          }
+        ]
+      },
+      {
+        "incoming": true,
+        "lane": 0,
+        "lanes": 2,
+        "color": 0,
+        "edges": [
+          {
+            "from": 1,
+            "to": 1,
+            "color": 1,
+            "fromNode": false
+          },
+          {
+            "from": 0,
+            "to": 1,
+            "color": 1,
+            "fromNode": true
+          }
+        ]
+      },
+      {
+        "incoming": true,
+        "lane": 1,
+        "lanes": 2,
+        "color": 1,
+        "edges": []
+      }
+    ]
+  },
+  {
+    "commits": [
+      {
+        "oid": "merge",
+        "parents": [
+          "a",
+          "b"
+        ],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      },
+      {
+        "oid": "a",
+        "parents": [
+          "unloaded"
+        ],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      },
+      {
+        "oid": "b",
+        "parents": [
+          "unloaded"
+        ],
+        "subject": "Synthetic topology",
+        "author": "Demo Contributor",
+        "date": "2026-11-05T12:00:00Z",
+        "refs": ""
+      }
+    ],
+    "rows": [
+      {
+        "incoming": false,
+        "lane": 0,
+        "lanes": 2,
+        "color": 0,
+        "edges": [
+          {
+            "from": 0,
+            "to": 0,
+            "color": 0,
+            "fromNode": true
+          },
+          {
+            "from": 0,
+            "to": 1,
+            "color": 1,
+            "fromNode": true
+          }
+        ]
+      },
+      {
+        "incoming": true,
+        "lane": 0,
+        "lanes": 2,
+        "color": 0,
+        "edges": [
+          {
+            "from": 1,
+            "to": 1,
+            "color": 1,
+            "fromNode": false
+          },
+          {
+            "from": 0,
+            "to": 0,
+            "color": 0,
+            "fromNode": true
+          }
+        ]
+      },
+      {
+        "incoming": true,
+        "lane": 1,
+        "lanes": 2,
+        "color": 1,
+        "edges": [
+          {
+            "from": 0,
+            "to": 0,
+            "color": 0,
+            "fromNode": false
+          },
+          {
+            "from": 1,
+            "to": 0,
+            "color": 0,
+            "fromNode": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "commits": [],
+    "rows": []
+  }
+]

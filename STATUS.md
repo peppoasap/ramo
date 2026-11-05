@@ -459,19 +459,38 @@ checked; no functional suite is rerun or claimed for this documentation-only tas
 No Codex/Claude/Ollama application inference, installer or release is produced by
 this task. The requested visual uses the built-in image-generation tool.
 
+## Native implementation — 2026-11-05
+
+Implemented `apps/native` version0.3.0-dev.1: real egui/wgpu application consuming
+our existing Rust core without Tauri. Actual refs/history/diffs, worker dispatch,
+stale-response guards, virtual22px/30px history and a two-source/result editor
+with single-line picks and explicit, separate local drafts. This is R0 plus an
+R1 feasibility slice; released beta.4 and its installers remain unchanged.
+
+Local macOS arm64 evidence:14 native tests,127 core tests, native clippy/fmt and
+notice collection passed. Actual native GUI loaded5011 synthetic commits with32
+visible compact rows; keyboard navigation, search, source line selection,
+undo/redo, Unicode paste and draft save/restart/restore were exercised.
+See [native verification](docs/NATIVE-VERIFICATION.md) and [design QA](design-qa.md).
+Git entries, HEAD, status and working bytes were preserved. The history fixture's
+binary index hash changed (stat/cache metadata); the conflicted fixture index
+remained byte-identical. Do not describe both binary indexes as unchanged.
+
+A separate ad-hoc-signed local development bundle is available through
+`scripts/run-native-macos.sh`. Native CI is configured for macOS/Windows/Linux;
+its hosted results are separate from local GUI evidence. No native installer,
+release tag, live provider inference or GitKraken speed comparison is produced.
+
 ## Exact next task
 
-Review the six-screen visual direction; then deliver R0: a Rust read-only shell
-using the existing no-default-features core to open a synthetic repository and
-show actual refs/history/diff with bounded rows, worker dispatch and stale-request
-guards. Pair it with R1's native editor feasibility spike: source-line selection,
-normal selection/IME/Unicode, CRLF/EOF, undo/search/navigation and draft recovery.
-Do not replace CodeMirror or remove the old app until that proof passes. Preserve
-existing backend tests and released installers throughout. Then reach current
-workflow parity and add line staging, recoverable discard and file history/blame,
-followed by reflog/reset/rebase and deeper remote handling.
+Complete R1 acceptance: IME, accessibility, typed CRLF, large files and linked
+scrolling, then guarded save/stage/complete merge through the existing core.
+Port Git writes incrementally to the native shell (trust, double-click checkout,
+stage/commit, network, stash/worktrees) while preserving backend safeguards.
+Keep the existing beta until native workflow parity and platform GUI acceptance.
+Then deliver line staging, recoverable discard and file history/blame, followed
+by reflog/reset/rebase and deeper remote handling. Native egui adoption does not
+mean the installed Git engine has been replaced with gix.
 
-Release acceptance still needs downloaded workflows on a second Mac and actual
-Windows/Linux GUI machines, a verified private security channel and a signing
-strategy. Hosted builds pass but do not close these runtime gates. Preserve the
-full gap inventory; neither this concept nor Rust adoption implies GitKraken parity.
+Release acceptance still requires a second Mac, actual Windows/Linux GUI testing,
+a private security channel and a signing strategy. Preserve the gap inventory.

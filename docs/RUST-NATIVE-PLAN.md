@@ -4,6 +4,11 @@ Proposed 2026-11-05. The owner requested the Rust direction; this document speci
 the next work, not a delivered rewrite. Current release: **0.2.0-beta.4**,
 Tauri/React/TypeScript/CodeMirror plus Rust and installed Git. Apache-2.0 remains.
 
+Progress: [apps/native](../apps/native/README.md) implements the first read-only
+egui workbench and native editor evaluation. It is0.3.0-dev.1, not a replacement
+release. The owner selected the concept with wider layout and high history density;
+the development app uses22px compact rows. R0/R1 acceptance gaps remain explicit.
+
 ## What to take from the Crafting Apps
 
 [PhotoCraft](https://github.com/storytold/photocraft#the-crafting-apps) describes
@@ -39,11 +44,11 @@ oracle comparisons to Git. No silent engine switching after a mutation fails.
 | [egui + eframe](https://github.com/emilk/egui) | Rust UI, custom drawing for graph/diff gutters, portable shell; close to the architectural reference | Editor fidelity, accessible focus/semantics, IME, menus, clipboard, DPI, bounded row layout and idle resource use |
 | [Iced](https://github.com/iced-rs/iced) | Rust reactive model with explicit state/messages and asynchronous actions | Same editor/graph/desktop gates; compare actual implementation effort |
 
-Recommendation: **try egui first**, with a styled workbench rather than default
+Recommendation adopted for the first trial: **egui0.33.3**, with a styled workbench rather than default
 demo widgets. Iced is an alternative if the spike reveals an unacceptable editor
 or accessibility cost. Neither toolkit automatically supplies a GitKraken-class
 editor or native platform widgets. Pin versions and audit licenses when the spike
-actually introduces dependencies; none are added by this design document.
+actually introduces dependencies; the development consumer now pins its own versions/lock.
 
 ## Reuse versus replacement
 
@@ -138,7 +143,8 @@ requires the same workflows, fixture, machine and measurement method.
 
 ## Next task
 
-Review the [six-screen design board](design/rust-native/README.md), then implement
-R0 and the critical R1 editor spike on an isolated development path. Keep existing
-beta.4 builds, storage and released source intact. This turn adds research,
-specification and a generated visual concept only; it does not migrate code.
+Continue from the selected [wide history target](design/rust-native/wide-history.png)
+and the implemented development consumer. Close R0/R1 platform/editor acceptance,
+then port current guarded Git write workflows before adding the daily-base gaps.
+Keep beta.4 builds/storage intact. Native code exists now; complete migration and
+release cutover do not. See STATUS.md for dated evidence and the exact next slice.

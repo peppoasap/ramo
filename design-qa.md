@@ -1,0 +1,49 @@
+# Native workbench design QA — 5 November 2026
+
+Source: [accepted wide concept](docs/design/rust-native/wide-history.png),1717×916.
+Implementation: [history](docs/images/native-history.png), actual native macOS
+capture3024×1900 before62px top chrome crop. Native window1512×950 logical at2x,
+constrained by this display; default request1680×960. No CSS/browser runtime.
+[Combined comparison](docs/design/rust-native/native-comparison.jpg) preserves
+aspect ratio and fits both into equal880px-wide comparison regions. Different
+synthetic commits and viewport proportions are deliberate; no pixel-parity claim.
+State: dark, top merge selected,5011 loaded commits,32 visible compact rows.
+
+## Findings and comparison history
+
+- Fixed P1: source line controls previously exceeded their20px text row height.
+  Gutter controls now use exact heights and visible-row virtualization. The
+  [revised merge capture](docs/images/native-merge.png) shows aligned source rows;
+  selecting current line7 changes only the active conflict.
+- Fixed P2: branch buttons aligned centrally and current branch lacked clear
+  emphasis. Revised history uses left alignment and mint selection.
+- Fixed P2: saved-draft action had insufficient foreground contrast. Revised
+  merge action uses dark text on mint.
+- P3: egui default fonts differ from the concept. Font-family/weight refinement
+  remains; current hierarchy and monospace code remain readable.
+
+## Required surface review
+
+Typography: explicit subject/author/hash columns, monospace diffs, default native
+fonts rather than a claimed Inter match. Spacing:22px compact rows preserve density;
+resizable three regions, short toolbar controls, no card grid. Colors: graphite
+surfaces/mint selection, separate colored topology lanes and readable disabled
+network controls. Imagery: no hero/illustration substitution; real Phosphor icons
+with notices. Content: actual synthetic Git records replace generated text;
+read-only limitations visible. Focused toolbar/table/inspector regions reviewed
+from the full-resolution captures, plus source gutter/result editor capture.
+No persistent controls overlap at the observed desktop viewport.
+
+## Interaction evidence and remaining gates
+
+Exercised open picker, refresh, pagination, loaded-history search, keyboard
+navigation, conflict source-line pick, manual result edit, undo/redo, explicit
+draft save/restore and unsaved-close guard. Native accessibility labels were
+inspected; full screen-reader and IME acceptance remain untested. Minimum-width
+and other platform GUI acceptance remain follow-up gates, not implied by builds.
+Git writes and full beta parity are intentionally outside this read-only slice.
+
+final result: passed
+
+This result applies only to the observed R0 desktop layout and evaluated R1
+interactions. It does not approve replacing the released application/editor.

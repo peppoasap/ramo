@@ -1,0 +1,46 @@
+name: Rust native development
+on:
+  push:
+    branches: [main]
+    paths: ['apps/native/**', 'src-tauri/src/**', 'src-tauri/Cargo.*', 'licenses/**', 'scripts/native-notices.py', '.github/workflows/native.yml']
+  pull_request:
+    paths: ['apps/native/**', 'src-tauri/src/**', 'src-tauri/Cargo.*', 'licenses/**', 'scripts/native-notices.py', '.github/workflows/native.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  native:
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.95.0
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/native -> target
+      - name: Linux native prerequisites
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libgtk-3-dev
+      - name: Fetch locked native sources
+        run: cargo fetch --manifest-path apps/native/Cargo.toml --locked
+      - name: Native notices including bundled fonts
+        run: python scripts/native-notices.py
+      - name: Format
+        run: cargo fmt --manifest-path apps/native/Cargo.toml --check
+      - name: Native preservation and topology tests
+        run: cargo test --manifest-path apps/native/Cargo.toml --locked --offline
+      - name: Native lint
+        run: cargo clippy --manifest-path apps/native/Cargo.toml --locked --offline --all-targets --no-deps -- -D warnings
+      - name: Build native binary
+        run: cargo build --manifest-path apps/native/Cargo.toml --locked --offline
+      # Deliberately no installer/release upload: this slice has read-only Git
+      # and editor evaluation, not parity with the released desktop application.

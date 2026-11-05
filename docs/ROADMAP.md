@@ -13,6 +13,11 @@ Rust Git engine separately. See [migration and product plan](RUST-NATIVE-PLAN.md
 [six-screen UI concept](design/rust-native/README.md). These are proposals, not
 implemented features or new release evidence.
 
+Progress: [native development workbench](../apps/native/README.md) now implements
+read-only Git browsing and the first native editor/local-draft evaluation. Its
+compact22px history and adjustable panels address the accepted wide-layout brief.
+R0/R1 platform/editor gates and current Git-write parity remain before cutover.
+
 ## Existing product coverage
 
 | Slice | Current state |

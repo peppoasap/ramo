@@ -2,6 +2,13 @@
 
 Date: 2026-11-05. Status: user-requested direction; migration design proposed.
 
+Update: the owner accepted the visual direction and requested wider layout with
+more visible commits. A separate egui0.33.3/wgpu development consumer now reuses
+the core without its desktop feature. It exposes read-only Git and an editor
+evaluation with explicit local drafts. Compact22px rows, resizable panels and
+generation-scoped workers implement the initial density/architecture proof.
+This establishes a first trial, not complete editor/platform parity or cutover.
+
 The owner requests a pure-Rust direction inspired by the Crafting Apps, plus a
 more complete, understandable Git client. The released beta.4 remains Tauri,
 React/TypeScript, CodeMirror and a Rust backend invoking installed Git.

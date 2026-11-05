@@ -12,11 +12,12 @@ def main():
         raise RuntimeError('Candidate already exists. Preserve it or explicitly move it aside for a new check.')
     dirs = ['src','assets','licenses','scripts','.github','src-tauri/src','src-tauri/tests',
             'src-tauri/examples','src-tauri/icons','src-tauri/capabilities','docs/decisions',
-            'docs/design','docs/images']
+            'docs/design','docs/images','apps/native/src','apps/native/fixtures']
     files = ['README.md','WORKSPACE_GUIDELINES.md','.nvmrc','.gitattributes','package.json','package-lock.json','.npmrc','.gitignore','tsconfig.json','vite.config.ts',
              'index.html','LICENSE','NOTICE','THIRD_PARTY_NOTICES.txt','AGENTS.md','STATUS.md',
              'SECURITY.md','CONTRIBUTING.md','CHANGELOG.md','src-tauri/Cargo.toml',
-             'src-tauri/Cargo.lock','src-tauri/build.rs','src-tauri/tauri.conf.json']
+             'src-tauri/Cargo.lock','src-tauri/build.rs','src-tauri/tauri.conf.json',
+             'apps/native/Cargo.toml','apps/native/Cargo.lock','apps/native/README.md']
     files += [p.relative_to(ROOT).as_posix() for p in (ROOT/'docs').glob('*.md')]
     allowed = {'.ts','.tsx','.css','.json','.rs','.py','.mjs','.sh','.md','.png','.jpg','.icns','.ico','.svg','.yml','.yaml','.txt','.ps1','.html'}
     for directory in dirs:

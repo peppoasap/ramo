@@ -11,7 +11,11 @@ Read WORKSPACE_GUIDELINES.md, README.md, STATUS.md and the relevant spec before 
 - No general chat screen or autonomous Git actions in the initial scope.
 - On 2026-11-05 the owner requested a pure-Rust application direction. Current
   release remains Tauri/React; read docs/RUST-NATIVE-PLAN.md and ADR0025 before
-  migration work. egui is proposed, not a completed toolkit/engine replacement.
+  migration work. The owner accepted the six-screen direction with a wider,
+  denser history layout. apps/native is the egui R0/read-only workbench and R1
+  editor evaluation; it does not replace the released app or its Git write UI.
+  Compact history uses22px rows, comfortable30px. Keep real topology, virtual
+  rows, resizable panels and existing Git preservation guards.
 
 ## Implementation
 

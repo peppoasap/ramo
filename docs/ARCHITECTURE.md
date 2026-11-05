@@ -2,6 +2,13 @@
 
 Implemented locally: Tauri 2, React 19/TypeScript, Rust and the installed Git executable. One application package; no application server or account database. See ADR 0002 for the move from design to functional implementation.
 
+Rust-native development is isolated under [apps/native](../apps/native/README.md).
+It consumes this library with `default-features=false`, exposes only typed Git
+read operations through a bounded worker queue, and renders through egui/wgpu.
+It has no Tauri/WebView runtime and does not replace this released app. Editor
+drafts use separate versioned native files and are not Git writes or an automatic
+import of legacy WebView records. See ADR0025 and RUST-NATIVE-PLAN.md.
+
 ## Ownership
 
 | Module | Responsibility |

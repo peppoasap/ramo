@@ -3,6 +3,18 @@
 User-visible changes are recorded here. Versions describe source milestones;
 only a published GitHub Release establishes an external release.
 
+## Unreleased — Rust-native development (0.3.0-dev.1)
+
+- Add a separate egui/wgpu application using the Rust core without Tauri/WebView.
+- Browse actual repository history, branches/tags, commit files and diffs through
+  a worker, with compact22px virtual rows, pagination, search and keyboard navigation.
+- Evaluate a full-space native conflict editor with individual source-line picks,
+  manual result editing, undo/redo, result search and explicit local draft recovery.
+- Keep Git read-only in this development slice; existing beta.4 remains the
+  functional release for Git writes and AI. No new native installer release.
+- Add native preservation tests, scoped draft storage, dependency/font notices and
+  a separate cross-platform CI workflow. Hosted and native GUI evidence are separate.
+
 ## [0.2.0-beta.4] - 2026-11-05
 
 - Explicitly ad-hoc sign the macOS application bundle before creating its DMG.

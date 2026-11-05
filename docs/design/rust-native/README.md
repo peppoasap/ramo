@@ -4,6 +4,13 @@ Created 2026-11-05 with Product Design and the built-in image generator.
 One image, six workflow boards, one visual direction, as requested by the owner.
 **Proposed UI, not an implemented native application.** All data is synthetic.
 
+The owner subsequently accepted this direction with a wider viewport and more
+visible commits. The [wide history revision](wide-history.png) is the R0 target;
+[apps/native](../../../apps/native/README.md) now implements the initial browsing
+slice and editor evaluation. Most of this six-board feature surface remains a
+proposal; consult the native README for actual coverage. The wide revision was
+generated at1717×916, requested1920×1080, and copied unchanged.
+
 ![Six-screen Ramo design concept](workbench-board.png)
 
 ## Brief and visual system
