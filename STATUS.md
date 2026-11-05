@@ -481,16 +481,38 @@ A separate ad-hoc-signed local development bundle is available through
 its hosted results are separate from local GUI evidence. No native installer,
 release tag, live provider inference or GitKraken speed comparison is produced.
 
+## Native daily write workflows — 2026-11-05
+
+Partial R2 now exposes typed existing-core operations: file staging/unstaging,
+index commit, local double-click checkout, create/merge/delete branch, fetch,
+fast-forward pull, push, and reviewed stash save/apply/pop/drop. Branch and stash
+context menus share the same dispatcher as toolbar/Changes. Trust is per opening;
+explicit reopen resets it. No credentials are imported and no live AI is run.
+
+Native merge editor now offers reviewed Save and stage using its original
+fingerprint, then Complete merge/Abort in Changes. A real GUI test found and fixed
+unchanged-tree merge completion: accepting current content can produce no staged
+diff but must still create a two-parent merge commit. Native GUI verified that
+exact case, a double-click checkout without another trust request, and file
+stage/unstage.16 native tests and clippy passed locally. Original14-test native
+CI passed on macOS/Windows/Linux; these new changes need their own hosted run.
+
+No loss of unstaged bytes in the new commit preservation fixture; failed merge
+returns current conflicts, and resolve/commit completes with untracked data
+preserved. UI blocks mutation-time editor/composer input and concurrent actions.
+Network adapters are wired through the existing core but live hosted credentials
+and native progress/cancellation remain unverified. No replacement installer.
+
 ## Exact next task
 
-Complete R1 acceptance: IME, accessibility, typed CRLF, large files and linked
-scrolling, then guarded save/stage/complete merge through the existing core.
-Port Git writes incrementally to the native shell (trust, double-click checkout,
-stage/commit, network, stash/worktrees) while preserving backend safeguards.
-Keep the existing beta until native workflow parity and platform GUI acceptance.
-Then deliver line staging, recoverable discard and file history/blame, followed
-by reflog/reset/rebase and deeper remote handling. Native egui adoption does not
-mean the installed Git engine has been replaced with gix.
+Use [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full objective ledger.
+Next: durable repository-scoped commit-message drafts, hunk/line staging and
+commit object menus/sequence continuation; then native comparison/drag-drop,
+clone/remotes, worktrees and contextual AI. Preserve the selected compact visual
+direction and evaluate each state against the mock. Close editor IME/accessibility,
+typed CRLF, linked scrolling and large-file gates, followed by remaining R3/R4
+features and R5 native packaging/cutover. Do not call partial R2 a full migration.
+Keep beta.4 downloads and existing storage intact during this work.
 
 Release acceptance still requires a second Mac, actual Windows/Linux GUI testing,
-a private security channel and a signing strategy. Preserve the gap inventory.
+a private security channel and a signing strategy. Goal remains active.

@@ -7,7 +7,8 @@ Tauri/React/TypeScript/CodeMirror plus Rust and installed Git. Apache-2.0 remain
 Progress: [apps/native](../apps/native/README.md) implements the first read-only
 egui workbench and native editor evaluation. It is0.3.0-dev.1, not a replacement
 release. The owner selected the concept with wider layout and high history density;
-the development app uses22px compact rows. R0/R1 acceptance gaps remain explicit.
+the development app uses22px compact rows. R0/R1 acceptance gaps remain explicit. Partial R2 now includes guarded daily Git
+writes and save/stage/complete merge. See [native completion ledger](NATIVE-COMPLETION.md).
 
 ## What to take from the Crafting Apps
 

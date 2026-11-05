@@ -5,13 +5,21 @@ only a published GitHub Release establishes an external release.
 
 ## Unreleased — Rust-native development (0.3.0-dev.1)
 
+- Native daily Git actions now reuse existing trust and freshness guards: file
+  staging/unstaging, index commits, branch checkout/create/merge/delete,
+  fetch/pull/push and reviewed stash operations.
+- Native merge results can be reviewed, saved and staged, then completed from
+  Changes; unchanged-tree merge results can also be committed.
+- Double-click local checkout, branch/stash contextual actions and separated
+  working/index file lists. Mutation failures refresh state without retrying.
+
 - Add a separate egui/wgpu application using the Rust core without Tauri/WebView.
 - Browse actual repository history, branches/tags, commit files and diffs through
   a worker, with compact22px virtual rows, pagination, search and keyboard navigation.
 - Evaluate a full-space native conflict editor with individual source-line picks,
   manual result editing, undo/redo, result search and explicit local draft recovery.
-- Keep Git read-only in this development slice; existing beta.4 remains the
-  functional release for Git writes and AI. No new native installer release.
+- Keep beta.4 as the released application during native workflow migration.
+  No new native installer release; contextual AI still uses the beta UI.
 - Add native preservation tests, scoped draft storage, dependency/font notices and
   a separate cross-platform CI workflow. Hosted and native GUI evidence are separate.
 

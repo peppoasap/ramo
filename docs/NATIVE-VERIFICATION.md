@@ -45,3 +45,21 @@ and [existing desktop CI](https://github.com/peppoasap/ramo/actions/runs/4210159
 at this handoff they remain in progress, not counted as passed. A fresh temporary
 `git archive` source export included the native manifest, lockfile and editor and
 excluded target/state directories. Existing frozen release assets were untouched.
+
+## Daily writes and merge completion — subsequent implementation
+
+The initial native CI run42101596287 completed successfully on all three OS.
+The next source slice adds writes; its local suite has16 passing tests and clean
+clippy. Native GUI on macOS completed the real two-conflict synthetic merge through
+editor Save and stage and Changes Complete merge, including a result identical
+to current HEAD. Git independently confirmed a new two-parent commit and a clean
+working tree. The same opening then checked out `side` by double-click and
+staged/unstaged a synthetic file with no additional trust confirmation. Trust
+was requested again after a deliberate app restart, as designed.
+
+![Native staged change](images/native-staging.png)
+
+New worker tests prove trust/freshness rejection, index-only commits preserving
+unstaged bytes, merge-error conflict refresh and reviewed resolution/commit while
+preserving untracked bytes. Network/stash UI is wired but has not had an end-to-end
+native hosted-authentication check. No platform GUI or performance parity is claimed.

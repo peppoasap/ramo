@@ -42,9 +42,21 @@ impl App {
                 }
                 if theme::button(ui,icon::ARROWS_CLOCKWISE,"Refresh").clicked(){self.refresh();}
                 ui.separator();
-                for (glyph,label) in [(icon::ARROW_DOWN,"Fetch"),(icon::ARROW_DOWN,"Pull"),(icon::ARROW_UP,"Push")] {
-                    ui.add_enabled(false,egui::Button::new(format!("{glyph} {label}")).frame(false))
-                        .on_disabled_hover_text("Available in the released Ramo beta. Native write workflows are a later migration slice.");
+                let ready=self.snapshot.is_some()&&self.action_request.is_none()&&self.action.is_none()&&self.editor.is_none();
+                for (glyph,label,action,detail) in [
+                    (icon::ARROW_DOWN,"Fetch",Action::Fetch,"Fetch updates from configured remotes."),
+                    (icon::ARROW_DOWN,"Pull",Action::Pull,"Fast-forward the current branch from its upstream. Divergence is refused."),
+                    (icon::ARROW_UP,"Push",Action::Push,"Push the current branch to its configured upstream. No force push.")
+                ] {
+                    if ui.add_enabled(ready,egui::Button::new(format!("{glyph} {label}")).frame(false)).clicked() {
+                        self.request_action(action,label,detail,label!="Fetch");
+                    }
+                }
+                ui.separator();
+                for (glyph,label) in [(icon::GIT_BRANCH,"Branch"),(icon::ARCHIVE,"Stash")] {
+                    if ui.add_enabled(ready,egui::Button::new(format!("{glyph} {label}")).frame(false)).clicked(){
+                        self.form=Some(actions::Form{kind:if label=="Branch"{actions::FormKind::Branch}else{actions::FormKind::Stash},text:String::new()});
+                    }
                 }
                 ui.with_layout(Layout::right_to_left(Align::Center),|ui|{
                     ui.menu_button(format!("{}  View",icon::SLIDERS_HORIZONTAL),|ui|{
@@ -65,7 +77,7 @@ impl App {
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.label(theme::caption(format!(
-                        "{} commits loaded · {} rows drawn · Read-only Git",
+                        "{} commits loaded · {} rows drawn",
                         self.commits.len(),
                         self.rendered_rows
                     )));
@@ -108,7 +120,18 @@ impl App {
                                 self.scroll_target=self.commits.iter().position(|c|c.oid==branch.oid);
                                 self.select(branch.oid.clone());
                             }
-                            response.on_hover_text("Inspect this branch tip. Checkout is not enabled in this native slice.");
+                            if response.double_clicked() && !remote && !selected {
+                                self.request_action(Action::Switch{name:branch.name.clone()},"Checkout branch",format!("Switch to {}",branch.name),false);
+                            }
+                            response.context_menu(|ui|{
+                                if !remote {
+                                    if ui.button("Checkout").clicked(){self.request_action(Action::Switch{name:branch.name.clone()},"Checkout branch",format!("Switch to {}",branch.name),false);ui.close();}
+                                    if ui.button("Merge into current branch…").clicked(){self.request_action(Action::Merge{name:branch.name.clone()},"Merge branch",format!("Merge {} into {}. Conflicts open in Changes.",branch.name,snapshot.branch),true);ui.close();}
+                                    if ui.button("Delete merged branch…").clicked(){self.request_action(Action::DeleteBranch{name:branch.name.clone()},"Delete branch",format!("Delete {} only if safely merged. Worktree branches are protected.",branch.name),true);ui.close();}
+                                }
+                                if ui.button("Copy branch name").clicked(){ui.ctx().copy_text(branch.name.clone());ui.close();}
+                            });
+                            response.on_hover_text(if remote {"Inspect remote branch"}else{"Click to inspect · double-click to checkout · right-click for actions"});
                         }
                     });ui.add_space(9.);ui.separator();
                 }
@@ -120,7 +143,13 @@ impl App {
                     }
                 });ui.separator();
                 egui::CollapsingHeader::new(format!("Stashes   {}",snapshot.stashes.len())).show(ui,|ui|{
-                    ui.label(theme::caption("Use the released beta to inspect or apply stashes."));
+                    for stash in &snapshot.stashes {
+                        ui.label(&stash.message).context_menu(|ui|{
+                            for (label,action) in [("Apply…",Action::ApplyStash{index:stash.index,oid:stash.oid.clone()}),("Pop…",Action::PopStash{index:stash.index,oid:stash.oid.clone()}),("Drop…",Action::DropStash{index:stash.index,oid:stash.oid.clone()})] {
+                                if ui.button(label).clicked(){self.request_action(action,label,format!("{} {} ({})",label,stash.reference,stash.message),true);ui.close();}
+                            }
+                        });
+                    }
                 });
             });
         });

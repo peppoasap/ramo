@@ -159,8 +159,9 @@ The next architectural direction is a **Rust application and native Rust UI**.
 The released beta still uses Tauri/React/TypeScript. A first
 [Rust-native development workbench](apps/native/README.md) now browses real Git
 history with compact22px virtual rows and evaluates a native merge editor with
-local drafts. It reuses the Rust core; Git writes remain in the released beta
-until native workflow parity is verified. Installed Git remains a dependency; a Rust Git
+local drafts. It now also exposes guarded daily Git writes and reviewed merge
+completion through the existing Rust core. Full native workflow parity is still
+in progress; the released beta remains available. Installed Git remains a dependency; a Rust Git
 engine is a separate capability track. See the [migration plan](docs/RUST-NATIVE-PLAN.md)
 and [six-screen design concept](docs/design/rust-native/README.md).
 

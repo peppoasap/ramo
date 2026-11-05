@@ -14,6 +14,7 @@ pub enum Event {
         text: String,
         expected: Option<String>,
     },
+    Resolve,
     Back,
 }
 pub struct Editor {
@@ -161,7 +162,7 @@ impl Editor {
         if let Some(message) = self.notice.as_ref() {
             ui.label(RichText::new(message).size(12.).color(theme::AMBER));
         }
-        ui.label(theme::caption("Pick source line numbers, then use selected lines. The result stays in this editor until you explicitly save a local draft."));
+        ui.label(theme::caption("Pick source line numbers, then use selected lines. Edits stay here until you save a draft or explicitly save and stage the result."));
 
         let source_height = (ui.available_height() * 0.39).clamp(140., 320.);
         ui.columns(2, |columns| {
@@ -247,26 +248,37 @@ impl Editor {
             });
         });
         let editing_find = ctx.memory(|m| m.focused()) == Some(egui::Id::new("native_merge_find"));
-        if !editing_find && ctx.input_mut(|i| i.consume_key(Modifiers::COMMAND, Key::Z)) {
+        if ui.is_enabled()
+            && !editing_find
+            && ctx.input_mut(|i| i.consume_key(Modifiers::COMMAND, Key::Z))
+        {
             self.history.undo(&mut self.result);
             self.dirty = self.result != self.clean_text;
         }
-        if !editing_find
+        if ui.is_enabled()
+            && !editing_find
             && ctx.input_mut(|i| i.consume_key(Modifiers::COMMAND | Modifiers::SHIFT, Key::Z))
         {
             self.history.redo(&mut self.result);
             self.dirty = self.result != self.clean_text;
         }
-        let save_shortcut = ctx.input_mut(|i| i.consume_key(Modifiers::COMMAND, Key::S));
+        let save_shortcut =
+            ui.is_enabled() && ctx.input_mut(|i| i.consume_key(Modifiers::COMMAND, Key::S));
         let can_save = self.draft_ready && !self.draft_busy && drafts::permitted(&self.scope.path);
         let save = egui::TopBottomPanel::bottom("editor_actions")
             .frame(egui::Frame::new().fill(theme::BASE).inner_margin(8.))
             .show_inside(ui, |ui| {
                 ui.horizontal(|ui| {
                     ui.label(theme::caption(
-                        "Native editor evaluation · Save/stage to Git is not enabled yet",
+                        "Review the result, then save and stage this file.",
                     ));
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui
+                            .add_enabled(blocks.is_empty(), egui::Button::new("Save and stage…"))
+                            .clicked()
+                        {
+                            event = Some(Event::Resolve);
+                        }
                         ui.add_enabled(
                             can_save,
                             egui::Button::new(

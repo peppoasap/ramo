@@ -1,4 +1,4 @@
-//! One bounded worker owns the existing backend. No Git mutation endpoint is exposed.
+//! One bounded worker owns the existing backend and typed, fingerprint-guarded operations.
 use crate::drafts::{self, Loaded, Scope};
 use eframe::egui;
 use ramo_core::git::{Backend, Commit, ConflictFile, FileChange, Snapshot};
@@ -10,6 +10,12 @@ use std::{
 pub enum Work {
     Open(Option<PathBuf>),
     Refresh(String),
+    Trust(String),
+    Mutate {
+        repo: String,
+        fingerprint: String,
+        action: ramo_core::git::Action,
+    },
     Page {
         repo: String,
         fingerprint: String,
@@ -47,6 +53,12 @@ pub enum Payload {
         snapshot: Box<Snapshot>,
         commits: Vec<Commit>,
     },
+    Changed {
+        snapshot: Box<Snapshot>,
+        commits: Vec<Commit>,
+        error: Option<String>,
+    },
+    Trusted(Box<Snapshot>),
     Cancelled,
     Page {
         skip: usize,
@@ -81,8 +93,17 @@ impl Worker {
         let (out, answers) = mpsc::channel();
         std::thread::spawn(move || {
             let mut backend = Backend::new(state.join("repositories.json"));
+            let mut active: Option<String> = None;
             while let Ok(request) = rx.recv() {
+                let opening = matches!(&request.work, Work::Open(_));
                 let result = execute(&mut backend, &state, request.work);
+                if opening
+                    && let Ok(Payload::Opened { snapshot, .. }) = &result
+                    && let Some(previous) = active.replace(snapshot.repo.id.clone())
+                    && previous != snapshot.repo.id
+                {
+                    backend.close_repository(&previous);
+                }
                 if out
                     .send(Reply {
                         sequence: request.sequence,
@@ -113,11 +134,45 @@ fn execute(backend: &mut Backend, state: &std::path::Path, work: Work) -> Result
             }) else {
                 return Ok(Payload::Cancelled);
             };
-            let snapshot = backend.register(&path)?;
+            let mut snapshot = backend.register(&path)?;
+            // Opening is a fresh trust boundary, unlike a refresh. No trust is persisted.
+            if snapshot.repo.trusted {
+                backend.close_repository(&snapshot.repo.id);
+                snapshot = backend.register(&path)?;
+            }
             let commits = backend.history(&snapshot.repo.id, 0)?;
             Payload::Opened {
                 snapshot: Box::new(snapshot),
                 commits,
+            }
+        }
+        Work::Trust(repo) => Payload::Trusted(Box::new(backend.trust(&repo)?)),
+        Work::Mutate {
+            repo,
+            fingerprint,
+            action,
+        } => {
+            // A failed merge/network command may have changed Git state. Always
+            // return the authoritative snapshot, never leave the old UI active.
+            let result = backend.mutate(&repo, &fingerprint, action);
+            let (snapshot, error) = match result {
+                Ok(snapshot) => (snapshot, None),
+                Err(error) => (backend.snapshot(&repo)?, Some(error)),
+            };
+            let (commits, error) = match backend.history(&repo, 0) {
+                Ok(commits) => (commits, error),
+                Err(history_error) => (
+                    Vec::new(),
+                    Some(format!(
+                        "{} History refresh failed: {history_error}. Refresh before another operation.",
+                        error.unwrap_or_else(|| "Git operation completed.".into())
+                    )),
+                ),
+            };
+            Payload::Changed {
+                snapshot: Box::new(snapshot),
+                commits,
+                error,
             }
         }
         Work::Refresh(repo) => {
@@ -342,5 +397,162 @@ mod tests {
         assert_eq!(loaded.record.text, "local resolution 日本語\r\n");
         assert_eq!(proof(&root), before);
         assert!(!git(&root, &["ls-files", "-u"]).is_empty());
+    }
+    fn changed(payload: Payload) -> (Box<Snapshot>, Option<String>) {
+        match payload {
+            Payload::Changed {
+                snapshot, error, ..
+            } => (snapshot, error),
+            _ => panic!("expected mutation result"),
+        }
+    }
+    fn mutate(
+        backend: &mut Backend,
+        state: &Path,
+        snapshot: &Snapshot,
+        action: ramo_core::git::Action,
+    ) -> (Box<Snapshot>, Option<String>) {
+        changed(
+            execute(
+                backend,
+                state,
+                Work::Mutate {
+                    repo: snapshot.repo.id.clone(),
+                    fingerprint: snapshot.fingerprint.clone(),
+                    action,
+                },
+            )
+            .unwrap(),
+        )
+    }
+    #[test]
+    fn native_write_dispatch_requires_trust_and_fresh_state_and_preserves_unstaged_bytes() {
+        use ramo_core::git::Action;
+        let (temp, root, mut backend) = fixture();
+        let initial = backend.register(&root).unwrap();
+        fs::write(root.join("search.txt"), b"staged change\n").unwrap();
+        let current = backend.snapshot(&initial.repo.id).unwrap();
+        let (_, error) = mutate(
+            &mut backend,
+            temp.path(),
+            &current,
+            Action::Stage {
+                paths: vec!["search.txt".into()],
+            },
+        );
+        assert!(error.unwrap().contains("Trust"));
+        let trusted = backend.trust(&current.repo.id).unwrap();
+        let (_, error) = mutate(
+            &mut backend,
+            temp.path(),
+            &initial,
+            Action::Stage {
+                paths: vec!["search.txt".into()],
+            },
+        );
+        assert!(error.unwrap().contains("changed"));
+        let (staged, error) = mutate(
+            &mut backend,
+            temp.path(),
+            &trusted,
+            Action::Stage {
+                paths: vec!["search.txt".into()],
+            },
+        );
+        assert!(error.is_none());
+        fs::write(root.join("search.txt"), b"keep unstaged\n").unwrap();
+        let current = backend.snapshot(&staged.repo.id).unwrap();
+        let (committed, error) = mutate(
+            &mut backend,
+            temp.path(),
+            &current,
+            Action::Commit {
+                message: "Native commit".into(),
+            },
+        );
+        assert!(error.is_none());
+        assert_eq!(git(&root, &["show", "HEAD:search.txt"]), b"staged change\n");
+        assert_eq!(
+            fs::read(root.join("search.txt")).unwrap(),
+            b"keep unstaged\n"
+        );
+        assert!(committed.repo.trusted);
+        let Payload::Opened { snapshot, .. } =
+            execute(&mut backend, temp.path(), Work::Open(Some(root.clone()))).unwrap()
+        else {
+            panic!()
+        };
+        assert!(!snapshot.repo.trusted);
+    }
+    #[test]
+    fn native_merge_failure_refreshes_conflicts_then_resolution_and_commit_complete_merge() {
+        use ramo_core::git::Action;
+        let (temp, root, mut backend) = fixture();
+        git(&root, &["switch", "-c", "side"]);
+        fs::write(root.join("search.txt"), b"incoming\n").unwrap();
+        git(&root, &["commit", "-am", "Incoming"]);
+        git(&root, &["switch", "main"]);
+        fs::write(root.join("search.txt"), b"current\n").unwrap();
+        git(&root, &["commit", "-am", "Current"]);
+
+        let s = backend.register(&root).unwrap();
+        let s = backend.trust(&s.repo.id).unwrap();
+        let (conflicted, error) = mutate(
+            &mut backend,
+            temp.path(),
+            &s,
+            Action::Merge {
+                name: "side".into(),
+            },
+        );
+        assert!(error.is_some());
+        assert!(conflicted.operation.is_some());
+        assert!(conflicted.files.iter().any(ramo_core::git::is_conflicted));
+        fs::write(root.join("keep.txt"), b"untracked preservation\n").unwrap();
+        let conflicted = Box::new(backend.snapshot(&conflicted.repo.id).unwrap());
+        let (_, error) = mutate(
+            &mut backend,
+            temp.path(),
+            &conflicted,
+            Action::ResolveFile {
+                path: "search.txt".into(),
+                content: Some("<<<<<<< invalid\n".into()),
+            },
+        );
+        assert!(error.is_some());
+        let (resolved, error) = mutate(
+            &mut backend,
+            temp.path(),
+            &conflicted,
+            Action::ResolveFile {
+                path: "search.txt".into(),
+                content: Some("resolved 日本語\n".into()),
+            },
+        );
+        assert!(error.is_none());
+        let (done, error) = mutate(
+            &mut backend,
+            temp.path(),
+            &resolved,
+            Action::Commit {
+                message: "Merge side".into(),
+            },
+        );
+        assert!(error.is_none());
+        assert!(done.operation.is_none());
+        assert_eq!(
+            fs::read(root.join("keep.txt")).unwrap(),
+            b"untracked preservation\n"
+        );
+        assert_eq!(
+            git(&root, &["show", "HEAD:search.txt"]),
+            "resolved 日本語\n".as_bytes()
+        );
+        assert_eq!(
+            git(&root, &["show", "--format=%P", "-s", "HEAD"])
+                .split(|b| *b == b' ')
+                .count(),
+            2
+        );
     }
 }

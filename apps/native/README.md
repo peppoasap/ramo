@@ -53,15 +53,26 @@ installs into Applications nor publishes a release.
 
 ## Boundaries
 
-Git writes/network/provider inference are **not exposed** by this native slice.
-Fetch/Pull/Push are visibly disabled with a reason. The released beta retains
-staging/commit/checkout/merge completion/stash/worktree/AI functionality while the
-native migration proceeds. No native installer is published by this workflow.
+Typed Git writes now use the existing trust/fingerprint guards: file stage/unstage,
+index commits (including completion of a merge with an unchanged tree), local
+branch creation/checkout/merge/deletion, fetch/fast-forward pull/push, and reviewed
+stash creation/apply/pop/drop. Double-click checks out a local branch without an
+extra review after trust; right-click exposes branch/stash operations. Trust lasts
+for an opening, resets on explicit reopen, and is not persisted. Network calls
+have the existing core timeouts; native progress/Stop is still missing.
+
+The editor has a reviewed Save and stage action; typing and local draft save do
+not change Git. The original editor fingerprint is checked before resolution.
+Git conflicts/failures refresh the authoritative snapshot and preserve the error;
+no automatic mutation retry. No native installer is published yet. Hunk/line
+staging, amend, richer menus, drag/drop, comparison, clone/remotes/worktree UI,
+AI routes and native commit-message draft persistence remain migration tasks.
 
 Workers serialize the existing backend. Replies are scoped to repository
 generation and selection request, and stale pagination fails until refresh.
 This discards stale UI results; it does not cancel already-running Git reads.
-Git mutation paths/trust rules are not reimplemented in widgets.
+Git mutation paths/trust rules are not reimplemented in widgets. The UI prevents
+concurrent mutation submission and disables the editor/composer while applying.
 
 Drafts are local, unencrypted, versioned and scoped to repository/file/fingerprint.
 Restore is explicit; an older fingerprint is identified as an older-state copy.
@@ -74,7 +85,7 @@ durability or multi-window transaction semantics for every filesystem.
 
 This editor is a feasibility slice. Full IME/accessibility/platform acceptance,
 typed CRLF editing, very large files, pixel-linked scrolling, syntax-language
-support, save/stage/complete merge and existing WebView draft import remain gates
+support and existing WebView draft import remain gates
 before replacing CodeMirror. Byte-preserving transformation tests alone do not
 close those native editor gates. See [migration plan](../../docs/RUST-NATIVE-PLAN.md).
 

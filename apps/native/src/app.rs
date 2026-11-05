@@ -1,3 +1,4 @@
+mod actions;
 mod history;
 mod inspection;
 mod navigation;
@@ -12,7 +13,7 @@ use eframe::egui::{
     self, Align, Color32, FontId, Key, Layout, RichText, ScrollArea, Sense, TextEdit,
 };
 use egui_phosphor::regular as icon;
-use ramo_core::git::{self, Commit, FileChange, Snapshot};
+use ramo_core::git::{self, Action, Commit, FileChange, Snapshot};
 use std::{
     collections::{BTreeSet, HashMap},
     path::PathBuf,
@@ -27,6 +28,10 @@ enum Mode {
 
 pub struct App {
     worker: Worker,
+    action: Option<actions::PendingAction>,
+    action_request: Option<u64>,
+    form: Option<actions::Form>,
+    commit_message: String,
     epoch: u64,
     sequence: u64,
     pending: BTreeSet<u64>,
@@ -43,6 +48,7 @@ pub struct App {
     selected: Option<String>,
     files: Vec<FileChange>,
     file: Option<String>,
+    staged_view: bool,
     diff: String,
     filter: String,
     branch_filter: String,
@@ -67,6 +73,10 @@ impl App {
         let worker = Worker::start(state, cc.egui_ctx.clone());
         let mut app = Self {
             worker,
+            action: None,
+            action_request: None,
+            form: None,
+            commit_message: String::new(),
             epoch: 0,
             sequence: 0,
             pending: BTreeSet::new(),
@@ -83,6 +93,7 @@ impl App {
             selected: None,
             files: Vec::new(),
             file: None,
+            staged_view: false,
             diff: String::new(),
             filter: String::new(),
             branch_filter: String::new(),
@@ -123,12 +134,21 @@ impl App {
         id
     }
     fn open(&mut self, path: Option<PathBuf>) {
+        if self.action_request.is_some() {
+            self.error = Some("Wait for the current Git operation to finish.".into());
+            return;
+        }
+        self.action = None;
+        self.form = None;
         self.epoch += 1;
         self.pending.clear();
         self.page_request = None;
         self.send(Work::Open(path));
     }
     fn refresh(&mut self) {
+        if self.action_request.is_some() {
+            return;
+        }
         if self.editor.as_ref().is_some_and(|e| e.dirty) {
             self.error =
                 Some("Save the editor draft or return to History before refreshing.".into());
@@ -194,6 +214,10 @@ impl App {
             }
             match reply.result {
                 Err(error) => {
+                    if self.action_request == Some(reply.sequence) {
+                        self.action_request = None;
+                        self.error = Some(error.clone());
+                    }
                     if page_failed {
                         self.has_more = false;
                         self.error = Some(error.clone());
@@ -209,6 +233,90 @@ impl App {
                         || reply.sequence == self.sequence
                     {
                         self.error = Some(error);
+                    }
+                }
+                Ok(Payload::Trusted(snapshot)) => {
+                    self.snapshot = Some(*snapshot);
+                    self.action_request = None;
+                    if let Some(action) = self.action.take() {
+                        self.run_action(action);
+                    }
+                }
+                Ok(Payload::Changed {
+                    snapshot,
+                    commits,
+                    error,
+                }) => {
+                    self.action_request = None;
+                    let mode = self.mode;
+                    self.epoch += 1;
+                    self.pending.clear();
+                    self.page_request = None;
+                    self.snapshot = Some(*snapshot);
+                    self.has_more = commits.len() == 300;
+                    self.commits = commits;
+                    self.rows = graph::layout(&self.commits);
+                    self.refilter();
+                    let focused_file = self.file.clone().or_else(|| {
+                        self.action.as_ref().and_then(|a| match &a.action {
+                            Action::Stage { paths } | Action::Unstage { paths } => {
+                                paths.first().cloned()
+                            }
+                            _ => None,
+                        })
+                    });
+                    self.diff.clear();
+                    self.file = None;
+                    self.files.clear();
+                    self.diff_request = 0;
+                    self.detail_request = 0;
+                    if error.is_none() {
+                        if self
+                            .action
+                            .as_ref()
+                            .is_some_and(|a| matches!(a.action, Action::Commit { .. }))
+                        {
+                            self.commit_message.clear();
+                        }
+                        if self
+                            .action
+                            .as_ref()
+                            .is_some_and(|a| matches!(a.action, Action::ResolveFile { .. }))
+                        {
+                            self.editor = None;
+                        }
+                    }
+                    self.action = None;
+                    self.error = error;
+                    self.mode = if self
+                        .snapshot
+                        .as_ref()
+                        .is_some_and(|s| s.operation.is_some())
+                    {
+                        Mode::Changes
+                    } else {
+                        mode
+                    };
+                    if self.mode == Mode::History
+                        && let Some(first) = self.commits.first()
+                    {
+                        self.select(first.oid.clone());
+                    }
+                    if self.mode == Mode::Changes
+                        && self.editor.is_none()
+                        && let (Some(path), Some(snapshot)) = (focused_file, self.snapshot.as_ref())
+                        && let Some(file) = snapshot.files.iter().find(|f| f.path == path)
+                    {
+                        self.staged_view = file.worktree.trim().is_empty()
+                            && !git::is_conflicted(file)
+                            && file.index != "?";
+                        self.file = Some(path.clone());
+                        self.diff_request = self.send(Work::Diff {
+                            repo: snapshot.repo.id.clone(),
+                            oid: None,
+                            path,
+                            staged: self.staged_view,
+                        });
                     }
                 }
                 Ok(Payload::Cancelled) => {}
@@ -306,6 +414,10 @@ impl App {
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.pump();
+        if self.action_request.is_some() && ctx.input(|i| i.viewport().close_requested()) {
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            self.error = Some("Wait for the Git operation to finish before closing.".into());
+        }
         if ctx.input(|i| i.viewport().close_requested())
             && self.editor.as_ref().is_some_and(|e| e.dirty)
         {
@@ -317,6 +429,7 @@ impl eframe::App for App {
             self.ask_open();
         }
         self.chrome(ctx);
+        self.action_dialogs(ctx);
         if self.editor.is_none() {
             self.sidebar(ctx);
             self.inspector(ctx);
@@ -325,7 +438,13 @@ impl eframe::App for App {
         egui::CentralPanel::default()
             .frame(egui::Frame::new().fill(theme::BASE).inner_margin(10.))
             .show(ctx, |ui| {
+                if self.action_request.is_some() || self.action.is_some() {
+                    ui.disable();
+                }
                 if let Some(editor) = &mut self.editor {
+                    if self.action_request.is_some() || self.action.is_some() {
+                        ui.disable();
+                    }
                     event = editor.ui(ctx, ui);
                     return;
                 }
@@ -342,7 +461,7 @@ impl eframe::App for App {
                         }
                         ui.add_space(14.);
                         ui.label(theme::caption(
-                            "Rust-native development preview · Git operations are read-only",
+                            "Rust-native development · Open, inspect and work with Git",
                         ));
                     });
                     return;
@@ -378,6 +497,15 @@ impl eframe::App for App {
                 }
             });
         match event {
+            Some(editor::Event::Resolve) => {
+                if let Some(e) = &self.editor {
+                    // Use the editor's original fingerprint, not a newer refresh.
+                    let action = actions::PendingAction::resolution(e);
+                    if self.action.is_none() && self.action_request.is_none() {
+                        self.action = Some(action);
+                    }
+                }
+            }
             Some(editor::Event::Back) => {
                 if self.editor.as_ref().is_some_and(|e| e.dirty) {
                     self.close_confirm = true;

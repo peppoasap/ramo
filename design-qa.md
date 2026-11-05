@@ -48,3 +48,13 @@ final result: passed
 
 This result applies only to the observed R0 desktop layout and evaluated R1
 interactions. It does not approve replacing the released application/editor.
+
+## Subsequent daily-write UI coverage
+
+The initial pass above covers the R0 mock comparison. New Changes sections and
+review actions are an incremental R2 implementation, not a completed six-board
+fidelity acceptance. [Staging capture](docs/images/native-staging.png) records the
+actual synthetic file/index preview. The live merge exercise found and corrected
+a disabled Complete merge action when the reviewed result equals HEAD; the
+post-fix GUI completed that two-parent merge. Full native workflow fidelity,
+remaining dialog layouts and alternate viewport checks stay in the completion ledger.

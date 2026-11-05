@@ -19,7 +19,7 @@ fn main() -> eframe::Result {
             Some("--state-dir") => state = Some(required_path(args.next(), "--state-dir")),
             Some("--help") => {
                 println!(
-                    "Ramo Native development preview\n  --repository PATH   Open a Git repository read-only\n  --state-dir PATH    Isolated app preferences and explicit merge drafts\nNo Git writes or AI inference are exposed in this slice."
+                    "Ramo Native development preview\n  --repository PATH   Open a Git repository\n  --state-dir PATH    Isolated app preferences and explicit merge drafts\nGit writes require repository trust. No automatic AI inference."
                 );
                 return Ok(());
             }

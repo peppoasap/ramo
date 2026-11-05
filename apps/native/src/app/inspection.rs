@@ -71,58 +71,128 @@ impl App {
         let Some(snapshot) = self.snapshot.clone() else {
             return;
         };
-        ui.label(theme::caption("Browse working changes. Git staging and commits remain in the released beta during this migration slice."));
+        let busy = self.action_request.is_some() || self.action.is_some();
+        ui.horizontal(|ui| {
+            ui.heading(if snapshot.operation.is_some() {
+                "Operation in progress"
+            } else {
+                "Changes"
+            });
+            if let Some(operation) = &snapshot.operation {
+                ui.label(theme::caption(operation));
+            }
+        });
         ui.separator();
         let mut resolve = None;
         egui::SidePanel::left("changed_files")
-            .default_width(260.)
+            .default_width(280.)
             .resizable(true)
             .show_inside(ui, |ui| {
                 ScrollArea::vertical().show(ui, |ui| {
-                    for file in &snapshot.files {
-                        let conflict = git::is_conflicted(file);
-                        ui.horizontal(|ui| {
-                            if ui
-                                .selectable_label(
-                                    self.file.as_deref() == Some(&file.path),
-                                    format!(
-                                        "{}  {}",
-                                        if conflict {
-                                            icon::WARNING_CIRCLE
-                                        } else {
-                                            icon::FILE_TEXT
-                                        },
-                                        file.path
-                                    ),
-                                )
-                                .clicked()
-                            {
-                                self.file = Some(file.path.clone());
-                                self.diff.clear();
-                                self.diff_request = self.send(Work::Diff {
-                                    repo: snapshot.repo.id.clone(),
-                                    oid: None,
-                                    path: file.path.clone(),
-                                    staged: !conflict
-                                        && file.worktree.trim().is_empty()
-                                        && !file.index.trim().is_empty(),
-                                });
-                            }
+                    for staged in [false, true] {
+                        ui.strong(if staged {
+                            "Staged changes"
+                        } else {
+                            "Working changes"
                         });
-                        if conflict && ui.small_button("Open merge editor").clicked() {
-                            resolve = Some(file.path.clone());
+                        for file in &snapshot.files {
+                            let conflict = git::is_conflicted(file);
+                            let in_section = if staged {
+                                !file.index.trim().is_empty() && file.index != "?" && !conflict
+                            } else {
+                                !file.worktree.trim().is_empty() || file.index == "?" || conflict
+                            };
+                            if !in_section {
+                                continue;
+                            }
+                            ui.horizontal(|ui| {
+                                if ui
+                                    .selectable_label(
+                                        self.file.as_deref() == Some(&file.path)
+                                            && self.staged_view == staged,
+                                        format!(
+                                            "{}  {}",
+                                            if conflict {
+                                                icon::WARNING_CIRCLE
+                                            } else {
+                                                icon::FILE_TEXT
+                                            },
+                                            file.path
+                                        ),
+                                    )
+                                    .clicked()
+                                {
+                                    self.file = Some(file.path.clone());
+                                    self.staged_view = staged;
+                                    self.diff.clear();
+                                    self.diff_request = self.send(Work::Diff {
+                                        repo: snapshot.repo.id.clone(),
+                                        oid: None,
+                                        path: file.path.clone(),
+                                        staged,
+                                    });
+                                }
+                                if !conflict
+                                    && ui
+                                        .add_enabled(
+                                            !busy,
+                                            egui::Button::new(if staged { "−" } else { "+" })
+                                                .small(),
+                                        )
+                                        .on_hover_text(if staged {
+                                            "Unstage file"
+                                        } else {
+                                            "Stage file"
+                                        })
+                                        .clicked()
+                                {
+                                    let paths = vec![file.path.clone()];
+                                    self.request_action(
+                                        if staged {
+                                            Action::Unstage { paths }
+                                        } else {
+                                            Action::Stage { paths }
+                                        },
+                                        if staged { "Unstage file" } else { "Stage file" },
+                                        file.path.clone(),
+                                        false,
+                                    );
+                                }
+                            });
+                            if conflict && ui.small_button("Resolve in editor").clicked() {
+                                resolve = Some(file.path.clone());
+                            }
                         }
+                        ui.add_space(12.);
+                        ui.separator();
                     }
                     if snapshot.files.is_empty() {
-                        ui.label(theme::caption("Working tree is clean."));
+                        ui.label(theme::caption(if snapshot.operation.is_some() {
+                            "No unresolved files. Complete or abort the operation."
+                        } else {
+                            "Working tree is clean."
+                        }));
                     }
                 });
             });
-        egui::CentralPanel::default()
-            .frame(egui::Frame::NONE)
-            .show_inside(ui, |ui| {
-                render_diff(ui, &self.diff);
+        egui::CentralPanel::default().frame(egui::Frame::NONE).show_inside(ui,|ui|{
+            egui::TopBottomPanel::bottom("commit_composer").resizable(true).default_height(155.).show_inside(ui,|ui|{
+                ui.strong("Commit message");
+                ui.add(TextEdit::multiline(&mut self.commit_message).hint_text("Describe your staged changes").desired_rows(3).desired_width(f32::INFINITY));
+                ui.horizontal(|ui|{
+                    let conflicts=snapshot.files.iter().any(git::is_conflicted);
+                    let staged=snapshot.files.iter().any(|f|!f.index.trim().is_empty()&&f.index!="?");
+                    let merge=snapshot.operation.as_deref()==Some("Merge in progress");
+                    if ui.add_enabled(!busy&&!conflicts&&(staged||merge)&&!self.commit_message.trim().is_empty(),egui::Button::new(if merge {"Complete merge"}else{"Commit staged changes"})).clicked(){
+                        self.request_action(Action::Commit{message:self.commit_message.clone()},"Commit staged changes","Commit only the index using this message.",false);
+                    }
+                    if merge&&ui.add_enabled(!busy,egui::Button::new("Abort merge…")).clicked(){self.request_action(Action::AbortMerge,"Abort merge","Abort the merge and restore the pre-merge state. Review local work first.",true);}
+                    if conflicts {ui.label(theme::caption("Resolve each conflicted file before committing."));}
+                });
             });
+            if let Some(path)=&self.file {ui.label(theme::caption(format!("{} · {path}",if self.staged_view {"Staged"}else{"Working"})));}
+            render_diff(ui,&self.diff);
+        });
         if let Some(path) = resolve {
             self.editor_request = self.send(Work::Conflict {
                 repo: snapshot.repo.id,
