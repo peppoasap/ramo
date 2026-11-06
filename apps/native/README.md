@@ -186,7 +186,19 @@ Commit drafts are saved before switching. Open checkouts now remain in session
 tabs, with a width-aware overflow menu.
 Close a tab to end that checkout's session trust. The Open menu includes durable
 recent repositories; native trust is asked once on opening, with read-only access.
-Accepting trust never executes a queued mutation. In-memory view intent is
-restored using fresh core reads; automatic workspace restoration after restart
-remains pending.
+Accepting trust never executes a queued mutation. Navigation intent now persists across restart with atomic/CAS saves: tabs, active
+context, filters/selections, comparisons and compact/inspector preferences. Fresh
+core reads restore previews; trust is never persisted. Missing folders stay as
+retryable tabs. Explicit close removes them from the saved workspace. A supplied
+--repository adds/activates within the20-tab bound. Pane pixel widths/window
+geometry and schema migration remain outside this version.
 See [verification](../../docs/NATIVE-VERIFICATION.md).
+
+The native state's workspace/ record is bounded/versioned; conflicts and corrupt
+records are preserved rather than replaced. Retry or explicit quit without saving
+workspace are available after a save error. An unsupported/corrupt load pauses
+workspace persistence; keep that file for recovery and use a separate --state-dir
+if a fresh workspace is needed. Commit/merge drafts have independent storage.
+Optional CJK fallback probes standard installed fonts and validates format/glyph
+coverage. No system font is distributed; macOS Japanese rendering is observed,
+Windows/Linux availability and complex-script/IME acceptance remain unverified.

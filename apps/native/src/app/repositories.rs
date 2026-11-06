@@ -16,6 +16,7 @@ pub(super) struct Tab {
     id: String,
     name: String,
     path: String,
+    unavailable: Option<String>,
 }
 #[derive(Default)]
 pub(super) struct Tabs {
@@ -35,6 +36,7 @@ impl Tabs {
             id: repo.id.clone(),
             name: repo.name.clone(),
             path: repo.path.clone(),
+            unavailable: None,
         };
         if let Some(current) = self.entries.iter_mut().find(|t| t.id == repo.id) {
             *current = tab;
@@ -64,6 +66,100 @@ impl Tabs {
     }
 }
 impl App {
+    fn clear_missing_notice(&mut self) {
+        if self.workspace.missing_notice
+            && self
+                .repositories
+                .entries
+                .iter()
+                .all(|t| t.unavailable.is_none())
+        {
+            self.workspace.notice = None;
+            self.workspace.missing_notice = false;
+        }
+    }
+    pub(super) fn workspace_document(&self) -> crate::workspace::Document {
+        let current = self.snapshot.as_ref().map(|s| s.repo.id.as_str());
+        let tabs = self
+            .repositories
+            .entries
+            .iter()
+            .map(|tab| {
+                let active;
+                let view = if current == Some(tab.id.as_str()) {
+                    active = self.capture_view();
+                    Some(&active)
+                } else {
+                    self.repositories.views.get(&tab.id)
+                };
+                let view = view.map_or_else(crate::workspace::View::default, |v| {
+                    crate::workspace::View {
+                        mode: v.mode,
+                        filter: crate::workspace::bounded(&v.filter, 1024),
+                        branches: crate::workspace::bounded(&v.branches, 1024),
+                        selected: v.selected.clone(),
+                        file: v.file.clone(),
+                        staged: v.staged,
+                        comparison: v.comparison.saved(),
+                    }
+                });
+                crate::workspace::Tab {
+                    id: tab.id.clone(),
+                    name: tab.name.clone(),
+                    path: tab.path.clone(),
+                    view,
+                }
+            })
+            .collect();
+        crate::workspace::Document {
+            version: 1,
+            tabs,
+            active: current.map(str::to_owned),
+            compact: self.compact,
+            inspector: self.inspector,
+        }
+    }
+    pub(super) fn apply_workspace(&mut self, restored: crate::workspace::Restored) {
+        self.compact = restored.compact;
+        self.inspector = restored.inspector;
+        let missing = restored.tabs.iter().filter(|(_, e)| e.is_some()).count();
+        for (tab, error) in restored.tabs {
+            let v = tab.view;
+            self.repositories.views.insert(
+                tab.id.clone(),
+                View {
+                    mode: v.mode,
+                    filter: v.filter,
+                    branches: v.branches,
+                    selected: v.selected,
+                    file: v.file,
+                    staged: v.staged,
+                    comparison: comparison::CompareView::restored(v.comparison),
+                },
+            );
+            self.repositories.entries.push(Tab {
+                id: tab.id,
+                name: tab.name,
+                path: tab.path,
+                unavailable: error,
+            });
+        }
+        if missing > 0 {
+            self.workspace.missing_notice = true;
+            self.workspace.notice = Some(format!(
+                "{missing} saved {} could not be reopened. Click {} tab to retry, or close it to remove it.",
+                if missing == 1 { "folder" } else { "folders" },
+                if missing == 1 { "its" } else { "a" }
+            ));
+        }
+        if !restored.notices.is_empty() {
+            self.workspace.missing_notice = false;
+            self.workspace.notice = Some(restored.notices.join("\n"));
+        }
+        if let Some(id) = restored.active {
+            self.open_target(OpenTarget::Activate(id));
+        }
+    }
     pub(super) fn repository_trust_dialog(&mut self, ctx: &egui::Context) {
         let Some(repo) = self.repositories.prompt.clone() else {
             return;
@@ -155,6 +251,7 @@ impl App {
                 .insert(current.repo.id.clone(), self.capture_view());
         }
         self.repositories.opened(&snapshot.repo);
+        self.clear_missing_notice();
         let view = if changed {
             self.repositories.views.remove(&snapshot.repo.id)
         } else {
@@ -202,7 +299,6 @@ impl App {
             let oid = self
                 .selected
                 .as_ref()
-                .filter(|oid| self.commits.iter().any(|c| &c.oid == *oid))
                 .cloned()
                 .or_else(|| self.commits.first().map(|c| c.oid.clone()));
             if let Some(oid) = oid {
@@ -237,6 +333,7 @@ impl App {
     pub(super) fn closed_repository(&mut self, id: &str) {
         let active = self.snapshot.as_ref().is_some_and(|s| s.repo.id == id);
         let next = self.repositories.remove(id);
+        self.clear_missing_notice();
         if !active {
             return;
         }
@@ -275,14 +372,22 @@ impl App {
                     let selected = active.as_deref() == Some(tab.id.as_str());
                     let response = ui.add_sized(
                         [180., 32.],
-                        egui::Button::new(theme::emphasis(format!("{}  {}", icon::CODE, tab.name)))
-                            .fill(if selected {
-                                theme::SELECTED.gamma_multiply(0.55)
+                        egui::Button::new(theme::emphasis(format!(
+                            "{}  {}",
+                            if tab.unavailable.is_some() {
+                                icon::WARNING_CIRCLE
                             } else {
-                                Color32::TRANSPARENT
-                            })
-                            .stroke(egui::Stroke::NONE)
-                            .truncate(),
+                                icon::CODE
+                            },
+                            tab.name
+                        )))
+                        .fill(if selected {
+                            theme::SELECTED.gamma_multiply(0.55)
+                        } else {
+                            Color32::TRANSPARENT
+                        })
+                        .stroke(egui::Stroke::NONE)
+                        .truncate(),
                     );
                     if selected {
                         ui.painter().line_segment(
@@ -291,7 +396,11 @@ impl App {
                         );
                     }
                     if response.clicked() && !selected {
-                        target = Some(OpenTarget::Activate(tab.id.clone()));
+                        target = Some(if tab.unavailable.is_some() {
+                            OpenTarget::Folder(Some(PathBuf::from(&tab.path)))
+                        } else {
+                            OpenTarget::Activate(tab.id.clone())
+                        });
                     }
                     response.context_menu(|ui| {
                         if ui.button("Close repository").clicked() {
@@ -303,7 +412,15 @@ impl App {
                             ui.close();
                         }
                     });
-                    response.on_hover_text(&tab.path);
+                    response.on_hover_text(tab.unavailable.as_ref().map_or_else(
+                        || tab.path.clone(),
+                        |e| {
+                            format!(
+                                "{}\n{}\nClick to retry opening, or close this tab.",
+                                tab.path, e
+                            )
+                        },
+                    ));
                     let close = ui.add_sized([20., 28.], egui::Button::new(icon::X).frame(false));
                     close.widget_info(|| {
                         egui::WidgetInfo::labeled(
@@ -325,7 +442,11 @@ impl App {
                                 .on_hover_text(&tab.path)
                                 .clicked()
                             {
-                                target = Some(OpenTarget::Activate(tab.id));
+                                target = Some(if tab.unavailable.is_some() {
+                                    OpenTarget::Folder(Some(PathBuf::from(&tab.path)))
+                                } else {
+                                    OpenTarget::Activate(tab.id)
+                                });
                                 ui.close();
                             }
                         }

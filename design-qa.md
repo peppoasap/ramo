@@ -182,4 +182,51 @@ Open-tab/view state is in-memory; only recents/drafts survive restart at present
 Previousa1eb21c CI passes all three OS; new source requires fresh hosted checks.
 Full objective and native release gates remain open.
 
+## Durable workspace and installed glyph fallback
+
+Scope: restore the selected workbench/navigation intent after restart, preserve
+Git/read-only authority, and make recovery states understandable without adding
+a dashboard. [Reference and actual UI together](docs/design/rust-native/workspace-fidelity/comparison.jpg)
+normalizes each to1200px width preserving aspect ratio. The accepted1717×916
+history concept and actual55-commit fixture differ in data/topology/content; no
+fake commits or invented comparison pixels were used. Actual raw3024×1898 exports
+3024×1836 content after removing only62px OS strip;1512×918 logical at2×.
+[Full final](docs/design/rust-native/workspace-fidelity/final.jpg) and
+[narrow1002×683](docs/design/rust-native/workspace-fidelity/narrow.jpg) retain
+compact chrome and functional history. There is no dedicated restore-error mock
+from which to claim exact pixel parity.
+
+[Readable recovery/fault comparison](docs/design/rust-native/workspace-fidelity/details.jpg),
+[missing folder](docs/design/rust-native/workspace-fidelity/missing-folder.jpg),
+[recovered folder](docs/design/rust-native/workspace-fidelity/recovered-folder.jpg),
+[fresh trust](docs/design/rust-native/workspace-fidelity/startup-trust.jpg),
+[concurrent writer](docs/design/rust-native/workspace-fidelity/cas-error.jpg),
+[corrupt record](docs/design/rust-native/workspace-fidelity/corrupt.jpg),
+[explicit merge draft](docs/design/rust-native/workspace-fidelity/restored-merge-draft.jpg)
+and [Unicode composer](docs/design/rust-native/workspace-fidelity/unicode-fallback.jpg)
+were inspected. Existing graphite/mint/Noto/Phosphor, flat tabs, restrained radii,
+three regions and visible actions remain. Recovery copy now handles singular
+folder count; the notice clears on success/close. Save errors refer to workspace
+rather than the generic draft store. No new decorative raster or custom icon.
+
+P2 found/fixed in inspection: Japanese draft bytes were preserved but displayed
+replacement squares. Optional installed-font fallback now validates font format
+and representative glyph coverage using the already locked parser. Actual macOS
+composer and merge result show Japanese text; no system font is bundled and Latin
+font priority is unchanged. Windows/Linux font availability and broader shaping/
+IME/a11y acceptance remain open; this is not universal Unicode certification.
+
+Actual restarts restored three tabs/active comparison/filter/selection/Changes file,
+Unicode composer and preferences. Fresh diff showed an external edit while closed
+(edit restored). Missing retry failure preserved current view; restored folder retry
+cleared its notice. Merge Keep editing cancelled quit; local draft recovery remained
+explicit. A closed tab stayed absent. Competing and corrupt workspace bytes stayed
+identical through failures/retry/quit while in-memory work remained usable. Git
+independently preserves all three synthetic fixtures; no staging/completion/AI/
+network action in this pass.43 tests, fmt/clippy, strict bundle and267 notices pass.
+Self-review; no P0/P1/P2 remains in this inspected macOS workspace scope. Pixel pane
+geometry, automatic schema migration and other-platform GUI remain outside this
+slice. Previous6b1364f CI passes all three OS; this source needs fresh checks.
+Full objective and native release ledger remain open.
+
 final result: passed

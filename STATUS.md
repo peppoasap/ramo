@@ -779,14 +779,45 @@ preserved HEAD, index entries/tree, work/untracked/ignored bytes and conflict ma
 a1eb21c native42210758879 and legacy42210758750 passed all three OS; new source
 requires separate CI. No inference/network Git request or native release.
 
+## Durable native workspace — 6 November 2026
+
+Native workspace now saves/restores bounded versioned navigation intent: up to20
+checkouts, active tab, mode, filters, selected commit/file, immutable comparison
+configuration and compact/inspector preferences. The existing atomic/CAS local
+writer debounces changes and flushes on normal quit; trust, Git payloads, operation
+plans and editor buffers are excluded. Startup registers fresh read-only checkouts
+and refetches previews. --repository adds/activates within the bound; unavailable
+folders remain retryable/closable tabs. Changed Git roots are rejected. Explicit
+close persists removal. Trust is requested afresh on first activation after restart.
+
+Actual macOS restart restored three tabs, active comparison, filter/selection,
+Changes/README and Unicode composer, layout preferences and a locally saved merge
+draft through explicit Restore. An external edit while closed appeared on return
+and was restored afterward. Missing-folder failure kept the current view, retry
+recovered the restored folder and cleared its notice. Dirty merge Keep editing
+cancelled quit without a repeat loop. A closed tab stayed absent on the next
+restart. Competing valid and corrupt records remained byte-identical after save/
+retry/quit scenarios; explicit quit without saving workspace remains available.
+Independent Git checks preserve all three synthetic fixtures. No merge save/stage
+or completion, provider inference or network Git action occurred in these checks.
+
+Visual review found missing Japanese glyphs; optional validated system CJK fallback
+now renders the synthetic composer/result on macOS while preserving Latin styling.
+No system font is bundled. The direct parser dependency reuses the existing locked
+ab_glyph0.2.32; no dependency version upgrade.43 native tests, fmt/clippy, strict
+bundle signature and267 notices pass. See ADR0030, design-qa.md and synthetic proof.
+Previous6b1364f native42213963073 and legacy42213963104 passed all three OS; this
+new source needs separate CI. GUI evidence remains macOS; no native release yet.
+
 ## Exact next task
 
-Persist and restore the native workspace/view intent across restart, with fresh
-core reads and fresh trust consent, bounded validation and explicit recovery for
-missing folders. Current views/open tabs are in-memory; only recents and existing
-drafts are durable. Then port contextual native AI/settings and its selected mock
-surfaces. Keep [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full objective:
-clone Stop/progress, broader menus/remote controls, syntax/linked scroll/IME/a11y/
-CRLF/large-file editor gates, daily-base recovery/rebase and native packaging/
-cutover remain. Full migration is incomplete; platform GUI/install acceptance and
-matched performance remain distinct from CI.
+Port contextual native AI/settings against the selected mock surfaces: provider
+configuration/status, bounded input review, commit draft/diff explanation/conflict
+assistance and Stop, reusing existing core contracts. Use deterministic fixtures;
+no new paid inference, credential scraping, login or CLI installation is authorized.
+Keep [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full objective: clone
+Stop/progress, broader menus/remotes, syntax/linked scroll/IME/a11y/CRLF/large-file
+editor gates, daily-base recovery/rebase, native packaging/cutover and matched
+performance remain. Workspace pane pixel widths/window geometry, automatic schema
+migration and broader font/platform coverage are not established by this slice.
+Full native migration is incomplete; observe exact hosted checks separately.

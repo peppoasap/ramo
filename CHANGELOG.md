@@ -5,6 +5,13 @@ only a published GitHub Release establishes an external release.
 
 ## Unreleased — Rust-native development (0.3.0-dev.1)
 
+- Restore native workspaces across restart: tabs, active context, selections,
+  filters, comparisons and display preferences. Preserve unavailable tabs for
+  recovery; use fresh Git reads and fresh trust consent. Atomic revision-checked
+  saves protect concurrent/corrupt records and flush on ordinary quit.
+- Add optional validated installed-font fallback for CJK text. Fix Japanese draft
+  rendering on macOS without bundling system fonts or upgrading crate versions.
+
 - Add compact native repository tabs, close/keyboard actions, overflow and durable
   recent paths. Restore view intent on activation through fresh Git reads; keep
   commit drafts and unsaved merge edits protected. Preserve context on Refresh.

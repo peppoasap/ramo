@@ -31,3 +31,5 @@ View intents/open tabs remain in memory in this slice; automatic workspace and
 view restoration across app restart are not implemented. Persisted recent paths
 and commit/merge drafts do not imply persisted trust or a restored workspace.
 Native platform GUI and full keyboard/accessibility acceptance remain separate.
+
+ADR0030 subsequently adds durable navigation intent with fresh read-only restoration.

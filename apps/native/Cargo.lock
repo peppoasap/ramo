@@ -2737,6 +2737,7 @@ dependencies = [
 name = "ramo-native"
 version = "0.3.0-dev.1"
 dependencies = [
+ "ab_glyph",
  "eframe",
  "egui-phosphor",
  "objc2 0.6.5",

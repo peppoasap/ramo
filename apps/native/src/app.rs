@@ -11,6 +11,7 @@ mod inspection;
 mod navigation;
 mod remotes;
 mod repositories;
+mod workspace;
 mod worktrees;
 use worktrees::OpenTarget;
 
@@ -31,16 +32,12 @@ use std::{
 };
 
 const ROW: f32 = 22.;
-#[derive(Clone, Copy, PartialEq)]
-enum Mode {
-    History,
-    Changes,
-    Compare,
-}
+use crate::workspace::Mode;
 
 pub struct App {
     worker: Worker,
     repositories: repositories::Tabs,
+    workspace: workspace::Persistence,
     recent_request: Option<u64>,
     #[cfg(target_os = "macos")]
     quit_bridge: Option<crate::macos_quit::Bridge>,
@@ -100,6 +97,7 @@ impl App {
         let mut app = Self {
             worker,
             repositories: Default::default(),
+            workspace: Default::default(),
             recent_request: None,
             #[cfg(target_os = "macos")]
             quit_bridge: crate::macos_quit::Bridge::install(&cc.egui_ctx),
@@ -148,14 +146,13 @@ impl App {
             error: None,
             editor_exit: None,
         };
-        if let Some(repository) = repository {
-            app.open(Some(repository));
-        }
+        app.load_workspace(repository);
         app.load_recent();
         app
     }
     fn modal_open(&self) -> bool {
         self.open_request.is_some()
+            || self.workspace.busy_startup()
             || self.repositories.prompt.is_some()
             || self.worktree_dialog.is_some()
             || self.clone_dialog.is_some()
@@ -349,6 +346,11 @@ impl App {
                 dialog.receive(reply.result);
                 continue;
             }
+            if self.workspace.owns(reply.sequence) {
+                self.pending.remove(&reply.sequence);
+                self.workspace_reply(reply.sequence, reply.result);
+                continue;
+            }
             if self.repositories.trust_request == Some(reply.sequence) {
                 self.pending.remove(&reply.sequence);
                 self.repositories.trust_request = None;
@@ -523,7 +525,10 @@ impl App {
                     Payload::Compared(_)
                     | Payload::ComparisonDiff(_)
                     | Payload::Connection(_)
-                    | Payload::WorktreeParent(_),
+                    | Payload::WorktreeParent(_)
+                    | Payload::WorkspaceLoaded(_)
+                    | Payload::WorkspaceSaved(_)
+                    | Payload::WorkspaceRestored(_),
                 ) => {}
                 Ok(Payload::Cancelled) => {}
                 Ok(Payload::Opened { snapshot, commits }) => {
@@ -680,6 +685,7 @@ impl eframe::App for App {
         }
         self.chrome(ctx);
         self.drag_overlay(ctx);
+        self.workspace_notice(ctx);
         self.repository_trust_dialog(ctx);
         self.action_dialogs(ctx);
         self.clone_dialog_ui(ctx);
@@ -789,6 +795,7 @@ impl eframe::App for App {
             None => {}
         }
         self.editor_exit_dialog(ctx);
+        self.workspace_tick(ctx);
     }
 }
 

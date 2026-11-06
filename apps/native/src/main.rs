@@ -12,8 +12,10 @@ mod macos_quit;
 mod merge;
 mod patch_view;
 mod repository_provider;
+mod system_fonts;
 mod theme;
 mod worker;
+mod workspace;
 
 use std::path::PathBuf;
 

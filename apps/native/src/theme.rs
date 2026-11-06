@@ -37,6 +37,16 @@ pub fn install(ctx: &egui::Context) {
         .unwrap()
         .insert(0, "noto".into());
     egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
+    if let Some(font) = crate::system_fonts::installed_cjk() {
+        fonts.font_data.insert("system-cjk".into(), font.into());
+        for family in [egui::FontFamily::Proportional, egui::FontFamily::Monospace] {
+            fonts
+                .families
+                .entry(family)
+                .or_default()
+                .push("system-cjk".into());
+        }
+    }
     let mut strong_fallback = vec!["noto-semibold".into()];
     strong_fallback.extend(fonts.families[&egui::FontFamily::Proportional].clone());
     fonts

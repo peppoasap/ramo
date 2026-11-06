@@ -17,6 +17,33 @@ pub(super) struct CompareView {
     file_request: Option<u64>,
 }
 impl CompareView {
+    pub(super) fn saved(&self) -> Option<crate::workspace::Comparison> {
+        (crate::workspace::oid(&self.from) && crate::workspace::oid(&self.to)).then(|| {
+            crate::workspace::Comparison {
+                from: self.from.clone(),
+                to: self.to.clone(),
+                ancestor: self.ancestor,
+                labels: self
+                    .labels
+                    .clone()
+                    .map(|v| v.map(|(id, name)| (id, crate::workspace::bounded(&name, 2048)))),
+                filters: self
+                    .filters
+                    .clone()
+                    .map(|v| crate::workspace::bounded(&v, 1024)),
+            }
+        })
+    }
+    pub(super) fn restored(saved: Option<crate::workspace::Comparison>) -> Self {
+        saved.map_or_else(Self::default, |v| Self {
+            from: v.from,
+            to: v.to,
+            ancestor: v.ancestor,
+            labels: v.labels,
+            filters: v.filters,
+            ..Default::default()
+        })
+    }
     pub(super) fn selection(&self) -> Self {
         Self {
             from: self.from.clone(),

@@ -349,3 +349,34 @@ Previousa1eb21c native42210758879 and legacy42210758750 pass all three OS; this
 source needs its own CI. Native GUI evidence remains macOS only. Views/open tabs
 are in-memory, automatic workspace restart restoration is pending; recents/drafts
 are durable. No AI request, native installer/tag/release or full-goal completion.
+
+## Durable workspace and installed font fallback — 6 November 2026
+
+43 native tests pass, including schema/path/object bounds, duplicate/authority
+rejection, malformed/future record preservation, revision-CAS winning-writer
+protection and actual Git restoration with fresh untrusted registrations, missing
+roots and changed-root rejection. A parser test rejects malformed and Latin-only
+fonts as CJK fallbacks. ab_glyph0.2.32 was already locked transitively; only a direct
+edge was added. Native fmt/clippy, strict developer bundle and267 notices pass.
+
+Actual macOS multiple restarts restored tab order/active comparison/filters/object
+selection, Changes file/Unicode composer and compact/inspector preferences. A
+saved merge draft was offered after fresh conflict sources and restored explicitly.
+An external edit while closed appeared in the fresh diff; its bytes were restored.
+An unavailable saved tab remained present, failed retry preserved the active view,
+restored folder retry succeeded and its notice cleared. Keep editing cancelled
+quit with dirty merge text without a loop. Explicit closed tab stayed absent on
+restart. Competing valid/corrupt records stayed byte-identical after save/retry/
+startup/quit; the explicit quit-without-saving control worked. Final screenshots
+show the corrected workspace error wording. System CJK fallback visibly renders
+Japanese composer and merge result text on macOS, with no font copied to bundle.
+
+Independent Git checks preserve source HEAD/index tree/work/untracked/ignored
+sentinels, comparison fixture HEAD/index/files and conflict HEAD/index/file/
+MERGE_HEAD. No merge was staged/completed, no provider inference/network Git action
+ran. See [proof](verification/native-workspace-ui.json) and root design-qa.md.
+Initial history page may require more loading to locate an older selected node,
+though its preview is refetched. Pixel pane geometry, schema migration, universal
+font availability, other-platform GUI and native release acceptance remain open.
+Previous6b1364f native42213963073 and legacy42213963104 pass all three OS; new
+source requires fresh hosted checks. Full native objective is not complete.

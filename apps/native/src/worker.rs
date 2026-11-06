@@ -8,6 +8,15 @@ use std::{
 };
 
 pub enum Work {
+    WorkspaceLoad,
+    WorkspaceSave {
+        document: crate::workspace::Document,
+        expected: Option<String>,
+    },
+    WorkspaceRestore {
+        document: crate::workspace::Document,
+        extra: Option<PathBuf>,
+    },
     Connection(crate::connection_work::Job),
     Open(Option<PathBuf>),
     Activate(String),
@@ -84,6 +93,9 @@ pub struct Request {
     pub work: Work,
 }
 pub enum Payload {
+    WorkspaceLoaded(Option<crate::workspace::Loaded>),
+    WorkspaceSaved(crate::workspace::Loaded),
+    WorkspaceRestored(crate::workspace::Restored),
     Recent(Vec<String>),
     Closed(String),
     WorktreeParent(ramo_core::git::WorktreeParent),
@@ -162,8 +174,89 @@ impl Worker {
     }
 }
 
+fn restore_workspace(
+    backend: &mut Backend,
+    document: crate::workspace::Document,
+    extra: Option<PathBuf>,
+) -> Result<crate::workspace::Restored, String> {
+    document.encode()?;
+    let mut restored = crate::workspace::Restored {
+        tabs: vec![],
+        active: document.active,
+        compact: document.compact,
+        inspector: document.inspector,
+        notices: vec![],
+    };
+    for mut tab in document.tabs {
+        let result=backend.register(std::path::Path::new(&tab.path)).and_then(|snapshot| {
+            if snapshot.repo.id != tab.id {
+                if !restored.tabs.iter().any(|(t,error)| t.id==snapshot.repo.id && error.is_none()) {backend.close_repository(&snapshot.repo.id);}
+                return Err("Folder now points to a different Git checkout. Open it explicitly to review.".into());
+            }
+            if snapshot.repo.trusted {backend.close_repository(&snapshot.repo.id);backend.register(std::path::Path::new(&tab.path))?;}
+            Ok(snapshot.repo.name)
+        });
+        match result {
+            Ok(name) => {
+                tab.name = name;
+                restored.tabs.push((tab, None));
+            }
+            Err(error) => restored.tabs.push((tab, Some(error))),
+        }
+    }
+    if let Some(path) = extra {
+        match backend.register(&path) {
+            Ok(snapshot) => {
+                let id = snapshot.repo.id.clone();
+                if let Some((tab, error)) = restored.tabs.iter_mut().find(|(t, _)| t.id == id) {
+                    tab.name = snapshot.repo.name;
+                    *error = None;
+                } else {
+                    if restored.tabs.len() < 20 {
+                        restored.tabs.push((
+                            crate::workspace::Tab {
+                                id: id.clone(),
+                                name: snapshot.repo.name,
+                                path: snapshot.repo.path,
+                                view: Default::default(),
+                            },
+                            None,
+                        ));
+                    } else {
+                        backend.close_repository(&id);
+                        restored.notices.push("The saved workspace already has20 tabs. Close one before opening the requested repository.".into());
+                    }
+                }
+                if restored.tabs.iter().any(|(t, e)| t.id == id && e.is_none()) {
+                    restored.active = Some(id);
+                }
+            }
+            Err(error) => restored.notices.push(error),
+        }
+    }
+    if !restored
+        .tabs
+        .iter()
+        .any(|(t, e)| Some(&t.id) == restored.active.as_ref() && e.is_none())
+    {
+        restored.active = restored
+            .tabs
+            .iter()
+            .find(|(_, e)| e.is_none())
+            .map(|(t, _)| t.id.clone());
+    }
+    Ok(restored)
+}
+
 fn execute(backend: &mut Backend, state: &std::path::Path, work: Work) -> Result<Payload, String> {
     Ok(match work {
+        Work::WorkspaceLoad => Payload::WorkspaceLoaded(crate::workspace::load(state)?),
+        Work::WorkspaceSave { document, expected } => {
+            Payload::WorkspaceSaved(crate::workspace::save(state, document, expected)?)
+        }
+        Work::WorkspaceRestore { document, extra } => {
+            Payload::WorkspaceRestored(restore_workspace(backend, document, extra)?)
+        }
         Work::Connection(job) => Payload::Connection(crate::connection_work::execute(backend, job)),
         Work::Open(path) => {
             let Some(path) = path.or_else(|| {
@@ -402,6 +495,103 @@ mod tests {
             git(root, &["status", "--porcelain=v1", "-z"]),
             fs::read(root.join("search.txt")).unwrap(),
         ]
+    }
+    #[test]
+    fn workspace_restore_is_fresh_untrusted_partial_and_preserves_navigation_and_git() {
+        let (temp, root, mut backend) = fixture();
+        let (_other_temp, other_root, _) = fixture();
+        let first = backend.register(&root).unwrap();
+        let other = backend.register(&other_root).unwrap();
+        backend.trust(&first.repo.id).unwrap();
+        backend.trust(&other.repo.id).unwrap();
+        fs::write(root.join("search.txt"), b"staged local\n").unwrap();
+        git(&root, &["add", "search.txt"]);
+        fs::write(root.join("search.txt"), b"external local\n").unwrap();
+        let before = proof(&root);
+        let tab = |s: &Snapshot| crate::workspace::Tab {
+            id: s.repo.id.clone(),
+            name: s.repo.name.clone(),
+            path: s.repo.path.clone(),
+            view: crate::workspace::View {
+                mode: crate::workspace::Mode::Changes,
+                file: Some("search.txt".into()),
+                filter: "日本語".into(),
+                ..Default::default()
+            },
+        };
+        let missing = temp
+            .path()
+            .join("missing-checkout")
+            .to_string_lossy()
+            .into_owned();
+        let id = ramo_core::git::hash(missing.as_bytes());
+        let mut document = crate::workspace::Document {
+            tabs: vec![
+                tab(&first),
+                tab(&other),
+                crate::workspace::Tab {
+                    id: id.clone(),
+                    name: "Missing".into(),
+                    path: missing,
+                    view: Default::default(),
+                },
+            ],
+            active: Some(id),
+            compact: false,
+            inspector: false,
+            ..Default::default()
+        };
+        let Payload::WorkspaceSaved(saved) = execute(
+            &mut backend,
+            temp.path(),
+            Work::WorkspaceSave {
+                document: document.clone(),
+                expected: None,
+            },
+        )
+        .unwrap() else {
+            panic!()
+        };
+        let Payload::WorkspaceLoaded(Some(loaded)) =
+            execute(&mut backend, temp.path(), Work::WorkspaceLoad).unwrap()
+        else {
+            panic!()
+        };
+        assert_eq!(saved.revision, loaded.revision);
+        assert_eq!(loaded.document, document);
+        let Payload::WorkspaceRestored(restored) = execute(
+            &mut backend,
+            temp.path(),
+            Work::WorkspaceRestore {
+                document: loaded.document,
+                extra: Some(root.clone()),
+            },
+        )
+        .unwrap() else {
+            panic!()
+        };
+        assert_eq!(restored.tabs.len(), 3);
+        assert_eq!(restored.active.as_deref(), Some(first.repo.id.as_str()));
+        assert!(restored.tabs[2].1.is_some());
+        assert_eq!(restored.tabs[0].0.view.filter, "日本語");
+        let current = backend.snapshot(&first.repo.id).unwrap();
+        assert!(!current.repo.trusted);
+        assert!(!current.files.is_empty());
+        assert!(!backend.snapshot(&other.repo.id).unwrap().repo.trusted);
+        assert_eq!(proof(&root), before);
+        // A saved subdirectory must not silently become a different registered root.
+        let nested = root.join("nested");
+        fs::create_dir(&nested).unwrap();
+        let path = nested.to_string_lossy().into_owned();
+        document.tabs.push(crate::workspace::Tab {
+            id: ramo_core::git::hash(path.as_bytes()),
+            name: "Moved root".into(),
+            path,
+            view: Default::default(),
+        });
+        let restored = restore_workspace(&mut backend, document, None).unwrap();
+        assert!(restored.tabs[3].1.is_some());
+        assert!(backend.repository(&first.repo.id).is_ok());
     }
     #[test]
     fn native_tabs_keep_live_trust_until_close_and_recents_reopen_without_it() {

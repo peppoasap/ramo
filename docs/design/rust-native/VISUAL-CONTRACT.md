@@ -59,3 +59,10 @@ and a mint active underline. Keep the active repository visible at narrow widths
 and put overflow in a menu; do not add horizontal toolbar scroll. Open/recents and
 Clone remain small. Opening trust reuses the bounded modal and a clear read-only
 alternative. Tab-fidelity/ records actual wide/narrow and source comparisons.
+
+Workspace restoration preserves the same workbench rather than introducing a
+dashboard. Unavailable tabs use the existing warning icon with one short recovery
+notice; errors retain the current context. Correct singular/plural copy and clear
+workspace-specific save errors. Optional installed CJK fonts append to existing
+regular/semibold/monospace fallbacks without changing Latin priority; do not bundle
+proprietary system fonts. workspace-fidelity/ records actual restart/fault states.
