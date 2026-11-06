@@ -34,7 +34,8 @@ installs into Applications nor publishes a release.
 
 ## What works in this slice
 
-- Real repository registration, snapshot, branches and linked-worktree listing.
+- Real repository registration, snapshots, branch/worktree navigation and guarded
+  worktree creation/management. Compact session tabs, close/overflow and durable recents.
 - Clone by HTTPS/SSH URL, provider shortcut or native-picked local source. A
   native-picked parent and immutable one-shot review protect destinations; failed
   clones are not retried or cleaned up automatically. Opens the new checkout
@@ -55,8 +56,9 @@ installs into Applications nor publishes a release.
 - Compare two immutable saved commits through the Compare tab, revision choices,
   full commit IDs or commit/branch context menus. Swap direction or compare since
   the unique common ancestor; inspect each changed file independently. No staging
-  or trust is required; working/index data is excluded. Choice list is bounded to
-  1,000 entries; other loaded commits remain selectable through their graph menu
+  or trust is required; working/index data is excluded. Choices scan up to
+  1,000 branches and1,000 loaded commits, rendering at most100 matches; other
+  loaded commits remain selectable through their graph menu
   and explicit full IDs work outside loaded history. Renames appear as delete/add;
   binary changes show Git summaries and text diffs have a512KiB limit.
 - Drag a commit, graph branch label or sidebar branch onto a commit to compare
@@ -88,7 +90,8 @@ index commits (including completion of a merge with an unchanged tree), local
 branch creation/checkout/merge/deletion, fetch/fast-forward pull/push, and reviewed
 stash creation/apply/pop/drop. Double-click checks out a local branch without an
 extra review after trust; right-click exposes branch/stash operations. Trust lasts
-for an opening, resets on explicit reopen, and is not persisted. Network calls
+until explicit tab close or app exit; activation preserves it and it is never
+persisted. The opening prompt also offers read-only access. Network calls
 have the existing core timeouts; native progress/Stop is still missing.
 
 The editor has a reviewed Save and stage action; typing and local draft save do
@@ -179,6 +182,11 @@ Worktree navigation now uses actual linked checkouts. Use the sidebar + to creat
 a checkout from a new or available existing branch; right-click for lock/unlock
 and guarded removal. Parent folders are selected through the native picker. Git
 files remain under the shared core's checks; the renderer holds no shell authority.
-Commit drafts are saved before switching. One checkout is active at a time for
-now; switching ends the previous checkout's session trust. Tabs/recents are next.
+Commit drafts are saved before switching. Open checkouts now remain in session
+tabs, with a width-aware overflow menu.
+Close a tab to end that checkout's session trust. The Open menu includes durable
+recent repositories; native trust is asked once on opening, with read-only access.
+Accepting trust never executes a queued mutation. In-memory view intent is
+restored using fresh core reads; automatic workspace restoration after restart
+remains pending.
 See [verification](../../docs/NATIVE-VERIFICATION.md).

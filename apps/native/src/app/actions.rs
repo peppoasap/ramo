@@ -71,7 +71,7 @@ impl App {
             action,
             title: title.into(),
             detail: detail.into(),
-            review,
+            review: review || !s.repo.trusted,
             fingerprint: s.fingerprint.clone(),
             repo: s.repo.id.clone(),
         });

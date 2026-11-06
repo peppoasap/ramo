@@ -53,3 +53,9 @@ captions and right-click actions as the selected workbench. Creation reuses the
 bounded theme modal, native folder picker, explicit branch choice and visible
 review footer. Scoped actual macOS captures live in worktree-fidelity/; there is
 no dedicated worktree dialog mock from which to claim pixel parity.
+
+Repository tabs use compact names/icons, flat close buttons with accessible names
+and a mint active underline. Keep the active repository visible at narrow widths
+and put overflow in a menu; do not add horizontal toolbar scroll. Open/recents and
+Clone remain small. Opening trust reuses the bounded modal and a clear read-only
+alternative. Tab-fidelity/ records actual wide/narrow and source comparisons.

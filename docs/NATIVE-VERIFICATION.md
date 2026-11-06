@@ -322,3 +322,30 @@ untracked bytes and ignored sentinel hashes unchanged. No AI/network action.
 Repository tabs/recents, Windows/Linux GUI and native release remain incomplete.
 Previousfa2a53a native42208900871 and legacy42208900858 pass all three OS; the
 new worktree revision requires separate hosted results.
+
+## Repository tabs and opening trust — 6 November 2026
+
+38 native tests pass. Worker tests verify two live registrations retain separate
+trust, activation observes external edits, canonical duplicate opens reuse ID,
+close invalidates activation and trust, durable recent paths reject arbitrary
+paths and reopen untrusted after backend restart. Model tests cover duplicate
+tabs, active overflow selection, close/reopen prompting. Existing mutation test
+now verifies trust both retained while open and reset after explicit close.
+Native fmt/clippy, bundle strict signature and267 notices pass.
+
+Actual macOS exercised four tabs and narrow +2 overflow, filter/Changes-file/
+immutable-comparison restoration, external edit freshness (edit restored), Unicode
+composer recovery on switch/restart, missing-recent error preserving active view,
+last close and Refresh context. A real synthetic conflict verified switch/Cmd-W
+keep-editing and explicit discard of memory only; closing an inactive tab kept
+the active result. Final opening-trust UI verified read-only no-repeat activation,
+trusted activation, new consent after close/reopen and queued branch review after
+trust acceptance. Independent Git confirms no such branch created and preserves
+source HEAD/index tree/work/untracked/ignored bytes, comparison fixture state and
+conflict HEAD/index/work/MERGE_HEAD. No merge was saved/staged/completed in this pass.
+See [synthetic proof](verification/native-tabs-ui.json) and root design-qa.md.
+
+Previousa1eb21c native42210758879 and legacy42210758750 pass all three OS; this
+source needs its own CI. Native GUI evidence remains macOS only. Views/open tabs
+are in-memory, automatic workspace restart restoration is pending; recents/drafts
+are durable. No AI request, native installer/tag/release or full-goal completion.

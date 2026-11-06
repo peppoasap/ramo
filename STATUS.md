@@ -751,14 +751,42 @@ section in design-qa.md and docs/verification/native-worktrees-ui.json. No new
 inference/network or release. Previousfa2a53a native42208900871 and legacy42208900858
 passed all three OS; this new source needs its own CI.
 
+## Native repository tabs and opening trust — 6 November 2026
+
+Compact repository tabs now retain backend registrations until explicit close,
+with20-tab bound, contextual close, Cmd/Ctrl-W and overflow menu that keeps the
+active tab visible. Open includes core-backed recent repositories. Switches read
+fresh Git snapshots/history and restore in-memory mode, filters, selected commit/
+changed file and immutable comparison intent. They refetch previews/comparisons;
+Git payloads are not restored from a tab cache. Refresh preserves view context.
+Active navigation saves the composer first and uses the dirty merge exit gate.
+Closing an inactive tab preserves the active result. Closing the last tab shows
+the empty workbench. Missing recent paths leave the current view intact.
+
+The native worker now follows ADR0022's opening policy: one trust prompt per open
+checkout, read-only choice remembered while open, no re-prompt on activation, and
+new consent after explicit close/restart. Worktrees retain separate authority.
+Accepting trust does not execute a queued mutation; explicit untrusted writes
+return to operation review. No provider/AI authority is added. See ADR0029.
+
+Actual macOS exercised four synthetic tabs, narrow overflow selection, context/
+filter/file/comparison restoration, external edit freshness, Unicode composer
+switch/restart recovery, merge switch/Cmd-W keep/discard and inactive-close guards,
+read-only and trusted activation, close/reopen trust, no automatic branch on trust,
+last-tab close and missing-recent recovery. Three synthetic Git states independently
+preserved HEAD, index entries/tree, work/untracked/ignored bytes and conflict markers.
+38 native tests, fmt/clippy, bundle strict signature and267 notices pass. Previous
+a1eb21c native42210758879 and legacy42210758750 passed all three OS; new source
+requires separate CI. No inference/network Git request or native release.
+
 ## Exact next task
 
-Implement native repository tabs and recent repository navigation/state restoration,
-including explicit close, session trust lifetime and draft-safe switching. Use the
-selected visual contract and shared core; do not cache stale Git snapshots as live.
-Keep [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full goal ledger:
-contextual native AI/settings, clone Stop/progress, broader menus/remote controls,
-syntax/linked scroll/IME/accessibility/CRLF/large-file editor gates, daily-base
-recovery/rebase depth and native packaging/cutover remain. Full migration is
-incomplete. Observe fresh hosted checks; Windows/Linux GUI and second-Mac release
-acceptance remain separate from CI.
+Persist and restore the native workspace/view intent across restart, with fresh
+core reads and fresh trust consent, bounded validation and explicit recovery for
+missing folders. Current views/open tabs are in-memory; only recents and existing
+drafts are durable. Then port contextual native AI/settings and its selected mock
+surfaces. Keep [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full objective:
+clone Stop/progress, broader menus/remote controls, syntax/linked scroll/IME/a11y/
+CRLF/large-file editor gates, daily-base recovery/rebase and native packaging/
+cutover remain. Full migration is incomplete; platform GUI/install acceptance and
+matched performance remain distinct from CI.

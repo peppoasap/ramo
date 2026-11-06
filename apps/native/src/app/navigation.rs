@@ -14,27 +14,12 @@ impl App {
                     ui.label(RichText::new(icon::GIT_BRANCH).size(23.).color(theme::MINT));
                     ui.label(theme::emphasis("Ramo").size(22.));
                     ui.add_space(20.);
-                    if let Some(snapshot) = &self.snapshot {
-                        let name = snapshot.repo.name.clone();
-                        let tab = ui.add(
-                            egui::Button::new(theme::emphasis(format!("{}  {name}", icon::CODE)))
-                                .fill(theme::SELECTED.gamma_multiply(0.55))
-                                .stroke(egui::Stroke::NONE)
-                                .min_size(egui::vec2(180., 32.)),
-                        );
-                        ui.painter().line_segment(
-                            [tab.rect.left_bottom(), tab.rect.right_bottom()],
-                            egui::Stroke::new(2., theme::MINT),
-                        );
-                        tab.on_hover_text(&snapshot.repo.path);
-                    }
+                    self.repository_tabs(ui);
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if self.modal_open() || self.action_request.is_some() {
                             ui.disable();
                         }
-                        if theme::button(ui, icon::FOLDER_OPEN, "Open repository").clicked() {
-                            self.ask_open();
-                        }
+                        self.repository_menu(ui);
                         if theme::button(ui, icon::CLOUD_ARROW_DOWN, "Clone").clicked() {
                             self.ask_clone();
                         }

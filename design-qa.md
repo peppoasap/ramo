@@ -1,4 +1,4 @@
-# Native comparison and worktree visual acceptance — 6 November 2026
+# Native workbench visual acceptance — 6 November 2026
 
 Scope: revision comparison, using the accepted graphite/mint visual contract and
 existing read-only comparison behavior. [History](docs/design/rust-native/qa-history-2026-11-06.md)
@@ -138,5 +138,48 @@ the existing merge exit guard is reused.36 native tests and lint/fmt pass. Bundl
 strict signature and267 notices pass. Self-review; no native release or new AI.
 Previousfa2a53a native/core42208900871 and legacy42208900858 passed all three OS;
 new source CI remains pending. Full goal ledger remains open.
+
+## Repository tabs and opening trust
+
+Scoped extension of the accepted workbench chrome: compact tabs, active mint
+underline, flat close actions, Open/recents and one opening-trust dialog. The
+[combined reference and implementation](docs/design/rust-native/tab-fidelity/comparison.jpg)
+normalizes each to1200px width with preserved aspect ratio. Source1717×916 is the
+accepted history revision; actual3024×1898 raw capture exports3024×1836 content
+by removing only62px OS strip (1512×918 logical at2×). Actual55-commit fixture and
+selected CONTRIBUTING commit differ from the concept; topology/data were not
+fabricated to match it. No dedicated multi-tab/trust mock supplies exact pixel
+parity for these added states.
+
+[Readable strip/overflow crops](docs/design/rust-native/tab-fidelity/details.jpg),
+[full actual](docs/design/rust-native/tab-fidelity/final.jpg),
+[narrow](docs/design/rust-native/tab-fidelity/narrow.jpg),
+[opening trust](docs/design/rust-native/tab-fidelity/open-trust.jpg),
+[recent restart](docs/design/rust-native/tab-fidelity/recent-restart.jpg),
+[restored Changes](docs/design/rust-native/tab-fidelity/restored-changes.jpg),
+[comparison](docs/design/rust-native/tab-fidelity/restored-comparison.jpg) and
+[merge guard](docs/design/rust-native/tab-fidelity/merge-guard.jpg) were inspected.
+Narrow1002×683 logical shows two tabs and +2 for four open repositories, keeping
+the active tab visible. Choosing the hidden repository works. No horizontal tab
+scroll. The first iteration truncated normal names too early and boxed close
+buttons: widened tabs to180px labels, flat20px close targets with explicit AX names
+and a conservative width budget. Existing Noto/Phosphor, palette,3px controls and
+6px modal are reused. No new raster, font or dependency was introduced.
+
+Functional evidence: fresh Changes/file/comparison reads and filters restore on
+activation; external edit becomes visible and is restored afterward. Unicode
+composer survives switch/restart. Active switch/Cmd-W guard unsaved merge text;
+inactive close preserves it. Last close shows the empty workbench; a missing
+recent folder leaves the active view intact. Read-only opening is not repeatedly
+prompted on activation; trusted tabs keep session consent until close. Explicit
+close/reopen prompts anew. After trust acceptance for an explicit untrusted branch
+request, the operation review remains and Git confirms no branch was auto-created.
+Independent source/compare/conflict preservation checks pass.38 native tests,
+fmt/clippy and strict developer bundle/267 notices pass. Self-review only.
+No P0/P1/P2 remains in this inspected tab/trust scope. Full keyboard/screen reader/
+IME/DPI/platform acceptance remains open; accessible close names do not prove it.
+Open-tab/view state is in-memory; only recents/drafts survive restart at present.
+Previousa1eb21c CI passes all three OS; new source requires fresh hosted checks.
+Full objective and native release gates remain open.
 
 final result: passed

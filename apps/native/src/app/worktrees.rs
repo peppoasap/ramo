@@ -5,12 +5,18 @@ use ramo_core::git::WorktreeParent;
 #[derive(Clone)]
 pub(super) enum OpenTarget {
     Folder(Option<PathBuf>),
+    Activate(String),
+    Recent(String),
+    Close(String),
     Worktree { repo: String, path: String },
 }
 impl OpenTarget {
     pub(super) fn work(self) -> Work {
         match self {
             Self::Folder(path) => Work::Open(path),
+            Self::Activate(id) => Work::Activate(id),
+            Self::Recent(path) => Work::Recent(path),
+            Self::Close(id) => Work::Close(id),
             Self::Worktree { repo, path } => Work::OpenWorktree { repo, path },
         }
     }

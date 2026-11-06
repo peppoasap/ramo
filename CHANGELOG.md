@@ -5,6 +5,12 @@ only a published GitHub Release establishes an external release.
 
 ## Unreleased — Rust-native development (0.3.0-dev.1)
 
+- Add compact native repository tabs, close/keyboard actions, overflow and durable
+  recent paths. Restore view intent on activation through fresh Git reads; keep
+  commit drafts and unsaved merge edits protected. Preserve context on Refresh.
+- Ask native repository trust once at opening. Switching tabs keeps the decision;
+  closing/restarting resets it. Accepting trust does not execute a queued mutation.
+
 - Make native worktree rows functional: open linked checkouts, create from a new
   or available existing branch, lock/unlock and review clean removal. Reuse core
   folder grants, membership/fingerprint checks and work-preservation rules.

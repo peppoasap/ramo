@@ -10,6 +10,10 @@ use std::{
 pub enum Work {
     Connection(crate::connection_work::Job),
     Open(Option<PathBuf>),
+    Activate(String),
+    Close(String),
+    RecentList,
+    Recent(String),
     OpenWorktree {
         repo: String,
         path: String,
@@ -80,6 +84,8 @@ pub struct Request {
     pub work: Work,
 }
 pub enum Payload {
+    Recent(Vec<String>),
+    Closed(String),
     WorktreeParent(ramo_core::git::WorktreeParent),
     Connection(Result<crate::connection_work::Reply, String>),
     Opened {
@@ -134,17 +140,8 @@ impl Worker {
         let (out, answers) = mpsc::channel();
         std::thread::spawn(move || {
             let mut backend = Backend::new(state.join("repositories.json"));
-            let mut active: Option<String> = None;
             while let Ok(request) = rx.recv() {
-                let opening = matches!(&request.work, Work::Open(_) | Work::OpenWorktree { .. });
                 let result = execute(&mut backend, &state, request.work);
-                if opening
-                    && let Ok(Payload::Opened { snapshot, .. }) = &result
-                    && let Some(previous) = active.replace(snapshot.repo.id.clone())
-                    && previous != snapshot.repo.id
-                {
-                    backend.close_repository(&previous);
-                }
                 if out
                     .send(Reply {
                         sequence: request.sequence,
@@ -176,12 +173,9 @@ fn execute(backend: &mut Backend, state: &std::path::Path, work: Work) -> Result
             }) else {
                 return Ok(Payload::Cancelled);
             };
-            let mut snapshot = backend.register(&path)?;
-            // Opening is a fresh trust boundary, unlike a refresh. No trust is persisted.
-            if snapshot.repo.trusted {
-                backend.close_repository(&snapshot.repo.id);
-                snapshot = backend.register(&path)?;
-            }
+            // Already-open canonical repositories retain their session trust.
+            // Explicit Close removes the registration; preferences never store trust.
+            let snapshot = backend.register(&path)?;
             let commits = backend.history(&snapshot.repo.id, 0)?;
             Payload::Opened {
                 snapshot: Box::new(snapshot),
@@ -189,12 +183,36 @@ fn execute(backend: &mut Backend, state: &std::path::Path, work: Work) -> Result
             }
         }
         Work::OpenWorktree { repo, path } => {
-            let mut snapshot = backend.open_worktree(&repo, &path)?;
-            // Linked worktrees are separate session trust scopes, just like Open.
-            if snapshot.repo.trusted {
-                backend.close_repository(&snapshot.repo.id);
-                snapshot = backend.register(std::path::Path::new(&snapshot.repo.path))?;
+            let snapshot = backend.open_worktree(&repo, &path)?;
+            let commits = backend.history(&snapshot.repo.id, 0)?;
+            Payload::Opened {
+                snapshot: Box::new(snapshot),
+                commits,
             }
+        }
+        Work::Activate(repo) => {
+            let snapshot = backend.snapshot(&repo)?;
+            let commits = backend.history(&repo, 0)?;
+            Payload::Opened {
+                snapshot: Box::new(snapshot),
+                commits,
+            }
+        }
+        Work::Close(repo) => {
+            backend.close_repository(&repo);
+            Payload::Closed(repo)
+        }
+        Work::RecentList => Payload::Recent(
+            backend
+                .preferences
+                .recent
+                .iter()
+                .take(20)
+                .cloned()
+                .collect(),
+        ),
+        Work::Recent(path) => {
+            let snapshot = backend.recent(&path)?;
             let commits = backend.history(&snapshot.repo.id, 0)?;
             Payload::Opened {
                 snapshot: Box::new(snapshot),
@@ -384,6 +402,103 @@ mod tests {
             git(root, &["status", "--porcelain=v1", "-z"]),
             fs::read(root.join("search.txt")).unwrap(),
         ]
+    }
+    #[test]
+    fn native_tabs_keep_live_trust_until_close_and_recents_reopen_without_it() {
+        let (temp, root, mut backend) = fixture();
+        let (_other_temp, other_root, _) = fixture();
+        let Payload::Opened {
+            snapshot: first, ..
+        } = execute(&mut backend, temp.path(), Work::Open(Some(root.clone()))).unwrap()
+        else {
+            panic!()
+        };
+        backend.trust(&first.repo.id).unwrap();
+        let Payload::Opened {
+            snapshot: other, ..
+        } = execute(&mut backend, temp.path(), Work::Open(Some(other_root))).unwrap()
+        else {
+            panic!()
+        };
+        assert!(!other.repo.trusted);
+        fs::write(root.join("search.txt"), b"external local edit\n").unwrap();
+        let before = proof(&root);
+        let Payload::Opened {
+            snapshot: active, ..
+        } = execute(
+            &mut backend,
+            temp.path(),
+            Work::Activate(first.repo.id.clone()),
+        )
+        .unwrap()
+        else {
+            panic!()
+        };
+        assert!(active.repo.trusted);
+        assert!(!active.files.is_empty());
+        let Payload::Opened {
+            snapshot: duplicate,
+            ..
+        } = execute(&mut backend, temp.path(), Work::Open(Some(root.clone()))).unwrap()
+        else {
+            panic!()
+        };
+        assert_eq!(duplicate.repo.id, first.repo.id);
+        assert!(duplicate.repo.trusted);
+        execute(
+            &mut backend,
+            temp.path(),
+            Work::Close(first.repo.id.clone()),
+        )
+        .unwrap();
+        assert!(
+            execute(
+                &mut backend,
+                temp.path(),
+                Work::Activate(first.repo.id.clone())
+            )
+            .is_err()
+        );
+        assert!(backend.repository(&other.repo.id).is_ok());
+        let Payload::Opened {
+            snapshot: reopened, ..
+        } = execute(
+            &mut backend,
+            temp.path(),
+            Work::Recent(first.repo.path.clone()),
+        )
+        .unwrap()
+        else {
+            panic!()
+        };
+        assert!(!reopened.repo.trusted);
+        assert_eq!(proof(&root), before);
+        drop(backend);
+        let mut restarted = Backend::new(temp.path().join("app-state/repositories.json"));
+        let Payload::Recent(paths) =
+            execute(&mut restarted, temp.path(), Work::RecentList).unwrap()
+        else {
+            panic!()
+        };
+        assert_eq!(paths.len(), 2);
+        assert_eq!(paths[0], first.repo.path);
+        assert!(restarted.repository(&first.repo.id).is_err());
+        assert!(
+            execute(
+                &mut restarted,
+                temp.path(),
+                Work::Recent(temp.path().to_string_lossy().into())
+            )
+            .is_err()
+        );
+        let Payload::Opened {
+            snapshot: reopened, ..
+        } = execute(&mut restarted, temp.path(), Work::Recent(first.repo.path)).unwrap()
+        else {
+            panic!()
+        };
+        assert!(!reopened.repo.trusted);
+        assert_eq!(proof(&root), before);
     }
     #[test]
     fn native_worktree_jobs_reuse_grants_membership_and_preserve_source_work() {
@@ -1214,6 +1329,13 @@ mod tests {
         assert!(committed.repo.trusted);
         let Payload::Opened { snapshot, .. } =
             execute(&mut backend, temp.path(), Work::Open(Some(root.clone()))).unwrap()
+        else {
+            panic!()
+        };
+        assert!(snapshot.repo.trusted);
+        execute(&mut backend, temp.path(), Work::Close(snapshot.repo.id)).unwrap();
+        let Payload::Opened { snapshot, .. } =
+            execute(&mut backend, temp.path(), Work::Open(Some(root))).unwrap()
         else {
             panic!()
         };

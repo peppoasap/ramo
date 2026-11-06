@@ -17,6 +17,19 @@ pub(super) struct CompareView {
     file_request: Option<u64>,
 }
 impl CompareView {
+    pub(super) fn selection(&self) -> Self {
+        Self {
+            from: self.from.clone(),
+            to: self.to.clone(),
+            ancestor: self.ancestor,
+            labels: self.labels.clone(),
+            filters: self.filters.clone(),
+            ..Default::default()
+        }
+    }
+    pub(super) fn has_pair(&self) -> bool {
+        !self.from.is_empty() && !self.to.is_empty()
+    }
     pub(super) fn cancel_requests(&mut self) {
         self.request = None;
         self.file_request = None;

@@ -10,6 +10,7 @@ mod history;
 mod inspection;
 mod navigation;
 mod remotes;
+mod repositories;
 mod worktrees;
 use worktrees::OpenTarget;
 
@@ -39,6 +40,8 @@ enum Mode {
 
 pub struct App {
     worker: Worker,
+    repositories: repositories::Tabs,
+    recent_request: Option<u64>,
     #[cfg(target_os = "macos")]
     quit_bridge: Option<crate::macos_quit::Bridge>,
     action: Option<actions::PendingAction>,
@@ -96,6 +99,8 @@ impl App {
         let worker = Worker::start(state, cc.egui_ctx.clone());
         let mut app = Self {
             worker,
+            repositories: Default::default(),
+            recent_request: None,
             #[cfg(target_os = "macos")]
             quit_bridge: crate::macos_quit::Bridge::install(&cc.egui_ctx),
             action: None,
@@ -146,10 +151,12 @@ impl App {
         if let Some(repository) = repository {
             app.open(Some(repository));
         }
+        app.load_recent();
         app
     }
     fn modal_open(&self) -> bool {
         self.open_request.is_some()
+            || self.repositories.prompt.is_some()
             || self.worktree_dialog.is_some()
             || self.clone_dialog.is_some()
             || self.remote_dialog.is_some()
@@ -189,13 +196,29 @@ impl App {
                 Some("Wait for cloning to finish before opening another repository.".into());
             return;
         }
-        if self.composer.pending() || self.composer.dirty() {
+        let closing_inactive = matches!(&target, OpenTarget::Close(id) if self.snapshot.as_ref().is_none_or(|s| &s.repo.id != id));
+        if !closing_inactive && (self.composer.pending() || self.composer.dirty()) {
             self.open_after_draft = Some(target);
             self.save_composer();
             return;
         }
         if self.action_request.is_some() {
             self.error = Some("Wait for the current Git operation to finish.".into());
+            return;
+        }
+        if self.repositories.entries.len() >= 20
+            && matches!(
+                &target,
+                OpenTarget::Folder(_) | OpenTarget::Recent(_) | OpenTarget::Worktree { .. }
+            )
+        {
+            self.error =
+                Some("Close a repository tab before opening another (20 open maximum).".into());
+            return;
+        }
+        if closing_inactive {
+            let id = self.send(target.work());
+            self.open_request = self.pending.contains(&id).then_some(id);
             return;
         }
         self.action = None;
@@ -324,6 +347,33 @@ impl App {
             {
                 self.pending.remove(&reply.sequence);
                 dialog.receive(reply.result);
+                continue;
+            }
+            if self.repositories.trust_request == Some(reply.sequence) {
+                self.pending.remove(&reply.sequence);
+                self.repositories.trust_request = None;
+                match reply.result {
+                    Ok(Payload::Trusted(snapshot)) => {
+                        self.snapshot = Some(*snapshot);
+                        self.repositories.prompt = None;
+                    }
+                    Err(error) => {
+                        self.error = Some(error);
+                    }
+                    _ => {
+                        self.error = Some("Unexpected trust response.".into());
+                    }
+                }
+                continue;
+            }
+            if self.recent_request == Some(reply.sequence) {
+                self.pending.remove(&reply.sequence);
+                self.recent_request = None;
+                match reply.result {
+                    Ok(Payload::Recent(paths)) => self.repositories.recent = paths,
+                    Err(error) => self.error = Some(error),
+                    _ => {}
+                }
                 continue;
             }
             if reply.epoch != self.epoch {
@@ -477,42 +527,10 @@ impl App {
                 ) => {}
                 Ok(Payload::Cancelled) => {}
                 Ok(Payload::Opened { snapshot, commits }) => {
-                    let retain_comparison = self.mode == Mode::Compare
-                        && self
-                            .snapshot
-                            .as_ref()
-                            .is_some_and(|current| current.repo.id == snapshot.repo.id);
-                    if self.composer.repository.as_deref() != Some(&snapshot.repo.id) {
-                        self.composer.bind(
-                            snapshot.repo.id.clone(),
-                            snapshot.head.clone().unwrap_or_default(),
-                        );
-                        self.load_composer();
-                    }
-                    self.error = None;
-                    if !retain_comparison {
-                        self.mode = Mode::History;
-                        self.comparison = Default::default();
-                    }
-                    self.editor = None;
-                    self.filter.clear();
-                    self.branch_filter.clear();
-                    self.has_more = commits.len() == 300;
-                    self.commits = commits;
-                    self.snapshot = Some(*snapshot);
-                    self.rows = graph::layout(&self.commits);
-                    self.refilter();
-                    self.selected = None;
-                    self.files.clear();
-                    self.file = None;
-                    self.diff.clear();
-                    if self.mode == Mode::History
-                        && let Some(first) = self.commits.first()
-                    {
-                        self.select(first.oid.clone());
-                    }
-                    self.scroll_target = Some(0);
+                    self.install_repository(*snapshot, commits)
                 }
+                Ok(Payload::Closed(id)) => self.closed_repository(&id),
+                Ok(Payload::Recent(_)) => {}
                 Ok(Payload::Page { skip, commits }) => {
                     if skip != self.commits.len() {
                         continue;
@@ -652,11 +670,17 @@ impl eframe::App for App {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             self.editor_exit = Some(EditorExit::Close);
         }
+        if ctx.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, Key::W))
+            && let Some(snapshot) = &self.snapshot
+        {
+            self.ask_repository(OpenTarget::Close(snapshot.repo.id.clone()));
+        }
         if ctx.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, Key::O)) {
             self.ask_open();
         }
         self.chrome(ctx);
         self.drag_overlay(ctx);
+        self.repository_trust_dialog(ctx);
         self.action_dialogs(ctx);
         self.clone_dialog_ui(ctx);
         self.remote_dialog_ui(ctx);
