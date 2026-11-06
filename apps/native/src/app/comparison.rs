@@ -60,6 +60,32 @@ impl App {
         self.comparison.invalidate();
         self.mode = Mode::Compare;
     }
+    pub(super) fn compare_pair(&mut self, from: String, to: String) {
+        self.compare_endpoint(true, from);
+        self.compare_endpoint(false, to);
+        self.comparison.ancestor = false;
+        self.run_comparison();
+    }
+    pub(super) fn run_comparison(&mut self) {
+        let Some(snapshot) = &self.snapshot else {
+            return;
+        };
+        let repo = snapshot.repo.id.clone();
+        self.comparison.invalidate();
+        let id = self.send(Work::Compare {
+            repo,
+            from: self.comparison.from.trim().into(),
+            to: self.comparison.to.trim().into(),
+            kind: if self.comparison.ancestor {
+                Kind::MergeBase
+            } else {
+                Kind::Trees
+            },
+        });
+        if self.pending.contains(&id) {
+            self.comparison.request = Some(id);
+        }
+    }
     pub(super) fn comparison(&mut self, ui: &mut egui::Ui) {
         let Some(snapshot) = self.snapshot.as_ref() else {
             return;
@@ -129,20 +155,7 @@ impl App {
             !self.comparison.from.trim().is_empty() && !self.comparison.to.trim().is_empty();
         ui.horizontal(|ui| {
             if theme::primary(ui, "Compare", enabled).clicked() {
-                self.comparison.invalidate();
-                let id = self.send(Work::Compare {
-                    repo: repo.clone(),
-                    from: self.comparison.from.trim().into(),
-                    to: self.comparison.to.trim().into(),
-                    kind: if self.comparison.ancestor {
-                        Kind::MergeBase
-                    } else {
-                        Kind::Trees
-                    },
-                });
-                if self.pending.contains(&id) {
-                    self.comparison.request = Some(id);
-                }
+                self.run_comparison();
             }
             if self.comparison.request.is_some() {
                 ui.spinner();

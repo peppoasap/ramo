@@ -5,6 +5,12 @@ only a published GitHub Release establishes an external release.
 
 ## Unreleased — Rust-native development (0.3.0-dev.1)
 
+- Native graph gestures compare commits/branches on drop, or open reviewed
+  merge/cherry-pick onto the named current branch. Sidebar branches also drag.
+  No automatic mutation, checkout or push; existing trust/freshness guards apply.
+- Capture drag origin before rapid mouse events can be coalesced. Keep graph
+  rows fixed during dragging and cancel stale, busy, escaped or unfocused sessions.
+
 - Compare saved revisions in a dedicated native view: choose two commits from
   branch/history menus or revision pickers, swap direction and inspect direct
   or unique-common-ancestor diffs without touching staged or working changes.

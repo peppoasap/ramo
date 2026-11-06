@@ -3,6 +3,7 @@ mod app;
 mod commit_draft;
 mod drafts;
 mod editor;
+mod gestures;
 mod graph;
 #[cfg(target_os = "macos")]
 mod macos_quit;

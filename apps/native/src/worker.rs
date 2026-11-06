@@ -351,6 +351,106 @@ mod tests {
         ]
     }
     #[test]
+    fn native_drag_intents_bind_source_context_and_never_mutate_git() {
+        use crate::gestures::{Drag, Intent, Source};
+        let (temp, root, mut backend) = fixture();
+        git(&root, &["branch", "side"]);
+        git(&root, &["update-ref", "refs/remotes/origin/side", "HEAD"]);
+        fs::write(root.join("search.txt"), b"next\n").unwrap();
+        git(&root, &["add", "search.txt"]);
+        git(&root, &["commit", "-m", "Next search"]);
+        let snapshot = backend.register(&root).unwrap();
+        let side = snapshot.branches.iter().find(|b| b.name == "side").unwrap();
+        let branch = Drag::new(
+            &snapshot,
+            Source::Branch {
+                oid: side.oid.clone(),
+                name: side.name.clone(),
+                remote: false,
+            },
+        );
+        let head = snapshot.head.as_deref().unwrap();
+        let before = proof(&root);
+        assert!(
+            matches!(branch.intent(&snapshot,Some(head),false).unwrap(),Intent::Compare {from,to} if from==side.oid&&to==head)
+        );
+        assert!(
+            matches!(branch.intent(&snapshot,None,false).unwrap(),Intent::Review {action:ramo_core::git::Action::Merge {name},..} if name=="side")
+        );
+        assert!(branch.intent(&snapshot, Some(head), true).is_err());
+        assert!(branch.intent(&snapshot, Some(&side.oid), false).is_err());
+        let mut stale = branch.clone();
+        stale.fingerprint = "old".into();
+        assert!(stale.intent(&snapshot, Some(head), false).is_err());
+        stale = branch.clone();
+        stale.repository = "another repository".into();
+        assert!(stale.intent(&snapshot, None, false).is_err());
+        stale = branch.clone();
+        if let Source::Branch { oid, .. } = &mut stale.source {
+            *oid = head.into();
+        }
+        assert!(stale.intent(&snapshot, Some(head), false).is_err());
+        let commit = Drag::new(
+            &snapshot,
+            Source::Commit {
+                oid: side.oid.clone(),
+                parents: 0,
+                subject: "Initial".into(),
+            },
+        );
+        assert!(
+            matches!(commit.intent(&snapshot,None,false).unwrap(),Intent::Review {action:ramo_core::git::Action::CherryPick{target},..} if target==side.oid)
+        );
+        let merged = Drag::new(
+            &snapshot,
+            Source::Commit {
+                oid: side.oid.clone(),
+                parents: 2,
+                subject: "Merge".into(),
+            },
+        );
+        assert!(merged.intent(&snapshot, None, false).is_err());
+        let current = Drag::new(
+            &snapshot,
+            Source::Commit {
+                oid: head.into(),
+                parents: 1,
+                subject: "Current".into(),
+            },
+        );
+        assert!(current.intent(&snapshot, None, false).is_err());
+        let main = snapshot.branches.iter().find(|b| b.name == "main").unwrap();
+        let current_branch = Drag::new(
+            &snapshot,
+            Source::Branch {
+                oid: main.oid.clone(),
+                name: main.name.clone(),
+                remote: false,
+            },
+        );
+        assert!(current_branch.intent(&snapshot, None, false).is_err());
+        assert_eq!(proof(&root), before);
+        // Comparison remains available with dirty files; mutation intent does not.
+        fs::write(root.join("search.txt"), b"keep local work\n").unwrap();
+        let dirty = backend.snapshot(&snapshot.repo.id).unwrap();
+        let branch = Drag::new(&dirty, branch.source);
+        assert!(branch.intent(&dirty, None, false).is_err());
+        assert!(matches!(
+            branch.intent(&dirty, Some(head), false).unwrap(),
+            Intent::Compare { .. }
+        ));
+        let mut detached = dirty;
+        detached.files.clear();
+        detached.branch = "Detached HEAD".into();
+        let commit = Drag::new(&detached, commit.source);
+        assert!(commit.intent(&detached, None, false).is_err());
+        detached.branch = "main".into();
+        detached.operation = Some("Merge in progress".into());
+        let commit = Drag::new(&detached, commit.source);
+        assert!(commit.intent(&detached, None, false).is_err());
+        drop(temp);
+    }
+    #[test]
     fn native_comparison_uses_immutable_pairs_and_preserves_dirty_index_and_work() {
         let (temp, root, mut backend) = fixture();
         let initial = String::from_utf8(git(&root, &["rev-parse", "HEAD"]))

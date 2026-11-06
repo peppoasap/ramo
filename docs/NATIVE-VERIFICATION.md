@@ -151,3 +151,44 @@ matched GitKraken speed claim follows. Preview limits remain core-owned:512KiB
 text diff, rename as delete/add and binary summary. Choice list is bounded to
 1,000 entries with context-menu/full-ID alternatives. Queued read jobs are not
 cancelled; their stale results are rejected. No new provider inference or release.
+
+
+## Reviewed native graph gestures — 6 November 2026
+
+28 native tests, native clippy/fmt,266 notices and developer-bundle build/strict
+signature checks pass locally; release metadata remains beta.4. Added real-Git intent cases cover source identity,
+current/head/merge/remote refusal, dirty comparison versus mutation, detached and
+interrupted-operation states, stale repository/fingerprint and no Git changes from
+intent creation. Headless egui tests reproduce a single input batch containing
+press, movement and release; they prove the captured source remains correct.
+They also exercise Escape, pointer-gone, focus loss, busy and changed snapshots.
+These headless cases are not OS-level gesture/accessibility acceptance.
+
+Actual macOS GUI first compared commits by dragging. Branch drags exposed a
+coalesced-event defect: press_origin had already cleared before source rendering,
+so default widget drag-start lost or misidentified the source. Capturing the raw
+press event and resolving release against collected visible geometry fixed the
+reproduced case. Final trials correctly compared sidebar branch and graph branch
+label against a different commit. Drops on the toolbar's named current branch
+opened exact merge/cherry-pick reviews. Initial trust did not execute the merge;
+Cancel preserved HEAD, logical index entries, status and working bytes, checked
+independently against a captured baseline.
+
+A subsequent reviewed drag merge on the disposable divergent fixture produced
+a two-parent commit: first parent previous main, second parent feat/search. Main
+remained checked out; original README/navigation bytes survived, expected search
+content appeared, and index/status were clean. Temporary diagnostic logs were
+removed from source. Actual review screenshot (only OS strip cropped):
+
+![Reviewed native branch drop on synthetic history](images/native-drag-merge-review.png)
+
+No multi-object drag, graph auto-scroll or arbitrary-branch mutation target. No
+external file/text payload, auto-checkout, rebase/reset or push gesture. Broader
+keyboard/context-menu activation and actual Windows/Linux gestures remain open.
+Previous comparison revision0959be3 passed native/core and legacy desktop CI on
+all three OS; the gesture source needs its own hosted run. No new native release.
+
+The final developer bundle was rebuilt after pointer-cancellation and bounded-
+overlay refinements; sidebar docs/update → current merge commit correctly opened
+the ordered comparison. This final read-only check used the resulting synthetic
+merge fixture; it did not repeat or reset the merge.

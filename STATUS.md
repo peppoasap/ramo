@@ -580,12 +580,49 @@ swapped the direction and checked reversed additions/removals, then inspected
 common-ancestor output. Picker dismissal was refined after inspection. See
 [verification](docs/NATIVE-VERIFICATION.md); no drag/drop or installer yet.
 
+## Native reviewed graph gestures — 2026-11-06
+
+Commit subjects, displayed graph branch labels and sidebar branches now drag.
+Dropping on a commit opens direct immutable-pair comparison automatically; dirty
+working files remain separate. Dropping a local branch or non-merge commit onto
+the named current branch in the toolbar, or its temporary overlay, opens merge/
+cherry-pick review. No automatic checkout, write, reset/rebase or push. Intent
+checks bind repository/fingerprint/source refs; existing core trust and fresh
+snapshot checks still authorize execution. Dirty/detached/active-operation states
+refuse mutation intents. Context menus and Compare retain non-drag routes.
+
+Actual native testing exposed coalesced press/release input: default drag-start
+could lose the source or select the destination row. Native gesture handling now
+captures raw press origin, waits six logical pixels and resolves drops after the
+visible row geometry is collected. Source click is suppressed for a drag; a
+plain click remains inspection. The temporary target overlays existing layout,
+without shifting virtual rows. Escape, pointer leaving, focus loss, busy and stale
+states clear sessions; no external drag deserialization exists.
+
+Local evidence:28 native tests, native clippy/fmt,266 notices, developer bundle
+build/signature and release-metadata consistency passed. Tests include real-Git intent/preservation and
+headless egui batched-input/cancellation cases. Actual macOS GUI verified commit
+comparison, sidebar/graph-label branch comparison, correct merge/cherry-pick
+reviews and cancellation without Git changes. A reviewed drag merge then created
+the expected two-parent commit on main, preserved original file bytes and left a
+clean index/tree. See [verification](docs/NATIVE-VERIFICATION.md) and
+[ADR0027](docs/decisions/0027-native-graph-gestures.md). These are synthetic fixtures;
+OS-level cancellation, full keyboard/accessibility and Windows/Linux gesture GUI
+acceptance remain separate from the headless tests.
+
+The preceding comparison revision0959be3 passed native/core CI on all three OS in
+[run42189798196](https://github.com/peppoasap/ramo/actions/runs/42189798196), and
+legacy desktop builds passed all three OS in
+[run42189798220](https://github.com/peppoasap/ramo/actions/runs/42189798220).
+Those results cover composer/comparison source, not these newer gestures.
+No native installer, live inference or matched GitKraken performance claim.
+
 ## Exact next task
 
 Keep [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full objective ledger.
-Next implement reviewed native drag/drop using the saved comparison endpoints
-and existing typed mutation review; preserve explicit menu/keyboard alternatives. Continue clone/remotes,
-worktrees/tabs and contextual AI. Preserve existing trust/fingerprint/preservation
+Next implement native clone and remote management using existing typed core
+operations, explicit destination selection and provider choices. Continue
+worktrees/tabs, contextual AI and broader graph/file menus. Preserve existing trust/fingerprint/preservation
 semantics and finish editor IME/accessibility/CRLF/linked-scroll/large-file gates,
 R3/R4 depth and R5 packaging/cutover. Full native migration remains incomplete.
 Observe this slice's hosted runs before claiming cross-platform source checks;

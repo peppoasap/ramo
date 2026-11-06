@@ -34,7 +34,9 @@ impl App {
         egui::TopBottomPanel::top("commands").exact_height(40.).frame(egui::Frame::new().fill(theme::PANEL).inner_margin(egui::Margin::symmetric(14,5))).show(ctx,|ui| {
             ui.horizontal(|ui| {
                 ui.label(RichText::new(icon::GIT_BRANCH).color(theme::MINT));
-                ui.strong(self.snapshot.as_ref().map_or("No repository",|s|s.branch.as_str()));
+                let branch_target=ui.strong(self.snapshot.as_ref().map_or("No repository",|s|s.branch.as_str()));
+                self.branch_drop_rect=Some(branch_target.rect.expand2(egui::vec2(8.,5.)));
+                branch_target.on_hover_text("Drop another local branch here to review a merge, or a commit to review cherry-pick.");
                 ui.separator();
                 if let Some(snapshot)=&self.snapshot {
                     ui.label(theme::caption(if snapshot.operation.is_some(){"Operation in progress".into()}
@@ -113,14 +115,18 @@ impl App {
                     egui::CollapsingHeader::new(format!("{title}   {}",branches.len())).default_open(!remote).show(ui,|ui| {
                         for branch in branches {
                             let selected=!branch.remote&&branch.name==snapshot.branch;
-                            let response=ui.add(egui::Button::selectable(selected,format!("{}  {}",icon::GIT_BRANCH,branch.name)).min_size(egui::vec2(ui.available_width(),28.)).truncate());
-                            if response.clicked() {
+                            let response=ui.add(egui::Button::selectable(selected,format!("{}  {}",icon::GIT_BRANCH,branch.name)).sense(Sense::click_and_drag()).min_size(egui::vec2(ui.available_width(),28.)).truncate());
+                            if self.action.is_none() && self.action_request.is_none() && self.editor.is_none() && let Some(origin)=gestures::press_origin(ui.ctx()).filter(|p|response.rect.intersect(ui.clip_rect()).contains(*p)) {
+                                let candidate=crate::gestures::Candidate{drag:crate::gestures::Drag::new(&snapshot,crate::gestures::Source::Branch{oid:branch.oid.clone(),name:branch.name.clone(),remote:branch.remote}),origin:[origin.x,origin.y]};
+                                gestures::begin_drag(ui.ctx(),candidate,&mut self.drag_candidate,&mut self.drag_frame);
+                            }
+                            if response.clicked() && !self.drag_frame {
                                 self.mode=Mode::History;
                                 self.filter.clear();self.refilter();
                                 self.scroll_target=self.commits.iter().position(|c|c.oid==branch.oid);
                                 self.select(branch.oid.clone());
                             }
-                            if response.double_clicked() && !remote && !selected {
+                            if response.double_clicked() && !self.drag_frame && !remote && !selected {
                                 self.request_action(Action::Switch{name:branch.name.clone()},"Checkout branch",format!("Switch to {}",branch.name),false);
                             }
                             response.context_menu(|ui|{

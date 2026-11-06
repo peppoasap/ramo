@@ -49,6 +49,13 @@ installs into Applications nor publishes a release.
   1,000 entries; other loaded commits remain selectable through their graph menu
   and explicit full IDs work outside loaded history. Renames appear as delete/add;
   binary changes show Git summaries and text diffs have a512KiB limit.
+- Drag a commit, graph branch label or sidebar branch onto a commit to compare
+  the saved pair directly. Drop another local branch onto the toolbar's current
+  branch name (or its temporary drag target) to review a merge. Drop a non-merge
+  commit there to review cherry-pick. No auto-checkout, rebase/reset/push or write
+  from the drop itself. Escape, leaving the window, focus loss and changed state
+  cancel the gesture. Six logical pixels distinguish dragging from inspection.
+  Context menus and the Compare screen retain non-drag alternatives.
 - History stays separate from working changes. Staged-only files use the index
   preview; mixed staged/unstaged files currently show the working diff.
 - Modified regular text files support stage/unstage of whole hunks or selected
@@ -92,7 +99,7 @@ retry/copy/reload actions. macOS Cmd-Q routes through the same close guard.
 Force kill, OS shutdown and filesystem crash durability are not guaranteed.
 Messages are plaintext, limited to32KiB, separate from merge drafts and beta storage.
 
-No native installer is published yet. Drag/drop, clone/remotes/worktree
+No native installer is published yet. Clone/remotes/worktree
 UI and contextual AI routes remain migration tasks.
 
 Workers serialize the existing backend. Replies are scoped to repository

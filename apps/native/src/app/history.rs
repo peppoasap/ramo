@@ -44,6 +44,7 @@ impl App {
             226. + graph_width + subject_width,
             width - 90.,
         ];
+        let mut drop_targets = Vec::new();
         let mut choose = None;
         let mut command = None;
         let mut endpoint = None;
@@ -148,7 +149,7 @@ impl App {
                         let commit = &self.commits[index];
                         let row = &self.rows[index];
                         let (rect, response) =
-                            ui.allocate_exact_size(egui::vec2(width, row_height), Sense::click());
+                            ui.allocate_exact_size(egui::vec2(width, row_height), Sense::click_and_drag());
                         let selected = self.selected.as_deref() == Some(&commit.oid);
                         response.widget_info(|| {
                             egui::WidgetInfo::selected(
@@ -289,7 +290,19 @@ impl App {
                             theme::MUTED,
                             false,
                         );
-                        if response.clicked() {
+                        drop_targets.push((rect.intersect(ui.clip_rect()),commit.oid.clone()));
+                        if self.action.is_none() && self.action_request.is_none() && let Some(origin)=gestures::press_origin(ui.ctx()).filter(|p|rect.intersect(ui.clip_rect()).contains(*p)) && let Some(snapshot)=&self.snapshot {
+                            let source=if origin.x<rect.left()+150. && !labels.is_empty() {
+                                let branch=labels[0];crate::gestures::Source::Branch{oid:branch.oid.clone(),name:branch.name.clone(),remote:branch.remote}
+                            } else {crate::gestures::Source::Commit{oid:commit.oid.clone(),parents:commit.parents.len(),subject:commit.subject.clone()}};
+                            let candidate=crate::gestures::Candidate{drag:crate::gestures::Drag::new(snapshot,source),origin:[origin.x,origin.y]};
+                            gestures::begin_drag(ui.ctx(),candidate,&mut self.drag_candidate,&mut self.drag_frame);
+                        }
+                        if let Some(drag) = response.dnd_hover_payload::<crate::gestures::Drag>()
+                            && drag.source.oid()!=commit.oid {
+                            painter.rect_stroke(rect,0.,egui::Stroke::new(1.5,theme::MINT),egui::StrokeKind::Inside);
+                        }
+                        if response.clicked() && !self.drag_frame {
                             choose = Some(commit.oid.clone());
                             response.request_focus();
                         }
@@ -373,6 +386,13 @@ impl App {
                     }
                 });
             });
+        if ui.input(|i| i.pointer.primary_released())
+            && let Some(point) = ui.input(|i| i.pointer.interact_pos())
+            && let Some((_, target)) = drop_targets.iter().find(|(rect, _)| rect.contains(point))
+            && let Some(drag) = egui::DragAndDrop::take_payload::<crate::gestures::Drag>(ui.ctx())
+        {
+            self.apply_drop(&drag, Some(target));
+        }
         if let Some((from, oid)) = endpoint {
             self.compare_endpoint(from, oid);
         }

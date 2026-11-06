@@ -92,3 +92,17 @@ these now use plain text and short IDs with full hover detail. Picker selection
 was updated and verified to close its popup immediately. Actual capture:
 `docs/images/native-comparison.png`. Dense-history/layout fidelity and narrow-window
 comparison acceptance remain separate open gates; this is scoped workflow QA.
+
+
+## Native graph gestures — 2026-11-06
+
+Actual synthetic macOS trials exercised subject/branch drags and exact ordered
+comparisons, then reviewed merge/cherry-pick. Current-branch destination is named;
+a temporary bounded overlay supplies intent feedback without moving graph rows.
+The raw press origin is captured so rapid coalesced events do not become a drag
+of the destination. Context menus remain available. Cancel left Git unchanged;
+a confirmed merge completed with independently checked parents/content.
+
+Evidence: `docs/images/native-drag-merge-review.png`. No dense-history screenshot
+fidelity upgrade or OS cancellation/keyboard/accessibility certification is claimed.
+Headless cancellation tests and actual gesture observations are recorded separately.

@@ -1,6 +1,7 @@
 mod actions;
 mod comparison;
 mod composer;
+mod gestures;
 mod history;
 mod inspection;
 mod navigation;
@@ -39,6 +40,9 @@ pub struct App {
     form: Option<actions::Form>,
     composer: crate::commit_draft::Composer,
     comparison: comparison::CompareView,
+    drag_candidate: Option<crate::gestures::Candidate>,
+    drag_frame: bool,
+    branch_drop_rect: Option<egui::Rect>,
     open_after_draft: Option<Option<PathBuf>>,
     close_after_draft: bool,
     epoch: u64,
@@ -91,6 +95,9 @@ impl App {
             form: None,
             composer: Default::default(),
             comparison: Default::default(),
+            drag_candidate: None,
+            drag_frame: false,
+            branch_drop_rect: None,
             open_after_draft: None,
             close_after_draft: false,
             epoch: 0,
@@ -164,6 +171,7 @@ impl App {
         self.form = None;
         self.epoch += 1;
         self.comparison.cancel_requests();
+        self.drag_candidate = None;
         self.pending.clear();
         self.page_request = None;
         self.send(Work::Open(path));
@@ -181,6 +189,7 @@ impl App {
             let repo = snapshot.repo.id.clone();
             self.epoch += 1;
             self.comparison.cancel_requests();
+            self.drag_candidate = None;
             self.pending.clear();
             self.page_request = None;
             self.send(Work::Refresh(repo));
@@ -307,6 +316,7 @@ impl App {
                     let mode = self.mode;
                     self.epoch += 1;
                     self.comparison.cancel_requests();
+                    self.drag_candidate = None;
                     self.pending.clear();
                     self.page_request = None;
                     self.snapshot = Some(*snapshot);
@@ -512,6 +522,7 @@ impl eframe::App for App {
         }
         self.pump();
         self.composer_tick(ctx);
+        self.guard_drag(ctx);
         if ctx.input(|i| i.viewport().close_requested())
             && (self.composer.pending() || self.composer.dirty())
             && !self.editor.as_ref().is_some_and(|e| e.dirty)
@@ -535,6 +546,7 @@ impl eframe::App for App {
             self.ask_open();
         }
         self.chrome(ctx);
+        self.drag_overlay(ctx);
         self.action_dialogs(ctx);
         if self.editor.is_none() {
             self.sidebar(ctx);
@@ -609,6 +621,7 @@ impl eframe::App for App {
                     Mode::Compare => self.comparison(ui),
                 }
             });
+        self.finish_drag(ctx);
         match event {
             Some(editor::Event::Resolve) => {
                 if let Some(e) = &self.editor {
