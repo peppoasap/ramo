@@ -47,3 +47,9 @@ editable result and separate draft/save-stage actions. Comparison uses named/pin
 full IDs are an explicit disclosure. Future AI/settings surfaces still need
 dedicated matching-state visual passes. Full
 migration and release acceptance remain open in NATIVE-COMPLETION.md.
+
+Worktree rows use the same compact folder/check/lock icon vocabulary, branch
+captions and right-click actions as the selected workbench. Creation reuses the
+bounded theme modal, native folder picker, explicit branch choice and visible
+review footer. Scoped actual macOS captures live in worktree-fidelity/; there is
+no dedicated worktree dialog mock from which to claim pixel parity.

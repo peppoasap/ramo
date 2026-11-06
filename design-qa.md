@@ -1,4 +1,4 @@
-# Native comparison visual acceptance — 6 November 2026
+# Native comparison and worktree visual acceptance — 6 November 2026
 
 Scope: revision comparison, using the accepted graphite/mint visual contract and
 existing read-only comparison behavior. [History](docs/design/rust-native/qa-history-2026-11-06.md)
@@ -98,5 +98,45 @@ three OS. This comparison revision needs its own hosted checks. No native releas
 Implementation checklist: compact named selectors, usable search, pinned objects,
 read-only files/diff, stable async replies, validated error/empty states, preservation
 proof, source/implementation comparisons and full objective ledger retained.
+
+## Worktree workflow refinement
+
+Scope: functional worktree navigation/create/manage using the selected workbench
+style. The wide-history mock supplies sidebar/chrome tokens and compact rows;
+there is no dedicated worktree creation mock. No exact dialog pixel parity is
+claimed. The fixture has one real commit and four linked checkouts, unlike the
+reference's denser history; topology was not fabricated to fill the graph.
+
+[Source and actual UI together](docs/design/rust-native/worktree-fidelity/comparison.jpg)
+normalizes both to1200px width preserving aspect ratios. Actual captures3024×1898
+export3024×1836 after removing only62px OS strip;1512×918 logical at2×.
+[Readable menu/dialog crops](docs/design/rust-native/worktree-fidelity/details.jpg),
+[full final](docs/design/rust-native/worktree-fidelity/final.jpg),
+[creation](docs/design/rust-native/worktree-fidelity/create.jpg),
+[existing-branch selector](docs/design/rust-native/worktree-fidelity/existing.jpg),
+[refusal](docs/design/rust-native/worktree-fidelity/refused.jpg) and
+[narrow](docs/design/rust-native/worktree-fidelity/narrow.jpg) were inspected.
+Narrow content1002×683 logical retains dialog fields and the review/cancel footer.
+
+Existing Noto/Phosphor assets and graphite/mint tokens are reused,3px controls and
+6px modal corners. Worktree paths align left with current/lock state right and a
+muted branch caption. + creates, click opens, right-click presents relevant actions.
+The creation form exposes only location, folder and new/existing branch selection;
+full destination wraps, footer remains visible, unavailable actions are disabled.
+No imagery, dependency or invented asset was added. No P0/P1/P2 found in this scoped
+pass. Broader tabs/recents and platform accessibility remain open, not polish gates
+claimed complete here.
+
+Actual macOS verified new/existing branch creation; only free existing branches
+appear. Lock/unlock updates the row and locked removal is disabled. Open/return
+recovered Unicode composer text. Ignored data caused a refusal; a clean checkout
+was removed with its branch retained. Git independently verifies source HEAD/index
+tree and working/untracked bytes, protected ignored sentinel and final linked
+checkout/branch state. Worker tests add collision/trust/grant/membership/open-
+checkout refusal coverage. No new conflict fixture was exercised in this pass;
+the existing merge exit guard is reused.36 native tests and lint/fmt pass. Bundle
+strict signature and267 notices pass. Self-review; no native release or new AI.
+Previousfa2a53a native/core42208900871 and legacy42208900858 passed all three OS;
+new source CI remains pending. Full goal ledger remains open.
 
 final result: passed

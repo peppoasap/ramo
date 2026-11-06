@@ -73,7 +73,7 @@ impl App {
                 && !self.editor.as_ref().is_some_and(|e| e.dirty)
                 && let Some(path) = self.open_after_draft.take()
             {
-                self.open(path);
+                self.open_target(path);
             }
             if self.close_after_draft && self.action_request.is_none() {
                 self.open_after_draft = None;

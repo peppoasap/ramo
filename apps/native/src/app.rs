@@ -10,6 +10,8 @@ mod history;
 mod inspection;
 mod navigation;
 mod remotes;
+mod worktrees;
+use worktrees::OpenTarget;
 
 use crate::{
     drafts::Scope,
@@ -50,7 +52,9 @@ pub struct App {
     drag_candidate: Option<crate::gestures::Candidate>,
     drag_frame: bool,
     branch_drop_rect: Option<egui::Rect>,
-    open_after_draft: Option<Option<PathBuf>>,
+    open_after_draft: Option<OpenTarget>,
+    open_request: Option<u64>,
+    worktree_dialog: Option<worktrees::CreateDialog>,
     close_after_draft: bool,
     epoch: u64,
     sequence: u64,
@@ -106,6 +110,8 @@ impl App {
             drag_frame: false,
             branch_drop_rect: None,
             open_after_draft: None,
+            open_request: None,
+            worktree_dialog: None,
             close_after_draft: false,
             epoch: 0,
             sequence: 0,
@@ -143,7 +149,9 @@ impl App {
         app
     }
     fn modal_open(&self) -> bool {
-        self.clone_dialog.is_some()
+        self.open_request.is_some()
+            || self.worktree_dialog.is_some()
+            || self.clone_dialog.is_some()
             || self.remote_dialog.is_some()
             || self.action.is_some()
             || self.form.is_some()
@@ -170,13 +178,19 @@ impl App {
         id
     }
     fn open(&mut self, path: Option<PathBuf>) {
+        self.open_target(OpenTarget::Folder(path));
+    }
+    fn open_target(&mut self, target: OpenTarget) {
+        if self.open_request.is_some() {
+            return;
+        }
         if self.clone_busy() {
             self.error =
                 Some("Wait for cloning to finish before opening another repository.".into());
             return;
         }
         if self.composer.pending() || self.composer.dirty() {
-            self.open_after_draft = Some(path);
+            self.open_after_draft = Some(target);
             self.save_composer();
             return;
         }
@@ -191,10 +205,11 @@ impl App {
         self.drag_candidate = None;
         self.pending.clear();
         self.page_request = None;
-        self.send(Work::Open(path));
+        let id = self.send(target.work());
+        self.open_request = self.pending.contains(&id).then_some(id);
     }
     fn refresh(&mut self) {
-        if self.action_request.is_some() {
+        if self.open_request.is_some() || self.action_request.is_some() {
             return;
         }
         if self
@@ -304,10 +319,20 @@ impl App {
                 }
                 continue;
             }
+            if let Some(dialog) = &mut self.worktree_dialog
+                && dialog.request == Some(reply.sequence)
+            {
+                self.pending.remove(&reply.sequence);
+                dialog.receive(reply.result);
+                continue;
+            }
             if reply.epoch != self.epoch {
                 continue;
             }
             self.pending.remove(&reply.sequence);
+            if self.open_request == Some(reply.sequence) {
+                self.open_request = None;
+            }
             if self.comparison.owns(reply.sequence) {
                 self.comparison.receive(reply.sequence, reply.result);
                 if let Some(path) = self.comparison.initial_file() {
@@ -444,7 +469,12 @@ impl App {
                         });
                     }
                 }
-                Ok(Payload::Compared(_) | Payload::ComparisonDiff(_) | Payload::Connection(_)) => {}
+                Ok(
+                    Payload::Compared(_)
+                    | Payload::ComparisonDiff(_)
+                    | Payload::Connection(_)
+                    | Payload::WorktreeParent(_),
+                ) => {}
                 Ok(Payload::Cancelled) => {}
                 Ok(Payload::Opened { snapshot, commits }) => {
                     let retain_comparison = self.mode == Mode::Compare
@@ -630,6 +660,7 @@ impl eframe::App for App {
         self.action_dialogs(ctx);
         self.clone_dialog_ui(ctx);
         self.remote_dialog_ui(ctx);
+        self.worktree_dialog_ui(ctx);
         if self.editor.is_none() {
             if self.mode == Mode::History {
                 self.sidebar(ctx);

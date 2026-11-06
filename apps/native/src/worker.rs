@@ -10,6 +10,14 @@ use std::{
 pub enum Work {
     Connection(crate::connection_work::Job),
     Open(Option<PathBuf>),
+    OpenWorktree {
+        repo: String,
+        path: String,
+    },
+    WorktreeParent {
+        repo: String,
+        path: Option<PathBuf>,
+    },
     Refresh(String),
     Trust(String),
     Mutate {
@@ -72,6 +80,7 @@ pub struct Request {
     pub work: Work,
 }
 pub enum Payload {
+    WorktreeParent(ramo_core::git::WorktreeParent),
     Connection(Result<crate::connection_work::Reply, String>),
     Opened {
         snapshot: Box<Snapshot>,
@@ -127,7 +136,7 @@ impl Worker {
             let mut backend = Backend::new(state.join("repositories.json"));
             let mut active: Option<String> = None;
             while let Ok(request) = rx.recv() {
-                let opening = matches!(&request.work, Work::Open(_));
+                let opening = matches!(&request.work, Work::Open(_) | Work::OpenWorktree { .. });
                 let result = execute(&mut backend, &state, request.work);
                 if opening
                     && let Ok(Payload::Opened { snapshot, .. }) = &result
@@ -178,6 +187,29 @@ fn execute(backend: &mut Backend, state: &std::path::Path, work: Work) -> Result
                 snapshot: Box::new(snapshot),
                 commits,
             }
+        }
+        Work::OpenWorktree { repo, path } => {
+            let mut snapshot = backend.open_worktree(&repo, &path)?;
+            // Linked worktrees are separate session trust scopes, just like Open.
+            if snapshot.repo.trusted {
+                backend.close_repository(&snapshot.repo.id);
+                snapshot = backend.register(std::path::Path::new(&snapshot.repo.path))?;
+            }
+            let commits = backend.history(&snapshot.repo.id, 0)?;
+            Payload::Opened {
+                snapshot: Box::new(snapshot),
+                commits,
+            }
+        }
+        Work::WorktreeParent { repo, path } => {
+            let Some(path) = path.or_else(|| {
+                rfd::FileDialog::new()
+                    .set_title("Choose worktree parent folder")
+                    .pick_folder()
+            }) else {
+                return Ok(Payload::Cancelled);
+            };
+            Payload::WorktreeParent(backend.authorize_worktree_parent(&repo, &path)?)
         }
         Work::Trust(repo) => Payload::Trusted(Box::new(backend.trust(&repo)?)),
         Work::Mutate {
@@ -352,6 +384,210 @@ mod tests {
             git(root, &["status", "--porcelain=v1", "-z"]),
             fs::read(root.join("search.txt")).unwrap(),
         ]
+    }
+    #[test]
+    fn native_worktree_jobs_reuse_grants_membership_and_preserve_source_work() {
+        let (temp, root, mut backend) = fixture();
+        // Commit EOL policy so a linked checkout does not inherit runner defaults.
+        fs::write(root.join(".gitattributes"), b"*.txt text eol=lf\n").unwrap();
+        git(&root, &["add", ".gitattributes"]);
+        git(&root, &["commit", "-m", "Pin checkout EOL"]);
+        fs::write(root.join("search.txt"), b"staged\n").unwrap();
+        git(&root, &["add", "search.txt"]);
+        fs::write(root.join("search.txt"), b"working\n").unwrap();
+        let snapshot = backend.register(&root).unwrap();
+        let before = proof(&root);
+        assert!(
+            execute(
+                &mut backend,
+                temp.path(),
+                Work::WorktreeParent {
+                    repo: snapshot.repo.id.clone(),
+                    path: Some(root.clone())
+                }
+            )
+            .is_err()
+        );
+        let Payload::WorktreeParent(parent) = execute(
+            &mut backend,
+            temp.path(),
+            Work::WorktreeParent {
+                repo: snapshot.repo.id.clone(),
+                path: Some(temp.path().to_owned()),
+            },
+        )
+        .unwrap() else {
+            panic!("parent grant expected")
+        };
+        let action = |grant: String| ramo_core::git::Action::CreateWorktree {
+            selection_id: grant,
+            directory: "linked".into(),
+            branch: "work/search".into(),
+            create_branch: true,
+        };
+        let Payload::Changed { error: Some(_), .. } = execute(
+            &mut backend,
+            temp.path(),
+            Work::Mutate {
+                repo: snapshot.repo.id.clone(),
+                fingerprint: snapshot.fingerprint.clone(),
+                action: action(parent.id.clone()),
+            },
+        )
+        .unwrap() else {
+            panic!("trust required")
+        };
+        let trusted = backend.trust(&snapshot.repo.id).unwrap();
+        let Payload::Changed { error: Some(_), .. } = execute(
+            &mut backend,
+            temp.path(),
+            Work::Mutate {
+                repo: snapshot.repo.id.clone(),
+                fingerprint: trusted.fingerprint.clone(),
+                action: action("forged".into()),
+            },
+        )
+        .unwrap() else {
+            panic!("grant required")
+        };
+        fs::create_dir(temp.path().join("linked")).unwrap();
+        fs::write(temp.path().join("linked/keep.txt"), b"collision sentinel").unwrap();
+        let Payload::Changed { error: Some(_), .. } = execute(
+            &mut backend,
+            temp.path(),
+            Work::Mutate {
+                repo: snapshot.repo.id.clone(),
+                fingerprint: trusted.fingerprint.clone(),
+                action: action(parent.id.clone()),
+            },
+        )
+        .unwrap() else {
+            panic!("collision must fail")
+        };
+        assert_eq!(
+            fs::read(temp.path().join("linked/keep.txt")).unwrap(),
+            b"collision sentinel"
+        );
+        fs::remove_file(temp.path().join("linked/keep.txt")).unwrap();
+        fs::remove_dir(temp.path().join("linked")).unwrap();
+        let Payload::Changed {
+            snapshot: created,
+            error: None,
+            ..
+        } = execute(
+            &mut backend,
+            temp.path(),
+            Work::Mutate {
+                repo: snapshot.repo.id.clone(),
+                fingerprint: trusted.fingerprint,
+                action: action(parent.id),
+            },
+        )
+        .unwrap()
+        else {
+            panic!("creation expected")
+        };
+        assert_eq!(created.worktrees.len(), 2);
+        assert_eq!(
+            fs::read(temp.path().join("linked/search.txt")).unwrap(),
+            b"base\n"
+        );
+        let unrelated = temp.path().join("unrelated");
+        fs::create_dir(&unrelated).unwrap();
+        git(&unrelated, &["init", "-b", "main"]);
+        assert!(
+            execute(
+                &mut backend,
+                temp.path(),
+                Work::OpenWorktree {
+                    repo: snapshot.repo.id.clone(),
+                    path: unrelated.to_str().unwrap().into()
+                }
+            )
+            .is_err()
+        );
+        let Payload::Opened {
+            snapshot: linked, ..
+        } = execute(
+            &mut backend,
+            temp.path(),
+            Work::OpenWorktree {
+                repo: snapshot.repo.id.clone(),
+                path: temp.path().join("linked").to_str().unwrap().into(),
+            },
+        )
+        .unwrap()
+        else {
+            panic!("open expected")
+        };
+        assert!(!linked.repo.trusted);
+        assert_eq!(linked.branch, "work/search");
+        let fresh = backend.snapshot(&snapshot.repo.id).unwrap();
+        let linked_path = created
+            .worktrees
+            .iter()
+            .find(|w| !w.primary)
+            .unwrap()
+            .path
+            .clone();
+        let Payload::Changed { error: Some(_), .. } = execute(
+            &mut backend,
+            temp.path(),
+            Work::Mutate {
+                repo: snapshot.repo.id.clone(),
+                fingerprint: fresh.fingerprint,
+                action: ramo_core::git::Action::RemoveWorktree { path: linked_path },
+            },
+        )
+        .unwrap() else {
+            panic!("open checkout must not be removed")
+        };
+        backend.close_repository(&linked.repo.id);
+        let fresh = backend.snapshot(&snapshot.repo.id).unwrap();
+        fs::write(temp.path().join("linked/keep.txt"), b"untracked sentinel").unwrap();
+        let reviewed_path = created
+            .worktrees
+            .iter()
+            .find(|w| !w.primary)
+            .unwrap()
+            .path
+            .clone();
+        let remove = || ramo_core::git::Action::RemoveWorktree {
+            path: reviewed_path.clone(),
+        };
+        let Payload::Changed { error: Some(_), .. } = execute(
+            &mut backend,
+            temp.path(),
+            Work::Mutate {
+                repo: snapshot.repo.id.clone(),
+                fingerprint: fresh.fingerprint.clone(),
+                action: remove(),
+            },
+        )
+        .unwrap() else {
+            panic!("untracked data must block removal")
+        };
+        assert_eq!(
+            fs::read(temp.path().join("linked/keep.txt")).unwrap(),
+            b"untracked sentinel"
+        );
+        fs::remove_file(temp.path().join("linked/keep.txt")).unwrap();
+        let fresh = backend.snapshot(&snapshot.repo.id).unwrap();
+        let Payload::Changed { error, .. } = execute(
+            &mut backend,
+            temp.path(),
+            Work::Mutate {
+                repo: snapshot.repo.id,
+                fingerprint: fresh.fingerprint,
+                action: remove(),
+            },
+        )
+        .unwrap() else {
+            panic!("clean removal expected")
+        };
+        assert!(error.is_none(), "{error:?}");
+        assert!(!temp.path().join("linked").exists());
+        assert_eq!(proof(&root), before);
     }
     #[test]
     fn native_local_clone_review_is_read_only_one_shot_and_collision_safe() {

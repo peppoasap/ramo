@@ -174,3 +174,11 @@ The [refined comparison view](../../docs/design/rust-native/comparison-fidelity/
 uses searchable named selectors pinned to commit objects, with an optional full-ID
 input. Direct/common-ancestor comparison auto-opens the first diff and keeps
 working/staged changes separate. Loaded choices and rendered matches are bounded.
+
+Worktree navigation now uses actual linked checkouts. Use the sidebar + to create
+a checkout from a new or available existing branch; right-click for lock/unlock
+and guarded removal. Parent folders are selected through the native picker. Git
+files remain under the shared core's checks; the renderer holds no shell authority.
+Commit drafts are saved before switching. One checkout is active at a time for
+now; switching ends the previous checkout's session trust. Tabs/recents are next.
+See [verification](../../docs/NATIVE-VERIFICATION.md).

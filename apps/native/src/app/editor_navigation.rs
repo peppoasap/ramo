@@ -4,6 +4,7 @@ use super::*;
 pub(super) enum EditorExit {
     Back,
     Open,
+    Repository(OpenTarget),
     Close,
     Conflict(String),
 }
@@ -116,6 +117,7 @@ impl App {
             match destination {
                 EditorExit::Back => {}
                 EditorExit::Open => self.open(None),
+                EditorExit::Repository(target) => self.open_target(target),
                 EditorExit::Close => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
                 EditorExit::Conflict(path) => self.load_conflict(path),
             }

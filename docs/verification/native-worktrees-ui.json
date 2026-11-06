@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-06",
+  "platform": "macOS native developer bundle",
+  "native_tests_passed": 36,
+  "create_new_branch_gui": true,
+  "create_existing_branch_gui": true,
+  "lock_unlock_gui": true,
+  "locked_remove_disabled_gui": true,
+  "open_return_gui": true,
+  "unicode_composer_recovered_gui": true,
+  "ignored_data_removal_refused_gui": true,
+  "clean_removal_branch_retained_gui": true,
+  "source_head_index_work_untracked_preserved": true,
+  "ignored_sentinel_preserved": true,
+  "worker_tests": [
+    "membership rejection",
+    "parent grant required",
+    "trust required",
+    "destination collision preserves bytes",
+    "open checkout removal refused",
+    "untracked removal refused",
+    "clean removal preserves source"
+  ],
+  "scope": "Synthetic linked checkouts only; no AI/network/release",
+  "limits": [
+    "repository tabs and recents remain next",
+    "Windows/Linux GUI unverified",
+    "merge navigation gate reused; not a new conflict fixture in this pass"
+  ]
+}

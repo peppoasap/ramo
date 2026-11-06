@@ -5,6 +5,11 @@ only a published GitHub Release establishes an external release.
 
 ## Unreleased — Rust-native development (0.3.0-dev.1)
 
+- Make native worktree rows functional: open linked checkouts, create from a new
+  or available existing branch, lock/unlock and review clean removal. Reuse core
+  folder grants, membership/fingerprint checks and work-preservation rules.
+  Preserve local commit drafts on navigation and prevent overlapping opens.
+
 - Refine native revision comparison with searchable named/pinned selectors,
   collapsible full-ID input, automatic first diff, clearer file/empty/error states
   and a focused read-only file/diff layout. Preserve immutable pairs and stale

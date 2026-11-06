@@ -302,3 +302,23 @@ comparison. Both cases were verified in the actual macOS app.
 Sourcec7091c2 native/core42203220979 and legacy42203221057 passed all three OS.
 This new source needs fresh CI; platform GUI/release and full native completion
 remain separate. See [comparison proof](verification/native-comparison-ui.json).
+
+## Worktree workflow — 6 November 2026
+
+36 native tests pass, including worker coverage of membership/parent grants/trust,
+collision preservation, open-checkout/untracked removal refusal and clean removal
+with source bytes/index preserved. The test uses the exact reviewed worktree path;
+macOS temporary aliases must not bypass the core's reviewed-path requirement.
+Native fmt/clippy, developer bundle strict signature and267 notices pass.
+
+Actual macOS created work/search in a separate checkout, locked/unlocked it,
+verified disabled removal while locked, opened/returned and recovered a Unicode
+local composer message. Removing another checkout with an ignored sentinel was
+refused; removing the clean created checkout succeeded while retaining its branch.
+A second creation used that available existing branch. Independent Git agreed
+with checkout/branch/clean state and confirmed source HEAD/index tree, working/
+untracked bytes and ignored sentinel hashes unchanged. No AI/network action.
+[Proof](verification/native-worktrees-ui.json) and root design-qa.md record scope.
+Repository tabs/recents, Windows/Linux GUI and native release remain incomplete.
+Previousfa2a53a native42208900871 and legacy42208900858 pass all three OS; the
+new worktree revision requires separate hosted results.

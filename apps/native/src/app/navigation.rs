@@ -164,13 +164,8 @@ impl App {
                         }
                     });ui.add_space(9.);ui.separator();
                 }
-                egui::CollapsingHeader::new(theme::emphasis(format!("Worktrees   {}",snapshot.worktrees.len()))).default_open(true).show(ui,|ui|{
-                    for worktree in &snapshot.worktrees {
-                        let name=std::path::Path::new(&worktree.path).file_name().unwrap_or_default().to_string_lossy();
-                        ui.label(format!("{}  {name}",icon::FOLDER_OPEN)).on_hover_text(&worktree.path);
-                        ui.label(theme::caption(worktree.branch.strip_prefix("refs/heads/").unwrap_or(&worktree.branch)));
-                    }
-                });ui.separator();
+                self.worktree_list(ui, &snapshot);
+                ui.separator();
                 egui::CollapsingHeader::new(theme::emphasis(format!("Stashes   {}",snapshot.stashes.len()))).show(ui,|ui|{
                     for stash in &snapshot.stashes {
                         ui.label(&stash.message).context_menu(|ui|{

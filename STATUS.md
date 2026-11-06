@@ -731,13 +731,34 @@ including after a controlled external ref move. Opening a different synthetic
 repository clears both endpoints; returning does not reuse the other repository’s
 comparison. Both cases were verified in the actual macOS app.
 
+## Native worktree workflow — 6 November 2026
+
+Worktree rows now open their linked checkout through the core's fresh membership
+check. A compact creation dialog uses the native parent-folder grant and supports
+new branches from HEAD or existing branches not already checked out. Context menus
+review lock/unlock and clean removal; primary/current/locked removal is unavailable.
+Core refuses changed, untracked, ignored, active-operation and open checkout data.
+Navigation waits for commit-draft persistence and reuses the dirty merge exit gate;
+a single opening request prevents overlapping switches. One active checkout is
+retained for now: opening another closes its previous session trust, just as Open.
+
+Actual macOS GUI exercised new/existing creation, lock/unlock, disabled locked
+removal, opening/return, Unicode composer recovery, ignored-data refusal and clean
+removal with branch retained. Independent Git verified source HEAD/index tree,
+working/untracked bytes and protected ignored sentinel unchanged.36 native tests,
+clippy/fmt and developer bundle/signature/267 notices pass. See the scoped worktree
+section in design-qa.md and docs/verification/native-worktrees-ui.json. No new
+inference/network or release. Previousfa2a53a native42208900871 and legacy42208900858
+passed all three OS; this new source needs its own CI.
+
 ## Exact next task
 
-Implement native worktree open/create/manage and repository navigation/tabs using
-the selected visual contract and existing core grants. Keep
-[NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full goal ledger: contextual
-native AI/settings, clone Stop/progress, broader menus and remote controls,
+Implement native repository tabs and recent repository navigation/state restoration,
+including explicit close, session trust lifetime and draft-safe switching. Use the
+selected visual contract and shared core; do not cache stale Git snapshots as live.
+Keep [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full goal ledger:
+contextual native AI/settings, clone Stop/progress, broader menus/remote controls,
 syntax/linked scroll/IME/accessibility/CRLF/large-file editor gates, daily-base
 recovery/rebase depth and native packaging/cutover remain. Full migration is
-incomplete. Observe fresh hosted source checks; actual Windows/Linux GUI and
-second-Mac release acceptance remain distinct from CI.
+incomplete. Observe fresh hosted checks; Windows/Linux GUI and second-Mac release
+acceptance remain separate from CI.
