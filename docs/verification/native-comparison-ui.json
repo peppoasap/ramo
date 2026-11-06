@@ -1,0 +1,29 @@
+{
+  "direct_from": "3edbd89940b75bc9deb095e95b477fe85871409a",
+  "direct_to": "150ad2cb7ba03e07f884d706932f5ef45edbe33d",
+  "ancestor_from": "150ad2cb7ba03e07f884d706932f5ef45edbe33d",
+  "ancestor_to": "a4d9494e43791e272f47e60b7799828028b5fce8",
+  "effective_base": "576d7820ca2eee0e03d5e39e2a9325de8d4aae2c",
+  "ancestor_files": [
+    "CONTRIBUTING.md"
+  ],
+  "same_commit_empty": true,
+  "invalid_commit_error": true,
+  "swap_inverts_diff": true,
+  "search_case_insensitive_verified": true,
+  "first_file_autoload_verified": true,
+  "selected_commits_unchanged_while_branch_ref_moves": true,
+  "temporary_ref_restored": true,
+  "head_index_status_and_working_files_preserved": true,
+  "multiple_file_selection_verified": true,
+  "unvalidated_custom_input_labeled_honestly": true,
+  "final_source_direct_comparison_verified": true,
+  "refresh_same_repo_retains_pair_and_preview": true,
+  "refresh_after_ref_move_keeps_original_objects": true,
+  "different_repository_clears_comparison_verified": true,
+  "date": "2026-11-06",
+  "platform": "macOS developer bundle",
+  "native_tests_passed": 34,
+  "scope": "read-only native comparison; synthetic repository",
+  "no_native_release": true
+}

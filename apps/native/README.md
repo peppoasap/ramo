@@ -169,3 +169,8 @@ composer. The merge editor has a guarded conflict-file sidebar, current/incoming
 sources and editable result. Actual [Changes](../../docs/design/rust-native/workflow-fidelity/native-changes.png)
 and [merge](../../docs/design/rust-native/workflow-fidelity/native-merge.png) captures
 use synthetic Git fixtures; remaining editor/AI/platform gates stay explicit.
+
+The [refined comparison view](../../docs/design/rust-native/comparison-fidelity/native-comparison.png)
+uses searchable named selectors pinned to commit objects, with an optional full-ID
+input. Direct/common-ancestor comparison auto-opens the first diff and keeps
+working/staged changes separate. Loaded choices and rendered matches are bounded.

@@ -310,6 +310,9 @@ impl App {
             self.pending.remove(&reply.sequence);
             if self.comparison.owns(reply.sequence) {
                 self.comparison.receive(reply.sequence, reply.result);
+                if let Some(path) = self.comparison.initial_file() {
+                    self.select_comparison_file(path);
+                }
                 continue;
             }
             let page_failed = self.page_request == Some(reply.sequence);
@@ -444,6 +447,11 @@ impl App {
                 Ok(Payload::Compared(_) | Payload::ComparisonDiff(_) | Payload::Connection(_)) => {}
                 Ok(Payload::Cancelled) => {}
                 Ok(Payload::Opened { snapshot, commits }) => {
+                    let retain_comparison = self.mode == Mode::Compare
+                        && self
+                            .snapshot
+                            .as_ref()
+                            .is_some_and(|current| current.repo.id == snapshot.repo.id);
                     if self.composer.repository.as_deref() != Some(&snapshot.repo.id) {
                         self.composer.bind(
                             snapshot.repo.id.clone(),
@@ -452,8 +460,10 @@ impl App {
                         self.load_composer();
                     }
                     self.error = None;
-                    self.mode = Mode::History;
-                    self.comparison = Default::default();
+                    if !retain_comparison {
+                        self.mode = Mode::History;
+                        self.comparison = Default::default();
+                    }
                     self.editor = None;
                     self.filter.clear();
                     self.branch_filter.clear();
@@ -466,7 +476,9 @@ impl App {
                     self.files.clear();
                     self.file = None;
                     self.diff.clear();
-                    if let Some(first) = self.commits.first() {
+                    if self.mode == Mode::History
+                        && let Some(first) = self.commits.first()
+                    {
                         self.select(first.oid.clone());
                     }
                     self.scroll_target = Some(0);
@@ -619,7 +631,7 @@ impl eframe::App for App {
         self.clone_dialog_ui(ctx);
         self.remote_dialog_ui(ctx);
         if self.editor.is_none() {
-            if self.mode != Mode::Changes {
+            if self.mode == Mode::History {
                 self.sidebar(ctx);
             }
             self.inspector(ctx);

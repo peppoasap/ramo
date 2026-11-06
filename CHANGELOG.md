@@ -5,6 +5,12 @@ only a published GitHub Release establishes an external release.
 
 ## Unreleased — Rust-native development (0.3.0-dev.1)
 
+- Refine native revision comparison with searchable named/pinned selectors,
+  collapsible full-ID input, automatic first diff, clearer file/empty/error states
+  and a focused read-only file/diff layout. Preserve immutable pairs and stale
+  result rejection across direct/common-ancestor comparisons. Keep the selected
+  comparison on same-repository Refresh; clear it when opening another repository.
+
 - Reorganize native Changes into files, selectable diff and right commit composer;
   keep original diff-row identities while hiding raw headers and highlighting rows.
 - Add guarded conflict-file navigation and refine current/incoming/result merge

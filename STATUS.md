@@ -708,13 +708,36 @@ Source5c91b59 native/core CI42199162572 and legacy CI42199162408 passed all thre
 OS, including the clone LF test correction. This workflow revision still needs
 its own hosted results; compilation does not prove Windows/Linux GUI acceptance.
 
+## Native comparison refinement — 6 November 2026
+
+Comparison now uses two compact searchable selectors with stable named/pinned
+commit selections; full IDs remain in an expandable section. Redundant branch
+navigation is hidden in this mode. Current successful results automatically open
+the first changed file. Direct/common-ancestor modes, Swap and explicit Compare
+remain read-only; changed endpoints/modes/files invalidate stale results. Custom
+IDs are distinguished from verified commits; same-file/invalid-ID states are clear.
+
+Actual macOS verified case-insensitive search, direct/swap/ancestor comparisons,
+three-file navigation, empty/error recovery, narrow layout and selection stability
+while an external synthetic branch ref moved. Git independently agreed on the
+ancestor/file list; refs were restored and HEAD/index entries/status/work bytes
+preserved.34 native tests, native clippy/fmt, bundle/signature and267 notices pass.
+Root design-qa.md records scoped visual evidence, not an invented comparison mock.
+No provider/network action, installer or new release. Previousc7091c2 native/core
+42203220979 and legacy42203221057 passed all three OS; new comparison CI pending.
+
+Refresh in the same repository preserves the selected immutable pair and preview,
+including after a controlled external ref move. Opening a different synthetic
+repository clears both endpoints; returning does not reuse the other repository’s
+comparison. Both cases were verified in the actual macOS app.
+
 ## Exact next task
 
-Finish the dedicated native comparison visual pass, then native worktree
-open/create/manage and repository navigation/tabs using the selected visual
-contract. Keep [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full goal
-ledger: contextual native AI/settings, clone Stop/progress, broader menus and
-remote controls, syntax/linked scroll/IME/accessibility/CRLF/large-file editor
-gates and native packaging/cutover remain. Full native migration is incomplete.
-Observe fresh hosted checks; actual Windows/Linux GUI and second-Mac release
-acceptance remain distinct from source CI.
+Implement native worktree open/create/manage and repository navigation/tabs using
+the selected visual contract and existing core grants. Keep
+[NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full goal ledger: contextual
+native AI/settings, clone Stop/progress, broader menus and remote controls,
+syntax/linked scroll/IME/accessibility/CRLF/large-file editor gates, daily-base
+recovery/rebase depth and native packaging/cutover remain. Full migration is
+incomplete. Observe fresh hosted source checks; actual Windows/Linux GUI and
+second-Mac release acceptance remain distinct from CI.

@@ -281,3 +281,24 @@ MERGE_HEAD. No account/inference/network action. See
 Previous source5c91b59 passed native/core42199162572 and legacy42199162408 on all
 three OS. Fresh workflow source CI is pending; GUI evidence remains macOS only.
 Full comparison/settings/AI visual gates and native release remain incomplete.
+
+## Comparison refinement — 6 November 2026
+
+Actual macOS read-only comparison verified searchable selectors, stable names and
+pinned IDs, automatic first diff, direct/swap/common-ancestor modes, three-file
+selection, same-commit empty state, invalid input recovery and narrow layout.
+The core's effective base and changed-file list matched independent Git. A
+controlled external synthetic ref move did not change the pinned comparison;
+that ref was restored, then HEAD/index entries/status/working hashes checked.
+No UI mutation/provider/network action.34 native tests, clippy/fmt, bundle/signature
+and267 notices pass. Root design-qa.md includes combined actual/reference evidence
+and exact scope; comparison has no dedicated source mock to claim pixel parity.
+
+Refresh in the same repository preserves the selected immutable pair and preview,
+including after a controlled external ref move. Opening a different synthetic
+repository clears both endpoints; returning does not reuse the other repository’s
+comparison. Both cases were verified in the actual macOS app.
+
+Sourcec7091c2 native/core42203220979 and legacy42203221057 passed all three OS.
+This new source needs fresh CI; platform GUI/release and full native completion
+remain separate. See [comparison proof](verification/native-comparison-ui.json).
