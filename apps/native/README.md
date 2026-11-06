@@ -42,6 +42,13 @@ installs into Applications nor publishes a release.
   minimum1000×680; OS/display limits apply. No forced bitmap scaling.
 - Loaded-history search by subject/author/OID, branch-tip inspection, keyboard
   Home/End/PageUp/PageDown/arrows, commit file lists and first-parent diffs.
+- Compare two immutable saved commits through the Compare tab, revision choices,
+  full commit IDs or commit/branch context menus. Swap direction or compare since
+  the unique common ancestor; inspect each changed file independently. No staging
+  or trust is required; working/index data is excluded. Choice list is bounded to
+  1,000 entries; other loaded commits remain selectable through their graph menu
+  and explicit full IDs work outside loaded history. Renames appear as delete/add;
+  binary changes show Git summaries and text diffs have a512KiB limit.
 - History stays separate from working changes. Staged-only files use the index
   preview; mixed staged/unstaged files currently show the working diff.
 - Modified regular text files support stage/unstage of whole hunks or selected
@@ -85,7 +92,7 @@ retry/copy/reload actions. macOS Cmd-Q routes through the same close guard.
 Force kill, OS shutdown and filesystem crash durability are not guaranteed.
 Messages are plaintext, limited to32KiB, separate from merge drafts and beta storage.
 
-No native installer is published yet. Drag/drop, comparison, clone/remotes/worktree
+No native installer is published yet. Drag/drop, clone/remotes/worktree
 UI and contextual AI routes remain migration tasks.
 
 Workers serialize the existing backend. Replies are scoped to repository

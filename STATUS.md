@@ -562,11 +562,29 @@ Windows/Linux GUI, draft-error/repository-switch GUI paths and dirty merge Cmd-Q
 remain acceptance limits. Tests cover storage competition and repository scoping;
 these are not substitutes for all platform GUI checks. No live inference.
 
+## Native revision comparison — 2026-11-06
+
+Separate read-only Compare view now accepts two saved commit IDs through explicit
+inputs, bounded revision choices and commit/branch menus. Direct/unique-common-
+ancestor modes, Swap, effective-base display and per-file diffs reuse the existing
+core. Objects are pinned when selected; moving a branch does not retarget a pair.
+Endpoint/mode changes clear old results. Comparison and file requests have unique
+IDs; invalidated replies/errors are ignored, including after a repository refresh.
+Working/index changes are excluded and no write trust is required.
+
+Local evidence:24 native tests and native clippy pass. New worker fixture checks
+divergent direct/ancestor results, a moved branch, staged/unstaged preservation and
+revision-expression refusal. A state test rejects stale results. Actual macOS GUI
+selected endpoints through commit/branch menus and both pickers, inspected a diff,
+swapped the direction and checked reversed additions/removals, then inspected
+common-ancestor output. Picker dismissal was refined after inspection. See
+[verification](docs/NATIVE-VERIFICATION.md); no drag/drop or installer yet.
+
 ## Exact next task
 
 Keep [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full objective ledger.
-Next implement native revision comparison with clear two-endpoint selection and
-keyboard/context-menu alternatives, then reviewed drag/drop. Continue clone/remotes,
+Next implement reviewed native drag/drop using the saved comparison endpoints
+and existing typed mutation review; preserve explicit menu/keyboard alternatives. Continue clone/remotes,
 worktrees/tabs and contextual AI. Preserve existing trust/fingerprint/preservation
 semantics and finish editor IME/accessibility/CRLF/linked-scroll/large-file gates,
 R3/R4 depth and R5 packaging/cutover. Full native migration remains incomplete.

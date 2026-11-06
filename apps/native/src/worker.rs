@@ -40,6 +40,18 @@ pub enum Work {
         repo: String,
         head: String,
     },
+    Compare {
+        repo: String,
+        from: String,
+        to: String,
+        kind: ramo_core::compare::Kind,
+    },
+    ComparisonDiff {
+        repo: String,
+        from: String,
+        to: String,
+        path: String,
+    },
     CommitDraftLoad(Scope),
     CommitDraftSave {
         scope: Scope,
@@ -88,6 +100,8 @@ pub enum Payload {
         head: String,
         message: String,
     },
+    Compared(Result<ramo_core::compare::Comparison, String>),
+    ComparisonDiff(Result<String, String>),
     CommitDraftLoaded(Option<Loaded>),
     CommitDraftSaved(Loaded),
     DraftLoaded(Option<Loaded>),
@@ -241,6 +255,24 @@ fn execute(backend: &mut Backend, state: &std::path::Path, work: Work) -> Result
             message: backend.amend_message(&repo, &head)?,
             head,
         },
+        Work::Compare {
+            repo,
+            from,
+            to,
+            kind,
+        } => Payload::Compared(backend.compare_revisions(&repo, &from, &to, kind)),
+        Work::ComparisonDiff {
+            repo,
+            from,
+            to,
+            path,
+        } => Payload::ComparisonDiff(backend.comparison_diff(
+            &repo,
+            &from,
+            &to,
+            ramo_core::compare::Kind::Trees,
+            &path,
+        )),
         Work::CommitDraftLoad(scope) => {
             Payload::CommitDraftLoaded(drafts::load(&state.join("commit-drafts"), &scope)?)
         }
@@ -317,6 +349,100 @@ mod tests {
             git(root, &["status", "--porcelain=v1", "-z"]),
             fs::read(root.join("search.txt")).unwrap(),
         ]
+    }
+    #[test]
+    fn native_comparison_uses_immutable_pairs_and_preserves_dirty_index_and_work() {
+        let (temp, root, mut backend) = fixture();
+        let initial = String::from_utf8(git(&root, &["rev-parse", "HEAD"]))
+            .unwrap()
+            .trim()
+            .to_owned();
+        git(&root, &["checkout", "-b", "left"]);
+        fs::write(root.join("left.txt"), b"left only\n").unwrap();
+        git(&root, &["add", "left.txt"]);
+        git(&root, &["commit", "-m", "Left branch"]);
+        let left = String::from_utf8(git(&root, &["rev-parse", "HEAD"]))
+            .unwrap()
+            .trim()
+            .to_owned();
+        git(&root, &["checkout", "main"]);
+        fs::write(root.join("search.txt"), "target 日本語\n".as_bytes()).unwrap();
+        git(&root, &["add", "search.txt"]);
+        git(&root, &["commit", "-m", "Target search"]);
+        let target = String::from_utf8(git(&root, &["rev-parse", "HEAD"]))
+            .unwrap()
+            .trim()
+            .to_owned();
+        fs::write(root.join("search.txt"), b"staged private fixture\n").unwrap();
+        git(&root, &["add", "search.txt"]);
+        fs::write(root.join("search.txt"), b"unstaged private fixture\n").unwrap();
+        let snapshot = backend.register(&root).unwrap();
+        assert!(!snapshot.repo.trusted);
+        git(&root, &["update-ref", "refs/heads/left", &target]);
+        let before = proof(&root);
+        let Payload::Compared(direct) = execute(
+            &mut backend,
+            temp.path(),
+            Work::Compare {
+                repo: snapshot.repo.id.clone(),
+                from: left.clone(),
+                to: target.clone(),
+                kind: ramo_core::compare::Kind::Trees,
+            },
+        )
+        .unwrap() else {
+            panic!("comparison expected")
+        };
+        let direct = direct.unwrap();
+        assert_eq!(direct.effective_from, left);
+        assert!(direct.files.iter().any(|f| f.path == "left.txt"));
+        let Payload::Compared(ancestor) = execute(
+            &mut backend,
+            temp.path(),
+            Work::Compare {
+                repo: snapshot.repo.id.clone(),
+                from: left,
+                to: target.clone(),
+                kind: ramo_core::compare::Kind::MergeBase,
+            },
+        )
+        .unwrap() else {
+            panic!("comparison expected")
+        };
+        let ancestor = ancestor.unwrap();
+        assert_eq!(ancestor.effective_from, initial);
+        assert_eq!(ancestor.files.len(), 1);
+        let Payload::ComparisonDiff(diff) = execute(
+            &mut backend,
+            temp.path(),
+            Work::ComparisonDiff {
+                repo: snapshot.repo.id.clone(),
+                from: ancestor.effective_from,
+                to: target.clone(),
+                path: "search.txt".into(),
+            },
+        )
+        .unwrap() else {
+            panic!("diff expected")
+        };
+        let diff = diff.unwrap();
+        assert!(diff.contains("+target 日本語"));
+        assert!(!diff.contains("private fixture"));
+        assert!(matches!(
+            execute(
+                &mut backend,
+                temp.path(),
+                Work::Compare {
+                    repo: snapshot.repo.id,
+                    from: "HEAD~1".into(),
+                    to: target,
+                    kind: ramo_core::compare::Kind::Trees
+                }
+            )
+            .unwrap(),
+            Payload::Compared(Err(_))
+        ));
+        assert_eq!(proof(&root), before);
     }
     #[test]
     fn browsing_dirty_staged_and_unstaged_data_is_read_only_and_stale_pages_fail() {

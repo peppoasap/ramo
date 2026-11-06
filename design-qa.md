@@ -81,3 +81,14 @@ corrected by pinning the selected dark theme. Actual synthetic screenshot:
 
 This is scoped dialog/contrast verification; dense history/mock fidelity, narrower
 window behavior, platform accessibility and all remaining dialogs are still open.
+
+
+## Native comparison refinement — 2026-11-06
+
+Actual Compare view verified on macOS with ordered endpoints, direct/ancestor
+modes, Swap, file list and color-coded diff. It is separate from working Changes.
+Inspection found a missing arrow glyph and unnecessarily long effective-ID labels;
+these now use plain text and short IDs with full hover detail. Picker selection
+was updated and verified to close its popup immediately. Actual capture:
+`docs/images/native-comparison.png`. Dense-history/layout fidelity and narrow-window
+comparison acceptance remain separate open gates; this is scoped workflow QA.

@@ -1,4 +1,5 @@
 mod actions;
+mod comparison;
 mod composer;
 mod history;
 mod inspection;
@@ -25,6 +26,7 @@ const ROW: f32 = 22.;
 enum Mode {
     History,
     Changes,
+    Compare,
 }
 
 pub struct App {
@@ -36,6 +38,7 @@ pub struct App {
     amend_request: u64,
     form: Option<actions::Form>,
     composer: crate::commit_draft::Composer,
+    comparison: comparison::CompareView,
     open_after_draft: Option<Option<PathBuf>>,
     close_after_draft: bool,
     epoch: u64,
@@ -87,6 +90,7 @@ impl App {
             amend_request: 0,
             form: None,
             composer: Default::default(),
+            comparison: Default::default(),
             open_after_draft: None,
             close_after_draft: false,
             epoch: 0,
@@ -159,6 +163,7 @@ impl App {
         self.action = None;
         self.form = None;
         self.epoch += 1;
+        self.comparison.cancel_requests();
         self.pending.clear();
         self.page_request = None;
         self.send(Work::Open(path));
@@ -175,6 +180,7 @@ impl App {
         if let Some(snapshot) = &self.snapshot {
             let repo = snapshot.repo.id.clone();
             self.epoch += 1;
+            self.comparison.cancel_requests();
             self.pending.clear();
             self.page_request = None;
             self.send(Work::Refresh(repo));
@@ -247,6 +253,10 @@ impl App {
                 continue;
             }
             self.pending.remove(&reply.sequence);
+            if self.comparison.owns(reply.sequence) {
+                self.comparison.receive(reply.sequence, reply.result);
+                continue;
+            }
             let page_failed = self.page_request == Some(reply.sequence);
             if page_failed {
                 self.page_request = None;
@@ -296,6 +306,7 @@ impl App {
                     self.action_request = None;
                     let mode = self.mode;
                     self.epoch += 1;
+                    self.comparison.cancel_requests();
                     self.pending.clear();
                     self.page_request = None;
                     self.snapshot = Some(*snapshot);
@@ -366,6 +377,7 @@ impl App {
                         });
                     }
                 }
+                Ok(Payload::Compared(_) | Payload::ComparisonDiff(_)) => {}
                 Ok(Payload::Cancelled) => {}
                 Ok(Payload::Opened { snapshot, commits }) => {
                     if self.composer.repository.as_deref() != Some(&snapshot.repo.id) {
@@ -377,6 +389,7 @@ impl App {
                     }
                     self.error = None;
                     self.mode = Mode::History;
+                    self.comparison = Default::default();
                     self.editor = None;
                     self.filter.clear();
                     self.branch_filter.clear();
@@ -571,6 +584,12 @@ impl eframe::App for App {
                             self.select(oid);
                         }
                     }
+                    if ui
+                        .selectable_label(self.mode == Mode::Compare, "Compare")
+                        .clicked()
+                    {
+                        self.mode = Mode::Compare;
+                    }
                     let count = self.snapshot.as_ref().map_or(0, |s| s.files.len());
                     if ui
                         .selectable_label(self.mode == Mode::Changes, format!("Changes  {count}"))
@@ -587,6 +606,7 @@ impl eframe::App for App {
                 match self.mode {
                     Mode::History => self.history(ui),
                     Mode::Changes => self.changes(ui),
+                    Mode::Compare => self.comparison(ui),
                 }
             });
         match event {

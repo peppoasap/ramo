@@ -5,6 +5,12 @@ only a published GitHub Release establishes an external release.
 
 ## Unreleased — Rust-native development (0.3.0-dev.1)
 
+- Compare saved revisions in a dedicated native view: choose two commits from
+  branch/history menus or revision pickers, swap direction and inspect direct
+  or unique-common-ancestor diffs without touching staged or working changes.
+- Bind comparison/file replies to the active selection; changing an endpoint
+  clears prior results and late replies cannot replace the current comparison.
+
 - Recover repository-scoped commit messages through local autosave, with guarded
   opening/closing, competing-writer checks and explicit storage-error recovery.
   Successful normal commits clear their saved message; amend keeps it.

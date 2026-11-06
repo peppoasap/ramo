@@ -124,6 +124,9 @@ impl App {
                                 self.request_action(Action::Switch{name:branch.name.clone()},"Checkout branch",format!("Switch to {}",branch.name),false);
                             }
                             response.context_menu(|ui|{
+                                if ui.button("Compare from this branch").clicked(){self.compare_endpoint(true,branch.oid.clone());ui.close();}
+                                if ui.button("Compare to this branch").clicked(){self.compare_endpoint(false,branch.oid.clone());ui.close();}
+                                ui.separator();
                                 if !remote {
                                     if ui.button("Checkout").clicked(){self.request_action(Action::Switch{name:branch.name.clone()},"Checkout branch",format!("Switch to {}",branch.name),false);ui.close();}
                                     if ui.button("Merge into current branch…").clicked(){self.request_action(Action::Merge{name:branch.name.clone()},"Merge branch",format!("Merge {} into {}. Conflicts open in Changes.",branch.name,snapshot.branch),true);ui.close();}

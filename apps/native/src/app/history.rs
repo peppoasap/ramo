@@ -46,6 +46,7 @@ impl App {
         ];
         let mut choose = None;
         let mut command = None;
+        let mut endpoint = None;
         let mut amend = None;
         let mut form = None;
         let clean = self
@@ -300,6 +301,9 @@ impl App {
                                 ui.ctx().copy_text(commit.oid.clone());
                                 ui.close();
                             }
+                            for (label, from) in [("Compare from this commit", true), ("Compare to this commit", false)] {
+                                if ui.button(label).clicked() { endpoint = Some((from, commit.oid.clone())); ui.close(); }
+                            }
                             if ui.button("Copy commit subject").clicked(){ui.ctx().copy_text(commit.subject.clone());ui.close();}
                             ui.separator();
                             let is_head=self.snapshot.as_ref().and_then(|s|s.head.as_ref())==Some(&commit.oid);
@@ -369,6 +373,9 @@ impl App {
                     }
                 });
             });
+        if let Some((from, oid)) = endpoint {
+            self.compare_endpoint(from, oid);
+        }
         if let Some(head) = amend
             && let Some(snapshot) = &self.snapshot
         {

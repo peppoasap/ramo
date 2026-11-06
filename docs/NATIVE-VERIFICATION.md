@@ -124,3 +124,30 @@ capture; no mock composition. It illustrates the dialog, not dense-history parit
 Repository-switch/error-reload GUI paths, dirty-merge Quit, Windows/Linux runtime,
 IME and force-kill/shutdown durability are not established by these checks.
 No hosted-account inference or installer acceptance was performed.
+
+
+## Saved-revision comparison — 6 November 2026
+
+24 native tests pass. The new real-Git worker fixture compares divergent commits
+in direct and unique-ancestor modes after moving a branch ref, with dirty index
+and working data. HEAD, binary index, status and working bytes remain unchanged;
+local uncommitted content is absent from the saved-tree diff. Revision expressions
+are refused. A state test rejects obsolete pair/file results. Existing core compare
+fixtures additionally cover unrelated/multiple ancestors, literal paths, binary
+summaries and bounded previews; those core tests were not rerun locally this slice.
+
+Actual macOS GUI selected From using an old commit menu, To using a branch menu,
+compared and inspected the changed file. Swap cleared the old result; comparing
+again reversed the visible deletion/addition. Both revision pickers and the
+common-ancestor mode were exercised in the subsequent bundle. A missing arrow
+font glyph was replaced with plain text; effective object IDs were shortened
+with full IDs on hover. Immediate popup closure after selection was also observed in the final bundle.
+
+![Actual native common-ancestor comparison](images/native-comparison.png)
+
+This is an actual synthetic repository capture, cropped only to remove the OS
+strip. No mergeability, uncommitted comparison, drag/drop, platform GUI parity or
+matched GitKraken speed claim follows. Preview limits remain core-owned:512KiB
+text diff, rename as delete/add and binary summary. Choice list is bounded to
+1,000 entries with context-menu/full-ID alternatives. Queued read jobs are not
+cancelled; their stale results are rejected. No new provider inference or release.
