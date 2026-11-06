@@ -2,47 +2,35 @@ use super::*;
 
 impl App {
     pub(super) fn history(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            ui.label(theme::caption(format!("{} commits", self.visible.len())));
-            if self.has_more
-                && ui
-                    .add_enabled(
-                        self.page_request.is_none(),
-                        egui::Button::new("Load more").frame(false),
-                    )
-                    .clicked()
-            {
-                self.load_more();
-            }
-            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                if ui
-                    .add_sized(
-                        [ui.available_width().min(260.), 28.],
-                        TextEdit::singleline(&mut self.filter)
-                            .hint_text("Find commit, author or hash"),
-                    )
-                    .changed()
-                {
-                    self.refilter();
-                    self.scroll_target = Some(0);
-                }
-            });
-        });
-        ui.add_space(3.);
+        if self.has_more
+            && ui
+                .add_enabled(
+                    self.page_request.is_none(),
+                    egui::Button::new("Load more commits").frame(false),
+                )
+                .clicked()
+        {
+            self.load_more();
+        }
         let row_height = if self.compact { ROW } else { 30. };
         let graph_width =
             (self.rows.iter().map(|r| r.lanes).max().unwrap_or(1) as f32 * 18. + 24.).max(72.);
+        let author_width = if ui.available_width() >= 820. {
+            110.
+        } else {
+            0.
+        };
         let width = ui
             .available_width()
-            .max(150. + graph_width + 76. + 220. + 126. + 90.);
-        let subject_width = width - 150. - graph_width - 76. - 126. - 90.;
+            .max(132. + graph_width + 68. + 180. + author_width + 82.);
+        let subject_width = width - 132. - graph_width - 68. - author_width - 82.;
         let columns = [
             0.,
-            150.,
-            150. + graph_width,
-            226. + graph_width,
-            226. + graph_width + subject_width,
-            width - 90.,
+            132.,
+            132. + graph_width,
+            200. + graph_width,
+            200. + graph_width + subject_width,
+            width - 82.,
         ];
         let mut drop_targets = Vec::new();
         let mut choose = None;
@@ -95,14 +83,15 @@ impl App {
             .show(ui, |ui| {
                 ui.set_min_width(width);
                 let (header, _) = ui.allocate_exact_size(egui::vec2(width, 28.), Sense::hover());
-                for (x, label) in columns.iter().zip([
+                for (column, (x, label)) in columns.iter().zip([
                     "BRANCH / TAG",
                     "GRAPH",
                     "COMMIT",
                     "SUBJECT",
                     "AUTHOR",
                     "DATE",
-                ]) {
+                ]).enumerate() {
+                    if column == 4 && author_width == 0. { continue; }
                     paint_text(
                         ui.painter(),
                         egui::pos2(header.left() + x + 8., header.center().y - 7.),
@@ -195,15 +184,14 @@ impl App {
                             } else {
                                 String::new()
                             };
-                            paint_text(
-                                &painter,
-                                egui::pos2(rect.left() + 7., y - 7.),
-                                &format!("{name}{count}"),
-                                138.,
-                                13.,
-                                theme::LANES[row.lane % 5],
-                                false,
-                            );
+                            let color=theme::LANES[row.lane % 5];
+                            let text=format!("{name}{count}");
+                            let mut job=egui::text::LayoutJob::simple(text, FontId::new(11., egui::FontFamily::Name(theme::STRONG.into())), theme::BASE, 108.);
+                            job.wrap.max_rows=1; job.wrap.overflow_character=Some('…');
+                            let galley=painter.layout_job(job);
+                            let badge=egui::Rect::from_min_size(egui::pos2(rect.left()+7., y-8.), egui::vec2(galley.size().x+12.,16.));
+                            painter.rect_filled(badge, 3., color);
+                            painter.galley(badge.min+egui::vec2(6.,0.),galley,theme::BASE);
                         }
                         let (before, after) = if self.filter.is_empty() {
                             (true, true)
@@ -272,15 +260,17 @@ impl App {
                             theme::TEXT,
                             false,
                         );
+                        if author_width > 0. {
                         paint_text(
                             &painter,
                             egui::pos2(rect.left() + columns[4] + 8., y - 7.),
                             &commit.author,
-                            116.,
+                            100.,
                             12.,
                             theme::MUTED,
                             false,
                         );
+                        }
                         paint_text(
                             &painter,
                             egui::pos2(rect.left() + columns[5] + 8., y - 7.),
@@ -292,7 +282,7 @@ impl App {
                         );
                         drop_targets.push((rect.intersect(ui.clip_rect()),commit.oid.clone()));
                         if !self.modal_open() && self.action_request.is_none() && let Some(origin)=gestures::press_origin(ui.ctx()).filter(|p|rect.intersect(ui.clip_rect()).contains(*p)) && let Some(snapshot)=&self.snapshot {
-                            let source=if origin.x<rect.left()+150. && !labels.is_empty() {
+                            let source=if origin.x<rect.left()+132. && !labels.is_empty() {
                                 let branch=labels[0];crate::gestures::Source::Branch{oid:branch.oid.clone(),name:branch.name.clone(),remote:branch.remote}
                             } else {crate::gestures::Source::Commit{oid:commit.oid.clone(),parents:commit.parents.len(),subject:commit.subject.clone()}};
                             let candidate=crate::gestures::Candidate{drag:crate::gestures::Drag::new(snapshot,source),origin:[origin.x,origin.y]};

@@ -1,6 +1,6 @@
 # Project status
 
-Updated: 2026-11-05 (Europe/Madrid). Published prerelease:0.2.0-beta.4.
+Updated: 2026-11-06 (Europe/Madrid). Published prerelease:0.2.0-beta.4.
 The owner authorized publication to https://github.com/peppoasap/ramo and public
 beta build downloads. Initial192-file import published as b4f30fb; a follow-up includes supplemental
 upstream license texts and standalone-export completeness. Local caches/settings, real repositories and private reference screenshots
@@ -658,14 +658,38 @@ These results do not yet cover the new connection UI. Live hosted authentication
 Windows/Linux GUI, forced-shutdown/long clone cancellation and additional provider
 catalogs remain unverified or unimplemented. No new native installer/release.
 
+## Native visual correction — 6 November 2026
+
+Owner priority: restore fidelity to the selected mockups before additional feature
+work. Native history now uses bundled Noto Sans Regular/SemiBold, explicit heading
+hierarchy, mint repository/history underlines, colored branch badges and quieter
+control states. Search moved into commands, removing a duplicate history control
+row. Inspector has a wider default, full-width file selection and read-only diff
+hunk coordinates/backgrounds through the existing coordinate parser. Shared
+styles apply to dialogs; clone provider selection remains visible.
+
+Actual macOS before/after captures use the same55-commit synthetic fixture and
+1512×918 logical content viewport. Search, inspection, menus, branch/clone dialog
+cancellation and narrow/wide resizing were exercised without Git writes. Git
+confirmed unchanged HEAD/index entries/status.32 native tests, native clippy/fmt,
+developer-bundle build/signature and267 redistribution notices passed. See
+[design-qa.md](design-qa.md) for scoped visual acceptance and
+[VISUAL-CONTRACT.md](docs/design/rust-native/VISUAL-CONTRACT.md) for maintainer rules.
+This is not whole-app visual parity or a new installer.
+
+Previous source4b45f2a native CI42196287619 passed macOS/Linux but Windows failed
+one synthetic clone LF assertion under runner autocrlf. The fixture now commits
+explicit eol=lf attributes rather than assuming local source config transfers to
+clones. Production Git configuration is unchanged. Its hosted Windows correction
+still requires a new run; local passing tests do not prove that result.
+
 ## Exact next task
 
-Keep [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full objective ledger.
-Next implement native worktree open/create/manage and repository navigation/tabs,
-reusing core grants and preserving dirty editors/messages on context changes.
-Continue contextual AI, clone progress/Stop, broader graph/file menus and deeper
-remote/upstream controls. Preserve existing trust/fingerprint/preservation
-semantics and finish editor IME/accessibility/CRLF/linked-scroll/large-file gates,
-R3/R4 depth and R5 packaging/cutover. Full native migration remains incomplete.
-Observe this slice's hosted runs before claiming cross-platform source checks;
-actual Windows/Linux GUI and second-Mac release acceptance still remain.
+Finish dedicated visual passes for native Changes/comparison and merge editor
+against selected workflow boards, using this visual contract and actual captures.
+Then resume native worktree open/create/manage and repository navigation/tabs.
+Keep [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full objective ledger;
+contextual AI, clone Stop/progress, broader menus and remote controls, editor
+IME/accessibility/CRLF/linked-scroll/large-file gates and packaging/cutover remain.
+Observe new hosted checks before claiming source acceptance on all three OS.
+Actual Windows/Linux GUI and second-Mac release acceptance remain separate gates.

@@ -357,6 +357,14 @@ mod tests {
     fn native_local_clone_review_is_read_only_one_shot_and_collision_safe() {
         use crate::connection_work::{Job, Reply};
         let (temp, root, mut backend) = fixture();
+        // A clone has its own Git configuration. Pin the fixture's checkout EOL
+        // in committed attributes rather than assuming the runner's autocrlf.
+        fs::write(root.join(".gitattributes"), b"*.txt text eol=lf\n").unwrap();
+        git(&root, &["add", ".gitattributes"]);
+        git(
+            &root,
+            &["commit", "-m", "Pin synthetic checkout line endings"],
+        );
         fs::write(root.join("search.txt"), b"uncommitted source stays here\n").unwrap();
         let original = backend.register(&root).unwrap();
         let before = proof(&root);

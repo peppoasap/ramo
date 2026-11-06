@@ -15,7 +15,7 @@ pub enum Event {
 fn changed(line: &str, in_hunk: bool) -> bool {
     in_hunk && (line.starts_with('+') || line.starts_with('-'))
 }
-fn numbers(lines: &[&str]) -> Vec<(Option<usize>, Option<usize>)> {
+pub(super) fn numbers(lines: &[&str]) -> Vec<(Option<usize>, Option<usize>)> {
     let mut old = 0;
     let mut new = 0;
     let mut active = false;

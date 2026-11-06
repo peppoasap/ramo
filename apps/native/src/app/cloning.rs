@@ -123,7 +123,7 @@ impl App {
                             ui.set_width(155.);
                             for provider in Provider::ALL {
                                 let glyph=match provider{Provider::Github|Provider::Enterprise=>icon::GITHUB_LOGO,Provider::Local=>icon::FOLDER_OPEN,Provider::Azure=>icon::CLOUD,_=>icon::GIT_BRANCH};
-                                if ui.add_sized([155.,28.],egui::Button::selectable(state.provider==provider,format!("{glyph}  {}",provider.label())).frame(false)).clicked() {
+                                if ui.add_sized([155.,28.],egui::Button::selectable(state.provider==provider,format!("{glyph}  {}",provider.label())).frame(state.provider==provider)).clicked() {
                                     state.provider=provider;state.catalog.clear();state.catalog_loaded=false;state.error=None;
                                 }
                             }
@@ -133,7 +133,7 @@ impl App {
                         ui.vertical(|ui|{
                             ui.set_width(500.);
                             ScrollArea::vertical().id_salt("clone_fields").max_height((ctx.content_rect().height()-210.).clamp(260.,360.)).show(ui,|ui|{
-                                ui.strong(state.provider.label());ui.add_space(8.);
+                                ui.label(theme::emphasis(state.provider.label()));ui.add_space(8.);
                                 if state.provider.custom_host() {
                                     ui.label("Server");
                                     if ui.add(TextEdit::singleline(&mut state.host).hint_text("git.example.com").desired_width(f32::INFINITY)).changed(){state.catalog.clear();state.catalog_loaded=false;}

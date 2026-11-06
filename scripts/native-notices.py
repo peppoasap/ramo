@@ -68,6 +68,13 @@ for package in sorted(metadata['packages'], key=lambda p: (p['name'], p['version
                     f"Source: https://crates.io/api/v1/crates/{package['name']}/{package['version']}/download\n{texts}")
 sections.append('Phosphor icon font\nSource: https://github.com/phosphor-icons/web/blob/master/LICENSE\n'+
                 (native_licenses/'Phosphor-icons-MIT.txt').read_text(encoding='utf-8'))
+font_root = root/'apps/native/assets/fonts'
+font_manifest = json.loads((font_root/'manifest.json').read_text(encoding='utf-8'))
+for name, expected in font_manifest['files'].items():
+    if hashlib.sha256((font_root/name).read_bytes()).hexdigest() != expected:
+        raise SystemExit('Bundled font hash mismatch: '+name)
+sections.append('Noto Sans Regular and SemiBold (unmodified)\nSource: '+font_manifest['source']+'\n'+
+                (font_root/'OFL.txt').read_text(encoding='utf-8'))
 if missing:
     raise SystemExit('Missing native license texts: '+', '.join(missing))
 output = root/'apps/native/THIRD_PARTY_NOTICES.txt'

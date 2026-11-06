@@ -155,3 +155,11 @@ Observed local evidence and screenshots: [verification](../../docs/NATIVE-VERIFI
 Native partial controls are disabled for clipped previews (over12,000 lines or
 4,096 characters per line) and during an active Git operation, with a visible
 whole-file fallback reason. Complete working files are never rewritten by staging.
+
+## Visual fidelity
+
+The native UI follows the [selected visual contract](../../docs/design/rust-native/VISUAL-CONTRACT.md).
+The [current actual capture](../../docs/design/rust-native/visual-fidelity/native-history.png)
+and [scoped QA report](../../design-qa.md) separate history refinements from remaining
+workflow visual gates. Font files retain OFL-1.1; the license is included in
+native bundle notices.

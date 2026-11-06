@@ -7,7 +7,7 @@ impl App {
         }
         egui::SidePanel::right("inspector")
             .resizable(true)
-            .default_width(340.)
+            .default_width(420.)
             .width_range(260.0..=600.0)
             .frame(egui::Frame::new().fill(theme::PANEL).inner_margin(14.))
             .show(ctx, |ui| {
@@ -26,13 +26,17 @@ impl App {
                         short(&commit.oid),
                         commit.author
                     )));
-                    ui.label(theme::caption(&commit.date));
+                    ui.label(theme::caption(commit.date.replace('T', "  ")))
+                        .on_hover_text(&commit.date);
                 } else if let Some(oid) = &self.selected {
                     ui.monospace(short(oid));
                 }
                 ui.add_space(10.);
                 ui.separator();
-                ui.strong(format!("Changed files ({})", self.files.len()));
+                ui.label(theme::emphasis(format!(
+                    "Changed files ({})",
+                    self.files.len()
+                )));
                 let files = self.files.clone();
                 ScrollArea::vertical()
                     .id_salt("commit_files")
@@ -40,9 +44,13 @@ impl App {
                     .show(ui, |ui| {
                         for file in files {
                             if ui
-                                .selectable_label(
-                                    self.file.as_deref() == Some(&file.path),
-                                    format!("{}  {}", icon::FILE_TEXT, file.path),
+                                .add(
+                                    egui::Button::selectable(
+                                        self.file.as_deref() == Some(&file.path),
+                                        format!("{}  {}", icon::FILE_TEXT, file.path),
+                                    )
+                                    .min_size(egui::vec2(ui.available_width(), 28.))
+                                    .truncate(),
                                 )
                                 .clicked()
                                 && let Some(snapshot) = &self.snapshot

@@ -5,6 +5,12 @@ only a published GitHub Release establishes an external release.
 
 ## Unreleased — Rust-native development (0.3.0-dev.1)
 
+- Refine native history toward the selected graphite/mint mocks: bundled
+  regular/semibold typography, underlined tabs, branch badges, integrated toolbar
+  search and clearer read-only diff rows. Preserve compact density and menus.
+- Pin synthetic clone checkout line endings through committed attributes, fixing
+  a Windows runner-dependent LF assertion without changing production Git config.
+
 - Clone from URL, provider shortcut or a native-picked local repository through
   destination grants and immutable one-shot review. Opening the new checkout
   preserves repository-scoped messages and starts with fresh write trust.

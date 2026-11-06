@@ -1,6 +1,8 @@
 use eframe::egui::{self, Color32, FontId, RichText, TextStyle};
 pub const BASE: Color32 = Color32::from_rgb(23, 27, 32);
-pub const PANEL: Color32 = Color32::from_rgb(30, 37, 44);
+pub const PANEL: Color32 = Color32::from_rgb(28, 35, 41);
+pub const HOVER: Color32 = Color32::from_rgb(38, 47, 54);
+pub const STRONG: &str = "Ramo Semibold";
 pub const BORDER: Color32 = Color32::from_rgb(48, 59, 69);
 pub const TEXT: Color32 = Color32::from_rgb(232, 237, 243);
 pub const MUTED: Color32 = Color32::from_rgb(166, 177, 192);
@@ -21,7 +23,25 @@ pub fn install(ctx: &egui::Context) {
     // Otherwise eframe can switch to its unstyled light palette after startup.
     ctx.set_theme(egui::Theme::Dark);
     let mut fonts = egui::FontDefinitions::default();
+    fonts.font_data.insert(
+        "noto".into(),
+        egui::FontData::from_static(include_bytes!("../assets/fonts/NotoSans-Regular.ttf")).into(),
+    );
+    fonts.font_data.insert(
+        "noto-semibold".into(),
+        egui::FontData::from_static(include_bytes!("../assets/fonts/NotoSans-SemiBold.ttf")).into(),
+    );
+    fonts
+        .families
+        .get_mut(&egui::FontFamily::Proportional)
+        .unwrap()
+        .insert(0, "noto".into());
     egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
+    let mut strong_fallback = vec!["noto-semibold".into()];
+    strong_fallback.extend(fonts.families[&egui::FontFamily::Proportional].clone());
+    fonts
+        .families
+        .insert(egui::FontFamily::Name(STRONG.into()), strong_fallback);
     ctx.set_fonts(fonts);
     let mut style = (*ctx.style()).clone();
     style.visuals = egui::Visuals::dark();
@@ -42,10 +62,26 @@ pub fn install(ctx: &egui::Context) {
         &mut style.visuals.widgets.open,
     ] {
         widget.corner_radius = egui::CornerRadius::same(3);
+        widget.fg_stroke = egui::Stroke::new(1.0, TEXT);
         widget.bg_stroke = egui::Stroke::new(1.0, BORDER);
     }
-    style.visuals.widgets.inactive.bg_fill = PANEL;
-    style.visuals.widgets.hovered.bg_fill = Color32::from_rgb(43, 53, 62);
+    style.visuals.widgets.noninteractive.fg_stroke.color = MUTED;
+    for widget in [
+        &mut style.visuals.widgets.inactive,
+        &mut style.visuals.widgets.hovered,
+        &mut style.visuals.widgets.active,
+        &mut style.visuals.widgets.open,
+    ] {
+        widget.bg_fill = HOVER;
+        widget.weak_bg_fill = PANEL;
+    }
+    style.visuals.widgets.hovered.weak_bg_fill = HOVER;
+    style.visuals.widgets.active.weak_bg_fill = SELECTED;
+    style.visuals.widgets.open.weak_bg_fill = SELECTED;
+    style.visuals.text_cursor.stroke.color = MINT;
+    style.visuals.widgets.active.bg_stroke.color = MINT;
+    style.visuals.widgets.hovered.bg_stroke.color = MUTED;
+    style.visuals.menu_corner_radius = egui::CornerRadius::same(4);
     style.spacing.item_spacing = egui::vec2(8., 5.);
     style.spacing.button_padding = egui::vec2(8., 5.);
     style.spacing.interact_size.y = 28.;
@@ -61,10 +97,33 @@ pub fn install(ctx: &egui::Context) {
     style
         .text_styles
         .insert(TextStyle::Monospace, FontId::monospace(13.));
-    style
-        .text_styles
-        .insert(TextStyle::Heading, FontId::proportional(18.));
+    style.text_styles.insert(
+        TextStyle::Heading,
+        FontId::new(17., egui::FontFamily::Name(STRONG.into())),
+    );
     ctx.set_style_of(egui::Theme::Dark, style);
+}
+/// Underlined workbench tabs use the same hit target without adding a button tile.
+pub fn tab(ui: &mut egui::Ui, label: &str, selected: bool) -> egui::Response {
+    let response = ui.add(
+        egui::Button::new(if selected {
+            emphasis(label).color(TEXT)
+        } else {
+            RichText::new(label).color(MUTED)
+        })
+        .frame(false)
+        .min_size(egui::vec2(72., 30.)),
+    );
+    if selected {
+        ui.painter().line_segment(
+            [response.rect.left_bottom(), response.rect.right_bottom()],
+            egui::Stroke::new(2., MINT),
+        );
+    }
+    response
+}
+pub fn emphasis(text: impl Into<String>) -> RichText {
+    RichText::new(text).family(egui::FontFamily::Name(STRONG.into()))
 }
 pub fn button(ui: &mut egui::Ui, icon: &str, label: &str) -> egui::Response {
     ui.add(egui::Button::new(format!("{icon}  {label}")).frame(false))

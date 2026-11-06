@@ -640,9 +640,7 @@ impl eframe::App for App {
                     return;
                 }
                 ui.horizontal(|ui| {
-                    if ui
-                        .selectable_label(self.mode == Mode::History, "History")
-                        .clicked()
+                    if theme::tab(ui, "History", self.mode == Mode::History).clicked()
                         && self.mode != Mode::History
                     {
                         self.diff_request = 0;
@@ -651,15 +649,11 @@ impl eframe::App for App {
                             self.select(oid);
                         }
                     }
-                    if ui
-                        .selectable_label(self.mode == Mode::Compare, "Compare")
-                        .clicked()
-                    {
+                    if theme::tab(ui, "Compare", self.mode == Mode::Compare).clicked() {
                         self.mode = Mode::Compare;
                     }
                     let count = self.snapshot.as_ref().map_or(0, |s| s.files.len());
-                    if ui
-                        .selectable_label(self.mode == Mode::Changes, format!("Changes  {count}"))
+                    if theme::tab(ui, &format!("Changes  {count}"), self.mode == Mode::Changes)
                         .clicked()
                     {
                         self.mode = Mode::Changes;
@@ -755,49 +749,67 @@ fn paint_text(
     p.galley(pos, galley, color);
 }
 fn render_diff(ui: &mut egui::Ui, diff: &str) {
-    let lines: Vec<_> = diff.split('\n').take(12_001).collect();
+    let lines = crate::diff_preview::lines(diff);
     let count = lines.len().min(12_000);
-    if lines.len() > 12_000 {
+    if diff.lines().take(12_001).count() > 12_000 {
         ui.label(theme::caption(
             "Preview limited to 12,000 lines. The file is unchanged.",
         ));
     }
-    if lines.iter().any(|line| line.len() > 4096) {
+    if lines.iter().any(|line| line.text.len() > 4096) {
         ui.label(theme::caption("Long-line preview limit: 4,096 characters."));
     }
     ui.spacing_mut().item_spacing.y = 0.;
     ScrollArea::both()
         .id_salt("diff")
         .auto_shrink([false, false])
-        .show_rows(ui, 18., count, |ui, range| {
+        .show_rows(ui, 20., count, |ui, range| {
             for index in range {
-                let line = lines[index];
-                let color = if line.starts_with('+') && !line.starts_with("+++") {
-                    theme::MINT
-                } else if line.starts_with('-') && !line.starts_with("---") {
-                    theme::RED
-                } else if line.starts_with("@@") {
-                    theme::LANES[1]
-                } else {
-                    theme::MUTED
+                let line = &lines[index];
+                let (color, background) = match line.kind {
+                    '+' => (theme::TEXT, theme::SELECTED.gamma_multiply(0.7)),
+                    '-' => (theme::TEXT, Color32::from_rgb(65, 37, 42)),
+                    '@' => (theme::LANES[1], theme::HOVER),
+                    _ => (theme::TEXT, theme::BASE),
                 };
-                let preview = if let Some((end, _)) = line.char_indices().nth(4096) {
-                    format!("{}…", &line[..end])
+                let text = line.text;
+                let preview = if let Some((end, _)) = text.char_indices().nth(4096) {
+                    format!("{}…", &text[..end])
                 } else {
-                    line.to_owned()
+                    text.to_owned()
                 };
-                ui.allocate_ui_with_layout(
-                    egui::vec2(ui.available_width(), 18.),
-                    Layout::left_to_right(Align::Center),
-                    |ui| {
-                        ui.add(
-                            egui::Label::new(
-                                RichText::new(preview).monospace().size(12.5).color(color),
-                            )
-                            .wrap_mode(egui::TextWrapMode::Extend),
-                        )
-                    },
-                );
+                let frame = egui::Frame::new().fill(background);
+                frame.show(ui, |ui| {
+                    ui.set_min_width(ui.available_width());
+                    ui.allocate_ui_with_layout(
+                        egui::vec2(ui.available_width(), 20.),
+                        Layout::left_to_right(Align::Center),
+                        |ui| {
+                            if line.old.is_some() || line.new.is_some() {
+                                let coordinate = line
+                                    .new
+                                    .or(line.old)
+                                    .map(|n| n.to_string())
+                                    .unwrap_or_default();
+                                ui.add_sized(
+                                    [32., 20.],
+                                    egui::Label::new(
+                                        RichText::new(coordinate)
+                                            .monospace()
+                                            .size(11.)
+                                            .color(theme::MUTED),
+                                    ),
+                                );
+                            }
+                            ui.add(
+                                egui::Label::new(
+                                    RichText::new(preview).monospace().size(12.5).color(color),
+                                )
+                                .wrap_mode(egui::TextWrapMode::Extend),
+                            );
+                        },
+                    );
+                });
             }
         });
 }

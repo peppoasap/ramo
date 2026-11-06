@@ -245,3 +245,19 @@ proves the repository snapshot also refreshes, rather than only the visible list
 Both are actual3024×1898 captures with only the62px OS strip removed. The clone
 image illustrates URL setup without a selected destination; it is not a hosted
 clone or connected-account claim. Native file-picker screenshots were not exported.
+
+## Visual correction — 6 November 2026
+
+See root design-qa.md and docs/design/rust-native/VISUAL-CONTRACT.md. Actual macOS
+history before/after uses matching1512×918 logical content, synthetic55 commits,
+selected feat/search and read-only inspector.32 native tests, native clippy/fmt,
+bundle/signature and267 notices passed. Toolbar search was exercised; branch
+inspection/context menu, branch/clone Cancel and window resize were observed.
+Independent Git HEAD/index entries/status stayed unchanged. Dedicated Changes,
+comparison, merge and future AI/settings visual passes remain open. No platform
+GUI acceptance or new native installer follows from this pass.
+
+Previous native CI42196287619 passed macOS/Linux but Windows failed a synthetic
+clone LF assertion: global autocrlf affects the new checkout, while source-local
+config is not cloned. The test now commits explicit eol=lf attributes. Production
+Git behavior is unchanged; a fresh hosted run is required for Windows evidence.

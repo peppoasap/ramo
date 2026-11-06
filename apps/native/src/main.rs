@@ -2,6 +2,7 @@
 mod app;
 mod commit_draft;
 mod connection_work;
+mod diff_preview;
 mod drafts;
 mod editor;
 mod gestures;
