@@ -116,7 +116,7 @@ impl Editor {
                 event = Some(Event::Back);
             }
             ui.separator();
-            ui.strong(&self.scope.path);
+            ui.label(theme::emphasis(&self.scope.path));
             ui.label(theme::caption(if blocks.is_empty() {
                 "No complete conflict blocks remain".into()
             } else {
@@ -124,14 +124,20 @@ impl Editor {
             }));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui
-                    .add_enabled(!blocks.is_empty(), egui::Button::new("Next"))
+                    .add_enabled(
+                        !blocks.is_empty(),
+                        egui::Button::new(format!("Next {}", icon::ARROW_RIGHT)),
+                    )
                     .clicked()
                 {
                     self.active = (self.active + 1) % blocks.len();
                     locate = true;
                 }
                 if ui
-                    .add_enabled(!blocks.is_empty(), egui::Button::new("Previous"))
+                    .add_enabled(
+                        !blocks.is_empty(),
+                        egui::Button::new(format!("{} Previous", icon::ARROW_LEFT)),
+                    )
                     .clicked()
                 {
                     self.active = (self.active + blocks.len() - 1) % blocks.len();
@@ -162,56 +168,71 @@ impl Editor {
         if let Some(message) = self.notice.as_ref() {
             ui.label(RichText::new(message).size(12.).color(theme::AMBER));
         }
-        ui.label(theme::caption("Pick source line numbers, then use selected lines. Edits stay here until you save a draft or explicitly save and stage the result."));
+        ui.label(theme::caption(
+            "Select source line numbers, then insert those lines into the result.",
+        ));
 
-        let source_height = (ui.available_height() * 0.39).clamp(140., 320.);
+        let source_height = (ui.available_height() * 0.32).clamp(120., 260.);
         ui.columns(2, |columns| {
-            columns[0].push_id("ours", |ui| {
-                ui.horizontal(|ui| {
-                    ui.strong("Current version");
-                    if ui
-                        .add_enabled(
-                            !self.ours_picks.is_empty(),
-                            egui::Button::new("Use selected lines"),
-                        )
-                        .clicked()
-                    {
-                        self.use_lines(true);
-                    }
+            for (index, ours) in [(0, true), (1, false)] {
+                columns[index].push_id(if ours { "ours" } else { "theirs" }, |ui| {
+                    egui::Frame::new()
+                        .fill(theme::PANEL)
+                        .stroke(egui::Stroke::new(1., theme::BORDER))
+                        .corner_radius(3.)
+                        .inner_margin(8.)
+                        .show(ui, |ui| {
+                            ui.label(theme::emphasis(if ours {
+                                "Current version"
+                            } else {
+                                "Incoming version"
+                            }));
+                            ui.separator();
+                            egui::Frame::new().fill(theme::BASE).show(ui, |ui| {
+                                if ours {
+                                    source(
+                                        ui,
+                                        &self.ours,
+                                        &mut self.ours_picks,
+                                        source_height,
+                                        "current",
+                                    );
+                                } else {
+                                    source(
+                                        ui,
+                                        &self.theirs,
+                                        &mut self.theirs_picks,
+                                        source_height,
+                                        "incoming",
+                                    );
+                                }
+                            });
+                            let count = if ours {
+                                self.ours_picks.len()
+                            } else {
+                                self.theirs_picks.len()
+                            };
+                            ui.add_space(4.);
+                            ui.horizontal(|ui| {
+                                let label = if count > 0 {
+                                    format!("{} Use selected lines ({count})", icon::ARROW_DOWN)
+                                } else {
+                                    format!("{} Use selected lines", icon::ARROW_DOWN)
+                                };
+                                if ui
+                                    .add_enabled(count > 0, egui::Button::new(label))
+                                    .clicked()
+                                {
+                                    self.use_lines(ours);
+                                }
+                            });
+                        });
                 });
-                source(
-                    ui,
-                    &self.ours,
-                    &mut self.ours_picks,
-                    source_height,
-                    "current",
-                );
-            });
-            columns[1].push_id("theirs", |ui| {
-                ui.horizontal(|ui| {
-                    ui.strong("Incoming version");
-                    if ui
-                        .add_enabled(
-                            !self.theirs_picks.is_empty(),
-                            egui::Button::new("Use selected lines"),
-                        )
-                        .clicked()
-                    {
-                        self.use_lines(false);
-                    }
-                });
-                source(
-                    ui,
-                    &self.theirs,
-                    &mut self.theirs_picks,
-                    source_height,
-                    "incoming",
-                );
-            });
+            }
         });
         ui.separator();
         ui.horizontal(|ui| {
-            ui.strong("Result");
+            ui.label(theme::emphasis("Result · edit to resolve"));
             if theme::button(ui, icon::ARROW_COUNTER_CLOCKWISE, "Undo").clicked() {
                 self.history.undo(&mut self.result);
                 self.dirty = self.result != self.clean_text;
@@ -273,23 +294,13 @@ impl Editor {
                         "Review the result, then save and stage this file.",
                     ));
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui
-                            .add_enabled(blocks.is_empty(), egui::Button::new("Save and stage…"))
+                        if theme::primary(ui, "Save and mark resolved…", blocks.is_empty())
                             .clicked()
                         {
                             event = Some(Event::Resolve);
                         }
-                        ui.add_enabled(
-                            can_save,
-                            egui::Button::new(
-                                RichText::new("Save local draft")
-                                    .color(theme::BASE)
-                                    .strong(),
-                            )
-                            .fill(theme::MINT)
-                            .stroke(egui::Stroke::NONE),
-                        )
-                        .clicked()
+                        ui.add_enabled(can_save, egui::Button::new("Save local draft"))
+                            .clicked()
                     })
                     .inner
                 })
@@ -322,51 +333,60 @@ impl Editor {
         if locate {
             area = area.vertical_scroll_offset(line as f32 * 20.);
         }
-        area.show(ui, |ui| {
-            ui.horizontal_top(|ui| {
-                ui.spacing_mut().item_spacing.y = 0.;
-                let count = self.result.bytes().filter(|b| *b == b'\n').count() + 1;
-                let (gutter, _) = ui
-                    .allocate_exact_size(egui::vec2(38., count as f32 * 20.), egui::Sense::hover());
-                let start = ((ui.clip_rect().top() - gutter.top()) / 20.)
-                    .floor()
-                    .max(0.) as usize;
-                let end = ((ui.clip_rect().bottom() - gutter.top()) / 20.)
-                    .ceil()
-                    .max(0.) as usize;
-                for row in start..end.min(count) {
-                    ui.painter().text(
-                        gutter.min + egui::vec2(28., row as f32 * 20. + 10.),
-                        egui::Align2::RIGHT_CENTER,
-                        (row + 1).to_string(),
-                        egui::FontId::monospace(12.),
-                        theme::MUTED,
-                    );
-                }
-                let active_range = active_range.clone();
-                let mut layouter = |ui: &egui::Ui, buffer: &dyn egui::TextBuffer, _width: f32| {
-                    ui.fonts_mut(|f| {
-                        f.layout_job(theme::code_job(
-                            buffer.as_str(),
-                            &BTreeSet::new(),
-                            active_range.clone(),
-                        ))
-                    })
-                };
-                let output = TextEdit::multiline(&mut self.result)
-                    .id_salt("result_buffer")
-                    .font(TextStyle::Monospace)
-                    .code_editor()
-                    .frame(false)
-                    .margin(egui::Margin::ZERO)
-                    .desired_width(f32::INFINITY)
-                    .layouter(&mut layouter)
-                    .show(ui);
-                if let Some(range) = output.cursor_range {
-                    self.cursor = range.primary.index;
-                }
+        egui::Frame::new()
+            .fill(theme::BASE)
+            .stroke(egui::Stroke::new(1., theme::BORDER))
+            .inner_margin(4.)
+            .show(ui, |ui| {
+                area.show(ui, |ui| {
+                    ui.horizontal_top(|ui| {
+                        ui.spacing_mut().item_spacing.y = 0.;
+                        let count = self.result.bytes().filter(|b| *b == b'\n').count() + 1;
+                        let (gutter, _) = ui.allocate_exact_size(
+                            egui::vec2(38., count as f32 * 20.),
+                            egui::Sense::hover(),
+                        );
+                        let start = ((ui.clip_rect().top() - gutter.top()) / 20.)
+                            .floor()
+                            .max(0.) as usize;
+                        let end = ((ui.clip_rect().bottom() - gutter.top()) / 20.)
+                            .ceil()
+                            .max(0.) as usize;
+                        for row in start..end.min(count) {
+                            ui.painter().text(
+                                gutter.min + egui::vec2(28., row as f32 * 20. + 10.),
+                                egui::Align2::RIGHT_CENTER,
+                                (row + 1).to_string(),
+                                egui::FontId::monospace(12.),
+                                theme::MUTED,
+                            );
+                        }
+                        let active_range = active_range.clone();
+                        let mut layouter =
+                            |ui: &egui::Ui, buffer: &dyn egui::TextBuffer, _width: f32| {
+                                ui.fonts_mut(|f| {
+                                    f.layout_job(theme::code_job(
+                                        buffer.as_str(),
+                                        &BTreeSet::new(),
+                                        active_range.clone(),
+                                    ))
+                                })
+                            };
+                        let output = TextEdit::multiline(&mut self.result)
+                            .id_salt("result_buffer")
+                            .font(TextStyle::Monospace)
+                            .code_editor()
+                            .frame(false)
+                            .margin(egui::Margin::ZERO)
+                            .desired_width(f32::INFINITY)
+                            .layouter(&mut layouter)
+                            .show(ui);
+                        if let Some(range) = output.cursor_range {
+                            self.cursor = range.primary.index;
+                        }
+                    });
+                });
             });
-        });
         if self.result != before {
             self.history.record(&before);
             self.dirty = self.result != self.clean_text;

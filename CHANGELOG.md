@@ -5,6 +5,11 @@ only a published GitHub Release establishes an external release.
 
 ## Unreleased — Rust-native development (0.3.0-dev.1)
 
+- Reorganize native Changes into files, selectable diff and right commit composer;
+  keep original diff-row identities while hiding raw headers and highlighting rows.
+- Add guarded conflict-file navigation and refine current/incoming/result merge
+  surfaces. Keep local draft save distinct from reviewed save/stage and completion.
+
 - Refine native history toward the selected graphite/mint mocks: bundled
   regular/semibold typography, underlined tabs, branch badges, integrated toolbar
   search and clearer read-only diff rows. Preserve compact density and menus.

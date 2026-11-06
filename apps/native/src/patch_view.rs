@@ -83,7 +83,7 @@ impl Selection {
         };
         let line_allowed = allowed.is_ok() && !diff.lines().any(|l| l.starts_with("\\ No newline"));
         let verb = if staged { "Unstage" } else { "Stage" };
-        ui.horizontal(|ui| {
+        ui.horizontal_wrapped(|ui| {
             ui.label(theme::caption("Select + / − rows; Shift selects a range."));
             if ui
                 .add_enabled(
@@ -122,120 +122,152 @@ impl Selection {
         if lines.len() > 12000 {
             ui.label(theme::caption("Preview limited to 12,000 lines."));
         }
+        let display_start = if first < lines.len() { first } else { 0 };
         ui.spacing_mut().item_spacing.y = 0.;
         ScrollArea::both()
             .id_salt("selectable_diff")
             .auto_shrink([false, false])
-            .show_rows(ui, 22., lines.len().min(12000), |ui, range| {
-                ui.spacing_mut().interact_size.y = 22.;
-                ui.spacing_mut().button_padding.y = 1.;
-                for index in range {
-                    let line = lines[index].trim_end_matches(['\r', '\n']);
-                    let content = changed(line, index > first);
-                    ui.horizontal(|ui| {
-                        ui.set_height(22.);
-                        let (gutter, _) =
-                            ui.allocate_exact_size(egui::vec2(124., 22.), egui::Sense::hover());
-                        if line.starts_with("@@ -") {
-                            if ui
-                                .add_enabled_ui(allowed.is_ok(), |ui| {
-                                    ui.put(
-                                        gutter,
-                                        egui::Button::new(format!(
-                                            "{verb} hunk {}",
-                                            hunks[index] + 1
-                                        ))
-                                        .small(),
-                                    )
-                                })
-                                .inner
-                                .clicked()
-                            {
-                                event = Some(Event::Hunk(hunks[index]));
-                            }
-                        } else if content {
-                            let picked = self.rows.contains(&index);
-                            let response = ui
-                                .add_enabled_ui(line_allowed, |ui| {
-                                    ui.put(
-                                        egui::Rect::from_min_size(gutter.min, egui::vec2(25., 22.)),
-                                        egui::Button::selectable(
-                                            picked,
-                                            if picked {
-                                                egui_phosphor::regular::CHECK
-                                            } else {
-                                                line.get(..1).unwrap_or(" ")
-                                            },
-                                        )
-                                        .min_size(egui::vec2(25., 22.)),
-                                    )
-                                })
-                                .inner;
-                            response.widget_info(|| {
-                                egui::WidgetInfo::selected(
-                                    egui::WidgetType::Checkbox,
-                                    line_allowed && ui.is_enabled(),
-                                    picked,
-                                    format!("Select diff row {}", index + 1),
-                                )
-                            });
-                            if response.clicked() {
-                                if ui.input(|i| i.modifiers.shift)
-                                    && let Some(anchor) = self.anchor
-                                {
-                                    for (n, line) in lines
-                                        .iter()
-                                        .enumerate()
-                                        .take(anchor.max(index) + 1)
-                                        .skip(anchor.min(index))
+            .show_rows(
+                ui,
+                22.,
+                lines.len().min(12000).saturating_sub(display_start),
+                |ui, range| {
+                    ui.spacing_mut().interact_size.y = 22.;
+                    ui.spacing_mut().button_padding.y = 1.;
+                    for visible_index in range {
+                        // Selection IDs still point at original raw diff rows.
+                        let index = visible_index + display_start;
+                        let line = lines[index].trim_end_matches(['\r', '\n']);
+                        let content = changed(line, index > first);
+                        let selected = self.rows.contains(&index);
+                        let background = if selected {
+                            theme::SELECTED
+                        } else if content && line.starts_with('+') {
+                            theme::SELECTED.gamma_multiply(0.65)
+                        } else if content && line.starts_with('-') {
+                            egui::Color32::from_rgb(65, 37, 42)
+                        } else if line.starts_with("@@ -") {
+                            theme::HOVER
+                        } else {
+                            theme::BASE
+                        };
+                        egui::Frame::new().fill(background).show(ui, |ui| {
+                            ui.horizontal(|ui| {
+                                ui.set_min_width(ui.available_width());
+                                ui.set_height(22.);
+                                let (gutter, _) = ui.allocate_exact_size(
+                                    egui::vec2(124., 22.),
+                                    egui::Sense::hover(),
+                                );
+                                if line.starts_with("@@ -") {
+                                    if ui
+                                        .add_enabled_ui(allowed.is_ok(), |ui| {
+                                            ui.put(
+                                                gutter,
+                                                egui::Button::new(format!(
+                                                    "{verb} hunk {}",
+                                                    hunks[index] + 1
+                                                ))
+                                                .small(),
+                                            )
+                                        })
+                                        .inner
+                                        .clicked()
                                     {
-                                        if changed(line, n > first) {
-                                            self.rows.insert(n);
+                                        event = Some(Event::Hunk(hunks[index]));
+                                    }
+                                } else if content {
+                                    let picked = self.rows.contains(&index);
+                                    let response = ui
+                                        .add_enabled_ui(line_allowed, |ui| {
+                                            ui.put(
+                                                egui::Rect::from_min_size(
+                                                    gutter.min,
+                                                    egui::vec2(25., 22.),
+                                                ),
+                                                egui::Button::selectable(
+                                                    picked,
+                                                    if picked {
+                                                        egui_phosphor::regular::CHECK
+                                                    } else {
+                                                        line.get(..1).unwrap_or(" ")
+                                                    },
+                                                )
+                                                .min_size(egui::vec2(25., 22.)),
+                                            )
+                                        })
+                                        .inner;
+                                    response.widget_info(|| {
+                                        egui::WidgetInfo::selected(
+                                            egui::WidgetType::Checkbox,
+                                            line_allowed && ui.is_enabled(),
+                                            picked,
+                                            format!("Select diff row {}", index + 1),
+                                        )
+                                    });
+                                    if response.clicked() {
+                                        if ui.input(|i| i.modifiers.shift)
+                                            && let Some(anchor) = self.anchor
+                                        {
+                                            for (n, line) in lines
+                                                .iter()
+                                                .enumerate()
+                                                .take(anchor.max(index) + 1)
+                                                .skip(anchor.min(index))
+                                            {
+                                                if changed(line, n > first) {
+                                                    self.rows.insert(n);
+                                                }
+                                            }
+                                        } else if !self.rows.remove(&index) {
+                                            self.rows.insert(index);
+                                        }
+                                        self.anchor = Some(index);
+                                    }
+                                }
+                                if !line.starts_with("@@ -") {
+                                    for (offset, value) in [
+                                        (78., line_numbers[index].0),
+                                        (120., line_numbers[index].1),
+                                    ] {
+                                        if let Some(n) = value {
+                                            ui.painter().text(
+                                                egui::pos2(
+                                                    gutter.left() + offset,
+                                                    gutter.center().y,
+                                                ),
+                                                egui::Align2::RIGHT_CENTER,
+                                                n,
+                                                egui::FontId::monospace(11.5),
+                                                theme::MUTED,
+                                            );
                                         }
                                     }
-                                } else if !self.rows.remove(&index) {
-                                    self.rows.insert(index);
                                 }
-                                self.anchor = Some(index);
-                            }
-                        }
-                        if !line.starts_with("@@ -") {
-                            for (offset, value) in
-                                [(78., line_numbers[index].0), (120., line_numbers[index].1)]
-                            {
-                                if let Some(n) = value {
-                                    ui.painter().text(
-                                        egui::pos2(gutter.left() + offset, gutter.center().y),
-                                        egui::Align2::RIGHT_CENTER,
-                                        n,
-                                        egui::FontId::monospace(11.5),
-                                        theme::MUTED,
-                                    );
+                                let color = if content && line.starts_with('+') {
+                                    theme::MINT
+                                } else if content {
+                                    theme::RED
+                                } else if line.starts_with("@@") {
+                                    theme::LANES[1]
+                                } else {
+                                    theme::MUTED
+                                };
+                                let mut text = line.chars().take(4096).collect::<String>();
+                                if line.chars().count() > 4096 {
+                                    text.push('…');
                                 }
-                            }
-                        }
-                        let color = if content && line.starts_with('+') {
-                            theme::MINT
-                        } else if content {
-                            theme::RED
-                        } else if line.starts_with("@@") {
-                            theme::LANES[1]
-                        } else {
-                            theme::MUTED
-                        };
-                        let mut text = line.chars().take(4096).collect::<String>();
-                        if line.chars().count() > 4096 {
-                            text.push('…');
-                        }
-                        ui.add(
-                            egui::Label::new(
-                                RichText::new(text).monospace().size(12.5).color(color),
-                            )
-                            .wrap_mode(egui::TextWrapMode::Extend),
-                        );
-                    });
-                }
-            });
+                                ui.add(
+                                    egui::Label::new(
+                                        RichText::new(text).monospace().size(12.5).color(color),
+                                    )
+                                    .wrap_mode(egui::TextWrapMode::Extend),
+                                );
+                            });
+                        });
+                    }
+                },
+            );
         event
     }
 }

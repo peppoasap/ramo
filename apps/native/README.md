@@ -163,3 +163,9 @@ The [current actual capture](../../docs/design/rust-native/visual-fidelity/nativ
 and [scoped QA report](../../design-qa.md) separate history refinements from remaining
 workflow visual gates. Font files retain OFL-1.1; the license is included in
 native bundle notices.
+
+Changes uses unstaged/staged files, a selectable center diff and a right commit
+composer. The merge editor has a guarded conflict-file sidebar, current/incoming
+sources and editable result. Actual [Changes](../../docs/design/rust-native/workflow-fidelity/native-changes.png)
+and [merge](../../docs/design/rust-native/workflow-fidelity/native-merge.png) captures
+use synthetic Git fixtures; remaining editor/AI/platform gates stay explicit.

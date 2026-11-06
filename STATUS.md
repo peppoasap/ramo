@@ -683,13 +683,38 @@ explicit eol=lf attributes rather than assuming local source config transfers to
 clones. Production Git configuration is unchanged. Its hosted Windows correction
 still requires a new run; local passing tests do not prove that result.
 
+## Native Changes and merge refinement — 6 November 2026
+
+Changes now follows the selected three-column workflow: unstaged/staged files,
+center line-selectable diff and right commit composer with persistent footer.
+Branch navigation is hidden in this mode. Paths/status align left/right; raw diff
+metadata yields to hunks without changing original selection IDs. Merge has a
+conflict-file sidebar, framed current/incoming sources, larger editable result
+and primary Save and mark resolved. Explicit Back/Open/Close/Conflict destinations
+share a modal unsaved-result gate, including pending local-draft saves.
+
+Actual macOS GUI staged original rows9/10 only, inspected/unstaged the hunk and
+restored baseline index/status with HEAD/working bytes preserved. Unicode message
+saved and recovered on restart. Two real synthetic conflicts exercised single
+source-line picking, manual result editing, undo/redo, guarded file switch and
+Cmd-Q cancellation, local draft save, older-fingerprint draft restore, reviewed
+save/stage and final merge commit. Independent Git confirmed exact result bytes,
+both expected parents, clean checkout and removed MERGE_HEAD. The synthetic
+resolved Rust test also compiled/passed.32 native tests, native clippy/fmt,
+developer-bundle build/signature and267 notices pass. See root design-qa.md and
+[verification](docs/NATIVE-VERIFICATION.md). No new AI/provider or native release.
+
+Source5c91b59 native/core CI42199162572 and legacy CI42199162408 passed all three
+OS, including the clone LF test correction. This workflow revision still needs
+its own hosted results; compilation does not prove Windows/Linux GUI acceptance.
+
 ## Exact next task
 
-Finish dedicated visual passes for native Changes/comparison and merge editor
-against selected workflow boards, using this visual contract and actual captures.
-Then resume native worktree open/create/manage and repository navigation/tabs.
-Keep [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full objective ledger;
-contextual AI, clone Stop/progress, broader menus and remote controls, editor
-IME/accessibility/CRLF/linked-scroll/large-file gates and packaging/cutover remain.
-Observe new hosted checks before claiming source acceptance on all three OS.
-Actual Windows/Linux GUI and second-Mac release acceptance remain separate gates.
+Finish the dedicated native comparison visual pass, then native worktree
+open/create/manage and repository navigation/tabs using the selected visual
+contract. Keep [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full goal
+ledger: contextual native AI/settings, clone Stop/progress, broader menus and
+remote controls, syntax/linked scroll/IME/accessibility/CRLF/large-file editor
+gates and native packaging/cutover remain. Full native migration is incomplete.
+Observe fresh hosted checks; actual Windows/Linux GUI and second-Mac release
+acceptance remain distinct from source CI.

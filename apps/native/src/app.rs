@@ -1,4 +1,7 @@
 mod actions;
+mod changes;
+mod editor_navigation;
+use editor_navigation::EditorExit;
 mod cloning;
 mod comparison;
 mod composer;
@@ -77,9 +80,7 @@ pub struct App {
     rendered_rows: usize,
     editor: Option<Editor>,
     error: Option<String>,
-    close_confirm: bool,
-    close_window: bool,
-    open_after_discard: bool,
+    editor_exit: Option<EditorExit>,
 }
 impl App {
     pub fn new(
@@ -134,9 +135,7 @@ impl App {
             rendered_rows: 0,
             editor: None,
             error: None,
-            close_confirm: false,
-            close_window: false,
-            open_after_discard: false,
+            editor_exit: None,
         };
         if let Some(repository) = repository {
             app.open(Some(repository));
@@ -148,6 +147,7 @@ impl App {
             || self.remote_dialog.is_some()
             || self.action.is_some()
             || self.form.is_some()
+            || self.editor_exit.is_some()
     }
     fn send(&mut self, work: Work) -> u64 {
         self.sequence += 1;
@@ -197,7 +197,11 @@ impl App {
         if self.action_request.is_some() {
             return;
         }
-        if self.editor.as_ref().is_some_and(|e| e.dirty) {
+        if self
+            .editor
+            .as_ref()
+            .is_some_and(|e| e.dirty || e.draft_busy)
+        {
             self.error =
                 Some("Save the editor draft or return to History before refreshing.".into());
             return;
@@ -550,13 +554,16 @@ impl App {
         }
     }
     fn ask_open(&mut self) {
-        if self.clone_dialog.is_some() || self.remote_dialog.is_some() {
+        if self.modal_open() {
             self.error = Some("Close the current dialog before opening another repository.".into());
             return;
         }
-        if self.editor.as_ref().is_some_and(|e| e.dirty) {
-            self.close_confirm = true;
-            self.open_after_discard = true;
+        if self
+            .editor
+            .as_ref()
+            .is_some_and(|e| e.dirty || e.draft_busy)
+        {
+            self.editor_exit = Some(EditorExit::Open);
         } else {
             self.open(None);
         }
@@ -579,7 +586,10 @@ impl eframe::App for App {
         self.guard_drag(ctx);
         if ctx.input(|i| i.viewport().close_requested())
             && (self.composer.pending() || self.composer.dirty())
-            && !self.editor.as_ref().is_some_and(|e| e.dirty)
+            && !self
+                .editor
+                .as_ref()
+                .is_some_and(|e| e.dirty || e.draft_busy)
         {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             self.close_after_draft = true;
@@ -592,11 +602,13 @@ impl eframe::App for App {
             self.error = Some("Wait for the Git operation to finish before closing.".into());
         }
         if ctx.input(|i| i.viewport().close_requested())
-            && self.editor.as_ref().is_some_and(|e| e.dirty)
+            && self
+                .editor
+                .as_ref()
+                .is_some_and(|e| e.dirty || e.draft_busy)
         {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
-            self.close_confirm = true;
-            self.close_window = true;
+            self.editor_exit = Some(EditorExit::Close);
         }
         if ctx.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, Key::O)) {
             self.ask_open();
@@ -607,8 +619,12 @@ impl eframe::App for App {
         self.clone_dialog_ui(ctx);
         self.remote_dialog_ui(ctx);
         if self.editor.is_none() {
-            self.sidebar(ctx);
+            if self.mode != Mode::Changes {
+                self.sidebar(ctx);
+            }
             self.inspector(ctx);
+        } else {
+            self.conflict_sidebar(ctx);
         }
         let mut event = None;
         egui::CentralPanel::default()
@@ -682,8 +698,12 @@ impl eframe::App for App {
                 }
             }
             Some(editor::Event::Back) => {
-                if self.editor.as_ref().is_some_and(|e| e.dirty) {
-                    self.close_confirm = true;
+                if self
+                    .editor
+                    .as_ref()
+                    .is_some_and(|e| e.dirty || e.draft_busy)
+                {
+                    self.editor_exit = Some(EditorExit::Back);
                 } else {
                     self.editor = None;
                 }
@@ -701,19 +721,7 @@ impl eframe::App for App {
             }
             None => {}
         }
-        if self.close_confirm {
-            egui::Window::new("Keep your editor changes?").collapsible(false).resizable(false).anchor(egui::Align2::CENTER_CENTER,[0.,0.]).show(ctx,|ui|{
-                ui.label("Unsaved result edits are still in memory. Return to the editor to save a local draft.");
-                ui.horizontal(|ui|{
-                    if ui.button("Keep editing").clicked(){self.close_confirm=false;self.close_window=false;self.open_after_discard=false;}
-                    if ui.button("Discard unsaved editor changes").clicked(){
-                        self.editor=None;self.close_confirm=false;
-                        if self.close_window {ctx.send_viewport_cmd(egui::ViewportCommand::Close);self.close_window=false;}
-                        if self.open_after_discard {self.open_after_discard=false;self.open(None);}
-                    }
-                });
-            });
-        }
+        self.editor_exit_dialog(ctx);
     }
 }
 

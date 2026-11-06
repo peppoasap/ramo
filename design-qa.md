@@ -1,92 +1,117 @@
-# Native workbench visual fidelity — 6 November 2026
+# Native Changes and merge visual acceptance — 6 November 2026
 
-Scope: history/navigation, shared typography/controls and read-only inspector.
-This is a scoped improvement pass, not a claim that the entire native application
-matches all six workflow boards. Earlier records are preserved in
-[the archived report](docs/design/rust-native/qa-before-visual-fidelity.md).
+Scope: selected workflow boards02 (Changes) and03 (Merge), preserving the
+[visual contract](docs/design/rust-native/VISUAL-CONTRACT.md). History acceptance
+is preserved in [the preceding report](docs/design/rust-native/qa-history-2026-11-06.md).
+Full native parity remains open in NATIVE-COMPLETION.md.
 
-## Targets and evidence
+## Sources, state and normalization
 
-- Source: [accepted wide history](docs/design/rust-native/wide-history.png),1717×916
-  concept pixels; original selected graphite/mint direction also inspected.
-- Implementation before/after: [before](docs/design/rust-native/visual-fidelity/before-history.png)
-  and [after](docs/design/rust-native/visual-fidelity/native-history.png),3024×1836
-  pixels,1512×918 logical content,2× density. Only62 physical pixels of OS chrome
-  removed from3024×1898 captures; original captures remain in ignored QA storage.
-- Same actual synthetic55-commit/four-local-branch fixture, compact22px rows,
-  current branch feat/search, selected Normalize search input, inspector open.
-  Source uses generated records and a different wider aspect ratio; it cannot
-  establish exact pixel equality or Git correctness. Before/after share viewport
-  and real data. The generated source's open commit menu is not a persistent bar.
-- [Combined full comparison](docs/design/rust-native/visual-fidelity/comparison.jpg)
-  puts source, before and after in one input; all normalized to1100px width,
-  preserving aspect ratio. [Focused upper-region comparison](docs/design/rust-native/visual-fidelity/details.jpg)
-  uses matching normalized widths; original full-resolution after was inspected
-  for glyphs, truncation, code rows and button alignment.
+Source truth: [accepted workflow board](docs/design/rust-native/workbench-board.png),
+1536×1024 concept image. Its Changes panel is cropped from529,116 to1010,474
+(481×358); merge from1024,116 to1524,474 (500×358). These are original concept crops,
+not invented substitutes. The owner accepted a wider implementation and dense
+code/history. Source records and exact fonts are generated; no Git correctness
+or exact pixel-equivalence claim follows from this source.
+
+Implementation: actual macOS Rust developer bundle. Before/after full captures are
+2984×1858 physical pixels; exported content2984×1796,1492×898 logical,2× density.
+Only the62px OS strip is removed. Same viewport and same respective synthetic
+repository state for each before/after pair: Changes has two unstaged files, one
+staged file, search.rs selected; merge has two unmerged files, search.rs selected,
+current/incoming above an editable marked result. Final Changes includes a typed
+message; baseline message is empty. Source Changes also shows a selected-line
+popover; it is an interaction state, not persistent page furniture.
+
+[Changes combined comparison](docs/design/rust-native/workflow-fidelity/changes-comparison.jpg)
+and [merge combined comparison](docs/design/rust-native/workflow-fidelity/merge-comparison.jpg)
+contain concept, before and after together, each normalized to960px width with
+aspect ratio preserved. Source panels have smaller/narrower original resolution;
+no inferred pixel distances are used across these unequal aspect ratios.
+Readable [Changes detail](docs/design/rust-native/workflow-fidelity/changes-details.jpg)
+and [merge detail](docs/design/rust-native/workflow-fidelity/merge-details.jpg)
+comparisons, plus original full-resolution native images, were also inspected.
 
 ## Findings and iterations
 
-1. P1 — default regular-only typography weakened headings and navigation. Fixed
-   with real bundled regular/semibold fonts and explicit named-family headings,
-   selected tabs and section labels. First capture exposed missing icons in the
-   named family; fixed the font fallback chain and recaptured the final binary.
-2. P2 — selected repository/history looked like ordinary buttons; branch labels
-   lost their badge treatment. Added restrained active-tab underlines, repository
-   tint, lane-colored badges and current-branch check. Badge ellipsis remains
-   bounded to its column; complete names stay accessible through existing menus.
-3. P2 — repeated commit count/search row consumed graph height. Search moved into
-   commands; count remains in footer, returning one row of controls to history.
-   Actual search was exercised and narrowed55 records to3 matching commits.
-4. P2 — raw patch metadata dominated the inspector. Hunk preview now shares the
-   existing diff-coordinate parser, shows actual line numbers and semantic row
-   backgrounds. Long lines scroll; code is not reflowed or modified. Existing
-   truncation warning remains. No syntax-coloring claim.
-5. P2 — clone navigation lacked a selected-provider indicator with frameless
-   buttons. Fixed selected frame and heading weight; inspected final clone dialog
-   with visible Cancel/Review footer. Branch dialog and context menu also observed.
+- Fixed P1, Changes: the branch sidebar plus modified-file pane competed for space,
+  and a bottom composer split the reading flow. Changes now uses the actual file
+  list, center diff and a dedicated right composer with persistent commit actions.
+- Fixed P2, Changes: raw diff headers consumed space and staging labels dominated
+  code. Hide metadata before the first hunk, retain original raw row identities,
+  add semantic row backgrounds, bounded paths and explicit file status. Actual
+  partial staging proves the hidden-header offset does not stage different rows.
+- Fixed P2, first revised Changes capture: wide file buttons centered names.
+  Right-side status slots now anchor names left; final capture confirms alignment.
+- Fixed P1, Merge: no conflict-file navigation and undifferentiated source/result
+  surfaces. Add conflict sidebar, bordered current/incoming sources, separate
+  editable result and primary Save and mark resolved action. Save draft remains
+  secondary; completing the merge remains a separate Changes operation.
+- Fixed P2, first revised merge capture: source buttons stretched across both code
+  panes and left too little result space. Intrinsic-width controls and a32% source
+  height cap return more space to the result; final capture was reviewed again.
+- Fixed P1, data preservation: moving among conflicts must not discard memory.
+  Back/Open/Close/Conflict now use one explicit destination enum and modal gate;
+  pending draft saves prevent discard. Actual dirty switch and Cmd-Q showed the
+  gate; Keep/Escape retained the result, explicit discard changed only the view.
 
 ## Required fidelity surfaces
 
-- Fonts/type: regular14, real semibold17 headings,12 captions, monospace code.
-  Source's exact generated font is not identifiable; Noto Sans is the explicit
-  reproducible substitute, closer to the original system-sans direction than
-  default egui typography. Phosphor glyphs checked after fallback correction.
-- Spacing/layout: three regions, compact22px table, short toolbar, underlined tabs,
- 3px control radii. Inspector starts wider; author yields below820px center width.
-  The1002×683 logical narrow content capture retains commands but requires table
-  horizontal scrolling with the inspector open; wide desktop remains the target.
-- Colors/tokens: graphite surfaces, mint active accents, quiet borders, separate
-  topology colors and dark-on-colored branch badges. No decorative gradients.
-- Assets: no invented illustration/logo replacement. Existing licensed Phosphor
-  font; unmodified Noto fonts with checked hashes and bundled OFL text. No raster
-  mock used as application UI.
-- Copy/content: actual Git subjects, hashes, branches and diffs. Status now says
-  commits loaded rather than rendering diagnostics. Native preview status remains.
+Typography: existing bundled Noto Sans regular/semibold hierarchy, compact mono
+code and real Phosphor icons. Source font identity is unknowable; the explicit
+bundled substitute is retained rather than default toolkit typography. Spacing:
+three meaningful regions, resizable files/composer, short controls, bounded
+source frames and persistent footers. Graphite/mint tokens and quiet borders
+match the selected identity; semantic green/red lines preserve plus/minus cues.
+Assets: no replacement illustration/logo or raster screenshot used as live UI;
+existing licensed fonts/icons retained. Copy: actual paths, staged status, counts,
+conflict blocks and messages; no fake Connected/AI response/button behavior.
 
-## Interactions and independent preservation checks
+## Interaction and preservation evidence
 
-Actual macOS developer bundle: branch inspection, branch context menu/Escape,
-Create branch form/Cancel, Clone/Escape and modal blocking, moved search/clear,
-window resize and returning to the wide layout. No Git write or account request
-was issued in these UI checks. Independent Git commands confirmed unchanged
-fixture HEAD, index entries and clean status.32 local native tests pass; native
-clippy/fmt, bundle build/signature and267 notices pass. One test validates preview
-coordinates across hunks. No browser-console claim applies to this native app.
+Actual macOS UI on synthetic data:
 
-## Follow-up and boundaries
+1. Select original diff rows9/10, stage them, inspect staged version, unstage that
+   hunk. Independent Git proves only the selected replacement entered the index,
+   the unrelated test hunk stayed unstaged, then index/status returned to baseline.
+   HEAD and all working-file bytes remained unchanged. The final recompiled
+   bundle also staged only hunk2 and unstaged it back to baseline after the UI
+   functions were separated for maintainability.
+2. Type a Unicode commit message, observe save, reopen the app and recover exactly
+   the same text in the right composer. Replace with an English synthetic message
+   for the exported image. Narrow1002×683 logical content keeps staging and commit
+   controls visible; long code uses horizontal scroll. Restore wide viewport.
+3. Select current source line7 in the merge, edit the result manually to combine
+   lowercase/hyphen handling, Undo/Redo, save a local draft and change files.
+   Independent Git verifies editor actions/draft save leave HEAD/index/file bytes
+   untouched. Dirty switch and Cmd-Q are cancellable; explicit discard is tested.
+4. Resolve README line3, review save/stage, reopen search.rs and explicitly restore
+   the saved draft from the older Git fingerprint. Review and save/stage with the
+   existing session trust. Git verifies the exact staged bytes and no unmerged
+   entries; the resulting synthetic Rust test compiles and passes.
+5. Type the merge message and Complete merge. Git verifies both expected parents,
+   exact result bytes, clean checkout and removed MERGE_HEAD. Composer clears.
 
-- Dedicated visual acceptance for Changes, comparison, merge, settings/AI and
-  additional dialog states remains required; this pass does not close those gates.
-- Commit body/stats, syntax highlighting and linked editor scrolling remain
-  functional gaps; their absence is not passed as six-board fidelity.
-- Platform GUI, screen-reader/IME and installation acceptance are unverified.
-- Latest previous hosted source4b45f2a passed native macOS/Linux; Windows failed
-  a synthetic clone LF assertion because clone honors runner autocrlf. The fixture
-  now commits eol=lf attributes; local pass does not establish the next Windows run.
-- Review is self-review. Future screenshots must preserve real row density.
+Local native32 tests, native clippy with warnings denied, fmt, developer-bundle
+build/signature and267 notices pass. The synthetic resolved Rust test is one
+additional fixture check, not counted as a native unit test. No browser/console
+or other-platform GUI claim applies. Self-review; no independent reviewer.
 
-Implementation checklist: shared typography and state tokens corrected; history
-chrome/badges and inspector preview refined; final binary visually inspected;
-remaining workflow and platform gates recorded in STATUS.md.
+## Open gates and follow-up
+
+No P0/P1/P2 remains for the inspected wide Changes/merge layout and observed
+workflow. This scoped pass does not establish full six-board fidelity. Dedicated
+comparison/settings/AI views, syntax highlighting, linked scrolling, IME/full
+screen-reader acceptance, huge files and full narrow/DPI/platform GUI acceptance
+remain. Native AI controls are not presented as implemented just to match a mock.
+History remains22px compact/30px comfortable; no fake commits or topology used.
+
+Previous source5c91b59 passed native/core and legacy source CI on all three OS
+(native42199162572, legacy42199162408). This workflow revision needs fresh hosted
+checks. No native installer, tag or release was created.
+
+Implementation checklist: three-column Changes; shared style and explicit states;
+source/result merge hierarchy; guarded conflict navigation; original staging IDs;
+real staged/merge preservation evidence; complete goal ledger retained.
 
 final result: passed

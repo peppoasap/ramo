@@ -261,3 +261,23 @@ Previous native CI42196287619 passed macOS/Linux but Windows failed a synthetic
 clone LF assertion: global autocrlf affects the new checkout, while source-local
 config is not cloned. The test now commits explicit eol=lf attributes. Production
 Git behavior is unchanged; a fresh hosted run is required for Windows evidence.
+
+## Changes and merge fidelity — 6 November 2026
+
+Root design-qa.md records matched before/after captures on actual macOS and selected
+workflow-board crops. Native32 tests, clippy/fmt and developer-bundle build/signature
+plus267 notices pass. GUI staged raw diff rows9/10 only and unstage restored the
+original index/status, while HEAD and work bytes stayed unchanged. A Unicode
+message saved and reopened. Resizing to1002×683 logical kept action controls visible.
+
+Real two-file conflict: source line pick, manual editing, Undo/Redo, cancellable
+dirty file switch/Cmd-Q, local draft save and old-fingerprint restore were observed.
+Git independently verified draft-only actions did not change the repo. Explicit
+save/stage resolved both files; the resolved synthetic Rust test passed. Complete
+merge produced the two expected parents, exact result bytes, clean status and no
+MERGE_HEAD. No account/inference/network action. See
+[scoped evidence](verification/native-workflow-ui.json) and root design-qa.md.
+
+Previous source5c91b59 passed native/core42199162572 and legacy42199162408 on all
+three OS. Fresh workflow source CI is pending; GUI evidence remains macOS only.
+Full comparison/settings/AI visual gates and native release remain incomplete.

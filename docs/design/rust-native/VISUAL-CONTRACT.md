@@ -40,6 +40,9 @@ limits in the root design-qa.md. Preserve original images. Do not call another
 unrelated concept a match, demote material drift to polish, or infer UI acceptance
 from compilation. New UI should reuse theme.rs before adding a local style.
 
-The current pass covers history/navigation and shared styles. Changes, comparison,
-merge editor and future AI/settings surfaces need dedicated matching-state visual
-passes. Full migration and release acceptance remain open in NATIVE-COMPLETION.md.
+History/navigation and Changes/merge now have scoped actual macOS visual passes.
+Changes replaces branch navigation with unstaged/staged files, center diff and
+right commit composer. Merge uses conflict navigation, two framed source editors,
+editable result and separate draft/save-stage actions. Comparison and future
+AI/settings surfaces still need dedicated matching-state visual passes. Full
+migration and release acceptance remain open in NATIVE-COMPLETION.md.
