@@ -45,6 +45,17 @@ impl App {
             width - 90.,
         ];
         let mut choose = None;
+        let mut command = None;
+        let mut amend = None;
+        let mut form = None;
+        let clean = self
+            .snapshot
+            .as_ref()
+            .is_some_and(|s| s.operation.is_none() && s.files.is_empty());
+        let available = self
+            .snapshot
+            .as_ref()
+            .is_some_and(|s| s.operation.is_none());
         let mut auto_more = false;
         let selected_position = self.selected.as_ref().and_then(|oid| {
             self.visible
@@ -289,6 +300,61 @@ impl App {
                                 ui.ctx().copy_text(commit.oid.clone());
                                 ui.close();
                             }
+                            if ui.button("Copy commit subject").clicked(){ui.ctx().copy_text(commit.subject.clone());ui.close();}
+                            ui.separator();
+                            let is_head=self.snapshot.as_ref().and_then(|s|s.head.as_ref())==Some(&commit.oid);
+                            if ui.add_enabled(available&&is_head,egui::Button::new("Amend latest commit…")).on_disabled_hover_text("Only the current local commit can be amended, with no operation in progress.").clicked(){amend=Some(commit.oid.clone());ui.close();}
+                            if ui
+                                .add_enabled(available, egui::Button::new("Create branch here…"))
+                                .clicked()
+                            {
+                                form = Some(actions::Form {
+                                    kind: actions::FormKind::BranchAt(commit.oid.clone()),
+                                    text: String::new(),
+                                });
+                                ui.close();
+                            }
+                            if ui
+                                .add_enabled(available, egui::Button::new("Create tag here…"))
+                                .clicked()
+                            {
+                                form = Some(actions::Form {
+                                    kind: actions::FormKind::TagAt(commit.oid.clone()),
+                                    text: String::new(),
+                                });
+                                ui.close();
+                            }
+                            for (label, action) in [
+                                (
+                                    "Checkout commit…",
+                                    Action::CheckoutCommit {
+                                        target: commit.oid.clone(),
+                                    },
+                                ),
+                                (
+                                    "Cherry-pick commit…",
+                                    Action::CherryPick {
+                                        target: commit.oid.clone(),
+                                    },
+                                ),
+                                (
+                                    "Revert commit…",
+                                    Action::Revert {
+                                        target: commit.oid.clone(),
+                                    },
+                                ),
+                            ] {
+                                if ui
+                                    .add_enabled(clean, egui::Button::new(label))
+                                    .on_disabled_hover_text(
+                                        "Requires a clean repository and no operation in progress.",
+                                    )
+                                    .clicked()
+                                {
+                                    command = Some((label, action, commit.oid.clone()));
+                                    ui.close();
+                                }
+                            }
                             if !names.is_empty() {
                                 ui.separator();
                                 for name in &names {
@@ -303,6 +369,34 @@ impl App {
                     }
                 });
             });
+        if let Some(head) = amend
+            && let Some(snapshot) = &self.snapshot
+        {
+            self.amend_request = self.send(Work::AmendMessage {
+                repo: snapshot.repo.id.clone(),
+                head,
+            });
+        }
+        if let Some(form) = form {
+            self.form = Some(form);
+        }
+        if let Some((label, action, oid)) = command {
+            let detail = match &action {
+                Action::CheckoutCommit { .. } => format!(
+                    "Checkout {} with detached HEAD. Create a branch before adding new commits.",
+                    short(&oid)
+                ),
+                Action::CherryPick { .. } => format!(
+                    "Apply {} to the current branch as a new commit. Conflicts open in Changes.",
+                    short(&oid)
+                ),
+                _ => format!(
+                    "Create a new commit reverting {} on the current branch. Conflicts open in Changes.",
+                    short(&oid)
+                ),
+            };
+            self.request_action(action, label, detail, true);
+        }
         if let Some(oid) = choose {
             self.select(oid);
         }

@@ -127,8 +127,10 @@ impl App {
                                 if !remote {
                                     if ui.button("Checkout").clicked(){self.request_action(Action::Switch{name:branch.name.clone()},"Checkout branch",format!("Switch to {}",branch.name),false);ui.close();}
                                     if ui.button("Merge into current branch…").clicked(){self.request_action(Action::Merge{name:branch.name.clone()},"Merge branch",format!("Merge {} into {}. Conflicts open in Changes.",branch.name,snapshot.branch),true);ui.close();}
+                                    if ui.button("Rename branch…").clicked(){self.form=Some(actions::Form{kind:actions::FormKind::Rename(branch.name.clone()),text:branch.name.clone()});ui.close();}
                                     if ui.button("Delete merged branch…").clicked(){self.request_action(Action::DeleteBranch{name:branch.name.clone()},"Delete branch",format!("Delete {} only if safely merged. Worktree branches are protected.",branch.name),true);ui.close();}
                                 }
+                                if remote && ui.button("Create tracking branch…").clicked(){self.form=Some(actions::Form{kind:actions::FormKind::Track(branch.name.clone()),text:branch.name.split_once('/').map_or(branch.name.clone(),|(_,name)|name.to_owned())});ui.close();}
                                 if ui.button("Copy branch name").clicked(){ui.ctx().copy_text(branch.name.clone());ui.close();}
                             });
                             response.on_hover_text(if remote {"Inspect remote branch"}else{"Click to inspect · double-click to checkout · right-click for actions"});

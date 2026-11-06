@@ -36,6 +36,16 @@ pub enum Work {
         fingerprint: String,
         path: String,
     },
+    AmendMessage {
+        repo: String,
+        head: String,
+    },
+    CommitDraftLoad(Scope),
+    CommitDraftSave {
+        scope: Scope,
+        text: String,
+        expected: Option<String>,
+    },
     DraftLoad(Scope),
     DraftSave {
         scope: Scope,
@@ -74,6 +84,12 @@ pub enum Payload {
         path: String,
         file: ConflictFile,
     },
+    AmendMessage {
+        head: String,
+        message: String,
+    },
+    CommitDraftLoaded(Option<Loaded>),
+    CommitDraftSaved(Loaded),
     DraftLoaded(Option<Loaded>),
     DraftSaved(Loaded),
 }
@@ -221,6 +237,30 @@ fn execute(backend: &mut Backend, state: &std::path::Path, work: Work) -> Result
             file: backend.conflict_file(&repo, &fingerprint, &path)?,
             path,
         },
+        Work::AmendMessage { repo, head } => Payload::AmendMessage {
+            message: backend.amend_message(&repo, &head)?,
+            head,
+        },
+        Work::CommitDraftLoad(scope) => {
+            Payload::CommitDraftLoaded(drafts::load(&state.join("commit-drafts"), &scope)?)
+        }
+        Work::CommitDraftSave {
+            scope,
+            text,
+            expected,
+        } => {
+            if text.len() > 32768 {
+                return Err(
+                    "Commit message exceeds32KiB. Shorten it or copy it before closing.".into(),
+                );
+            }
+            Payload::CommitDraftSaved(drafts::save(
+                &state.join("commit-drafts"),
+                scope,
+                text,
+                expected,
+            )?)
+        }
         Work::DraftLoad(scope) => {
             Payload::DraftLoaded(drafts::load(&state.join("merge-drafts"), &scope)?)
         }
@@ -554,5 +594,190 @@ mod tests {
                 .count(),
             2
         );
+    }
+    #[test]
+    fn commit_message_survives_backend_restart_without_git_writes_and_conflicts_preserve_copies() {
+        let (temp, root, mut backend) = fixture();
+        let snapshot = backend.register(&root).unwrap();
+        let before = proof(&root);
+        let scope = Scope {
+            repository: snapshot.repo.id,
+            path: "COMMIT_MESSAGE".into(),
+            fingerprint: "synthetic-head".into(),
+        };
+        let Payload::CommitDraftSaved(first) = execute(
+            &mut backend,
+            temp.path(),
+            Work::CommitDraftSave {
+                scope: scope.clone(),
+                text: "Review search 日本語\n\nKeep unstaged edits.".into(),
+                expected: None,
+            },
+        )
+        .unwrap() else {
+            panic!()
+        };
+        let mut restarted = Backend::new(temp.path().join("state/repositories.json"));
+        let Payload::CommitDraftLoaded(Some(loaded)) = execute(
+            &mut restarted,
+            temp.path(),
+            Work::CommitDraftLoad(scope.clone()),
+        )
+        .unwrap() else {
+            panic!()
+        };
+        assert_eq!(first.record.text, loaded.record.text);
+        assert!(
+            execute(
+                &mut restarted,
+                temp.path(),
+                Work::CommitDraftSave {
+                    scope: scope.clone(),
+                    text: "stale writer".into(),
+                    expected: None
+                }
+            )
+            .is_err()
+        );
+        assert!(
+            execute(
+                &mut restarted,
+                temp.path(),
+                Work::CommitDraftSave {
+                    scope: scope.clone(),
+                    text: "x".repeat(32769),
+                    expected: Some(first.revision.clone())
+                }
+            )
+            .is_err()
+        );
+        let Payload::CommitDraftLoaded(Some(still_saved)) =
+            execute(&mut restarted, temp.path(), Work::CommitDraftLoad(scope)).unwrap()
+        else {
+            panic!()
+        };
+        assert_eq!(still_saved.record.text, first.record.text);
+        assert_eq!(proof(&root), before);
+    }
+    #[test]
+    fn native_amend_reads_full_message_preserves_unstaged_work_and_refuses_published_head() {
+        use ramo_core::git::Action;
+        let (temp, root, mut backend) = fixture();
+        let s = backend.register(&root).unwrap();
+        let s = backend.trust(&s.repo.id).unwrap();
+        let head = s.head.clone().unwrap();
+        let Payload::AmendMessage { message, .. } = execute(
+            &mut backend,
+            temp.path(),
+            Work::AmendMessage {
+                repo: s.repo.id.clone(),
+                head: head.clone(),
+            },
+        )
+        .unwrap() else {
+            panic!()
+        };
+        assert_eq!(message.trim(), "Initial search");
+        fs::write(root.join("search.txt"), b"staged replacement\n").unwrap();
+        git(&root, &["add", "search.txt"]);
+        fs::write(root.join("search.txt"), b"keep unstaged\n").unwrap();
+        let current = backend.snapshot(&s.repo.id).unwrap();
+        let (done, error) = mutate(
+            &mut backend,
+            temp.path(),
+            &current,
+            Action::Amend {
+                head: head.clone(),
+                message: "Reviewed amend\n\nFull body".into(),
+            },
+        );
+        assert!(error.is_none());
+        assert_ne!(done.head.as_deref(), Some(head.as_str()));
+        assert_eq!(
+            fs::read(root.join("search.txt")).unwrap(),
+            b"keep unstaged\n"
+        );
+        assert_eq!(
+            git(&root, &["show", "HEAD:search.txt"]),
+            b"staged replacement\n"
+        );
+        assert!(
+            !git(
+                &root,
+                &["for-each-ref", "--format=%(refname)", "refs/ramo/amend/"]
+            )
+            .is_empty()
+        );
+        git(
+            &root,
+            &[
+                "update-ref",
+                "refs/remotes/origin/main",
+                done.head.as_deref().unwrap(),
+            ],
+        );
+        let before = proof(&root);
+        let error = match execute(
+            &mut backend,
+            temp.path(),
+            Work::AmendMessage {
+                repo: s.repo.id,
+                head: done.head.unwrap(),
+            },
+        ) {
+            Err(error) => error,
+            _ => panic!("published amend must fail"),
+        };
+        assert!(error.contains("remote"));
+        assert_eq!(proof(&root), before);
+    }
+    #[test]
+    fn native_cherry_pick_conflict_can_resolve_then_continue_with_untracked_work_preserved() {
+        use ramo_core::git::{Action, SequenceKind, SequenceStep};
+        let (temp, root, mut backend) = fixture();
+        git(&root, &["switch", "-c", "side"]);
+        fs::write(root.join("search.txt"), b"incoming\n").unwrap();
+        git(&root, &["commit", "-am", "Incoming"]);
+        let target = String::from_utf8(git(&root, &["rev-parse", "HEAD"]))
+            .unwrap()
+            .trim()
+            .to_owned();
+        git(&root, &["switch", "main"]);
+        fs::write(root.join("search.txt"), b"current\n").unwrap();
+        git(&root, &["commit", "-am", "Current"]);
+        let s = backend.register(&root).unwrap();
+        let s = backend.trust(&s.repo.id).unwrap();
+        let (conflicted, error) =
+            mutate(&mut backend, temp.path(), &s, Action::CherryPick { target });
+        assert!(error.is_some());
+        assert_eq!(
+            conflicted.operation.as_deref(),
+            Some("Cherry-pick in progress")
+        );
+        fs::write(root.join("keep.txt"), b"untracked\n").unwrap();
+        let current = backend.snapshot(&s.repo.id).unwrap();
+        let (resolved, error) = mutate(
+            &mut backend,
+            temp.path(),
+            &current,
+            Action::ResolveFile {
+                path: "search.txt".into(),
+                content: Some("resolved\n".into()),
+            },
+        );
+        assert!(error.is_none());
+        let (done, error) = mutate(
+            &mut backend,
+            temp.path(),
+            &resolved,
+            Action::Sequence {
+                operation: SequenceKind::CherryPick,
+                step: SequenceStep::Continue,
+            },
+        );
+        assert!(error.is_none());
+        assert!(done.operation.is_none());
+        assert_eq!(git(&root, &["show", "HEAD:search.txt"]), b"resolved\n");
+        assert_eq!(fs::read(root.join("keep.txt")).unwrap(), b"untracked\n");
     }
 }

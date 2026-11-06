@@ -1,4 +1,5 @@
 mod actions;
+mod composer;
 mod history;
 mod inspection;
 mod navigation;
@@ -28,10 +29,15 @@ enum Mode {
 
 pub struct App {
     worker: Worker,
+    #[cfg(target_os = "macos")]
+    quit_bridge: Option<crate::macos_quit::Bridge>,
     action: Option<actions::PendingAction>,
     action_request: Option<u64>,
+    amend_request: u64,
     form: Option<actions::Form>,
-    commit_message: String,
+    composer: crate::commit_draft::Composer,
+    open_after_draft: Option<Option<PathBuf>>,
+    close_after_draft: bool,
     epoch: u64,
     sequence: u64,
     pending: BTreeSet<u64>,
@@ -74,10 +80,15 @@ impl App {
         let worker = Worker::start(state, cc.egui_ctx.clone());
         let mut app = Self {
             worker,
+            #[cfg(target_os = "macos")]
+            quit_bridge: crate::macos_quit::Bridge::install(&cc.egui_ctx),
             action: None,
             action_request: None,
+            amend_request: 0,
             form: None,
-            commit_message: String::new(),
+            composer: Default::default(),
+            open_after_draft: None,
+            close_after_draft: false,
             epoch: 0,
             sequence: 0,
             pending: BTreeSet::new(),
@@ -136,6 +147,11 @@ impl App {
         id
     }
     fn open(&mut self, path: Option<PathBuf>) {
+        if self.composer.pending() || self.composer.dirty() {
+            self.open_after_draft = Some(path);
+            self.save_composer();
+            return;
+        }
         if self.action_request.is_some() {
             self.error = Some("Wait for the current Git operation to finish.".into());
             return;
@@ -206,6 +222,27 @@ impl App {
     }
     fn pump(&mut self) {
         while let Ok(reply) = self.worker.receiver.try_recv() {
+            // Composer IO is scoped by its own unique request IDs. Mutations
+            // invalidate Git reads via epoch changes, not an in-flight local save.
+            if self.composer.load_request == Some(reply.sequence)
+                || self.composer.save_request == Some(reply.sequence)
+            {
+                self.pending.remove(&reply.sequence);
+                match reply.result {
+                    Ok(Payload::CommitDraftLoaded(loaded)) => self.composer.loaded(Ok(loaded)),
+                    Ok(Payload::CommitDraftSaved(loaded)) => self.composer.saved(Ok(loaded)),
+                    Err(error) => {
+                        self.error = Some(error.clone());
+                        if self.composer.load_request == Some(reply.sequence) {
+                            self.composer.loaded(Err(error));
+                        } else {
+                            self.composer.saved(Err(error));
+                        }
+                    }
+                    _ => {}
+                }
+                continue;
+            }
             if reply.epoch != self.epoch {
                 continue;
             }
@@ -216,6 +253,12 @@ impl App {
             }
             match reply.result {
                 Err(error) => {
+                    if self.composer.load_request == Some(reply.sequence) {
+                        self.composer.loaded(Err(error.clone()));
+                    }
+                    if self.composer.save_request == Some(reply.sequence) {
+                        self.composer.saved(Err(error.clone()));
+                    }
                     if self.action_request == Some(reply.sequence) {
                         self.action_request = None;
                         self.error = Some(error.clone());
@@ -229,7 +272,8 @@ impl App {
                             editor.draft_busy = false;
                             editor.notice = Some(error);
                         }
-                    } else if reply.sequence == self.editor_request
+                    } else if reply.sequence == self.amend_request
+                        || reply.sequence == self.editor_request
                         || reply.sequence == self.detail_request
                         || reply.sequence == self.diff_request
                         || reply.sequence == self.sequence
@@ -278,7 +322,7 @@ impl App {
                             .as_ref()
                             .is_some_and(|a| matches!(a.action, Action::Commit { .. }))
                         {
-                            self.commit_message.clear();
+                            self.composer.committed();
                         }
                         if self
                             .action
@@ -324,6 +368,13 @@ impl App {
                 }
                 Ok(Payload::Cancelled) => {}
                 Ok(Payload::Opened { snapshot, commits }) => {
+                    if self.composer.repository.as_deref() != Some(&snapshot.repo.id) {
+                        self.composer.bind(
+                            snapshot.repo.id.clone(),
+                            snapshot.head.clone().unwrap_or_default(),
+                        );
+                        self.load_composer();
+                    }
                     self.error = None;
                     self.mode = Mode::History;
                     self.editor = None;
@@ -387,6 +438,27 @@ impl App {
                         self.draft_request = self.send(Work::DraftLoad(scope));
                     }
                 }
+                Ok(Payload::AmendMessage { head, message }) => {
+                    if reply.sequence == self.amend_request
+                        && self.form.is_none()
+                        && self.snapshot.as_ref().and_then(|s| s.head.as_deref()) == Some(&head)
+                    {
+                        self.form = Some(actions::Form {
+                            kind: actions::FormKind::Amend(head),
+                            text: message,
+                        });
+                    }
+                }
+                Ok(Payload::CommitDraftLoaded(loaded)) => {
+                    if self.composer.load_request == Some(reply.sequence) {
+                        self.composer.loaded(Ok(loaded));
+                    }
+                }
+                Ok(Payload::CommitDraftSaved(loaded)) => {
+                    if self.composer.save_request == Some(reply.sequence) {
+                        self.composer.saved(Ok(loaded));
+                    }
+                }
                 Ok(Payload::DraftLoaded(loaded)) => {
                     if reply.sequence == self.draft_request
                         && let Some(editor) = &mut self.editor
@@ -416,7 +488,25 @@ impl App {
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        #[cfg(target_os = "macos")]
+        {
+            if self.quit_bridge.is_none() {
+                self.quit_bridge = crate::macos_quit::Bridge::install(ctx);
+            }
+            if self.quit_bridge.as_ref().is_some_and(|b| b.take_request()) {
+                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            }
+        }
         self.pump();
+        self.composer_tick(ctx);
+        if ctx.input(|i| i.viewport().close_requested())
+            && (self.composer.pending() || self.composer.dirty())
+            && !self.editor.as_ref().is_some_and(|e| e.dirty)
+        {
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            self.close_after_draft = true;
+            self.save_composer();
+        }
         if self.action_request.is_some() && ctx.input(|i| i.viewport().close_requested()) {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             self.error = Some("Wait for the Git operation to finish before closing.".into());

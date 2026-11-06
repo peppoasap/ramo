@@ -529,14 +529,46 @@ byte assertions confirmed the chosen subset and preservation of the second hunk.
 See NATIVE-VERIFICATION.md and docs/images/native-line-selection.png. No hosted
 credential/inference use, native release or GitKraken performance claim.
 
+## Native composer and object actions — 2026-11-06
+
+Repository-scoped commit-message autosave/recovery now uses revision-checked atomic
+local records, separately from merge/beta drafts. Delayed save acknowledgements do
+not replace newer typing. Ordinary opening/closing waits for saves; errors retain
+in-memory/canonical copies with explicit retry/copy/reload. A successful normal
+commit clears the saved message; amend preserves the next-commit composer.
+
+Native commit menus expose copy, branch/tag creation, eligible amend, detached
+checkout, cherry-pick and revert. Branch menus add rename/tracking. Supported
+cherry-pick/revert sequences expose Continue/Skip/Abort using existing core guards.
+Action forms/reviews use modal backdrops and clear primary actions. The selected
+workbench theme is explicitly pinned dark after a real light-system startup defect.
+
+Local evidence:22 native tests, native clippy/fmt,266 dependency notices and the
+ad-hoc macOS developer bundle passed. Actual GUI synthetic amend preserved the
+unstaged hunk and retained a recovery ref. Immediate Unicode paste then Cmd-Q
+initially lost unsaved text: the Rust Cocoa menu bridge now routes Quit through
+the existing guard, and the same test recovered exact text after restart. A later
+real GUI stage/normal commit preserved file bytes, committed the recovered Unicode
+message and persisted an empty composer. Modal opening, disabled actions and Escape
+were observed in the latest bundle. See [verification](docs/NATIVE-VERIFICATION.md)
+and [ADR0026](docs/decisions/0026-native-composer-and-quit.md).
+
+Prior precise-staging revision5ed20e9 passed native/core CI on all three OS in
+[run42119232111](https://github.com/peppoasap/ramo/actions/runs/42119232111).
+Those hosted results do not cover this new composer/menu slice until its own run.
+No new native installer or release; beta.4 remains unchanged. Amend-dialog text
+is session-only; main drafts are plaintext/32KiB. Force kill/OS shutdown, actual
+Windows/Linux GUI, draft-error/repository-switch GUI paths and dirty merge Cmd-Q
+remain acceptance limits. Tests cover storage competition and repository scoping;
+these are not substitutes for all platform GUI checks. No live inference.
+
 ## Exact next task
 
 Keep [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full objective ledger.
-Next: durable repository-scoped commit-message drafts and commit object menus /
-sequence continuation; then native comparison/drag-drop, clone/remotes, worktrees
-and contextual AI. Preserve the compact visual direction, finish remaining
-editor IME/accessibility/CRLF/linked-scroll/large-file gates, R3/R4 workflows and
-R5 packaging/cutover. The full native migration remains incomplete and active.
-Keep beta.4 downloads and existing storage intact. Close expanded core lint debt
-and observe the new hosted native/core runs before claiming cross-platform checks.
-Release acceptance still needs actual Windows/Linux GUI and second-Mac testing.
+Next implement native revision comparison with clear two-endpoint selection and
+keyboard/context-menu alternatives, then reviewed drag/drop. Continue clone/remotes,
+worktrees/tabs and contextual AI. Preserve existing trust/fingerprint/preservation
+semantics and finish editor IME/accessibility/CRLF/linked-scroll/large-file gates,
+R3/R4 depth and R5 packaging/cutover. Full native migration remains incomplete.
+Observe this slice's hosted runs before claiming cross-platform source checks;
+actual Windows/Linux GUI and second-Mac release acceptance still remain.

@@ -5,6 +5,15 @@ only a published GitHub Release establishes an external release.
 
 ## Unreleased — Rust-native development (0.3.0-dev.1)
 
+- Recover repository-scoped commit messages through local autosave, with guarded
+  opening/closing, competing-writer checks and explicit storage-error recovery.
+  Successful normal commits clear their saved message; amend keeps it.
+- Add native commit menus for copy, branch/tag creation, amend, detached checkout,
+  cherry-pick and revert; add branch rename/tracking and supported sequence controls.
+- Use focused action dialogs, distinct primary buttons and a stable graphite theme.
+- Route macOS Quit through native close guards so immediate Cmd-Q waits for a
+  pending composer save. Force termination and OS shutdown remain separate limits.
+
 - Native diff view stages/unstages whole hunks or selected added/deleted rows,
   with Shift range selection and original/new file line numbers. Core derives
   the patch from the reviewed Git diff and rejects stale or unsupported selections.

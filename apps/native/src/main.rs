@@ -1,8 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod app;
+mod commit_draft;
 mod drafts;
 mod editor;
 mod graph;
+#[cfg(target_os = "macos")]
+mod macos_quit;
 mod merge;
 mod patch_view;
 mod theme;
@@ -20,7 +23,7 @@ fn main() -> eframe::Result {
             Some("--state-dir") => state = Some(required_path(args.next(), "--state-dir")),
             Some("--help") => {
                 println!(
-                    "Ramo Native development preview\n  --repository PATH   Open a Git repository\n  --state-dir PATH    Isolated app preferences and explicit merge drafts\nGit writes require repository trust. No automatic AI inference."
+                    "Ramo Native development preview\n  --repository PATH   Open a Git repository\n  --state-dir PATH    Isolated preferences, commit messages and merge drafts\nGit writes require repository trust. No automatic AI inference."
                 );
                 return Ok(());
             }

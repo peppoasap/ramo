@@ -68,3 +68,16 @@ capture uses fixed-height padding and the licensed Phosphor check icon. Original
 new numbers align with code rows. Accessibility off/on selection and Shift range
 selection were observed, followed by exact index-content checks. These are scoped
 interaction/detail checks; six-board fidelity/cutover acceptance remains open.
+
+
+## Native action/composer refinement — 2026-11-06
+
+Actual macOS bundle inspected, not a generated preview. Commit menus expose real
+core actions with unavailable mutations disabled. Forms/reviews use centered modal
+backdrops, compact fields,3px button corners and a mint primary action. Escape was
+verified on the branch form. A light-system palette mismatch found at runtime was
+corrected by pinning the selected dark theme. Actual synthetic screenshot:
+`docs/images/native-branch-modal.png` (3024×1836, OS strip only removed).
+
+This is scoped dialog/contrast verification; dense history/mock fidelity, narrower
+window behavior, platform accessibility and all remaining dialogs are still open.

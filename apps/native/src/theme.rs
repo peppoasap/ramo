@@ -17,6 +17,9 @@ pub const LANES: [Color32; 5] = [
 ];
 
 pub fn install(ctx: &egui::Context) {
+    // Pin the selected graphite workbench even when the OS prefers light mode.
+    // Otherwise eframe can switch to its unstyled light palette after startup.
+    ctx.set_theme(egui::Theme::Dark);
     let mut fonts = egui::FontDefinitions::default();
     egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
     ctx.set_fonts(fonts);
@@ -61,7 +64,7 @@ pub fn install(ctx: &egui::Context) {
     style
         .text_styles
         .insert(TextStyle::Heading, FontId::proportional(18.));
-    ctx.set_style(style);
+    ctx.set_style_of(egui::Theme::Dark, style);
 }
 pub fn button(ui: &mut egui::Ui, icon: &str, label: &str) -> egui::Response {
     ui.add(egui::Button::new(format!("{icon}  {label}")).frame(false))
@@ -102,4 +105,33 @@ pub fn code_job(
         offset += line.len();
     }
     job
+}
+
+pub fn primary(ui: &mut egui::Ui, label: &str, enabled: bool) -> egui::Response {
+    ui.add_enabled(
+        enabled,
+        egui::Button::new(RichText::new(label).strong().color(BASE))
+            .fill(MINT)
+            .stroke(egui::Stroke::NONE),
+    )
+}
+pub fn modal<R>(
+    ctx: &egui::Context,
+    id: &str,
+    title: &str,
+    width: f32,
+    body: impl FnOnce(&mut egui::Ui) -> R,
+) -> egui::ModalResponse<R> {
+    egui::Modal::new(egui::Id::new(id))
+        .frame(
+            egui::Frame::popup(&ctx.style())
+                .fill(PANEL)
+                .inner_margin(16.),
+        )
+        .show(ctx, |ui| {
+            ui.set_width(width.min((ctx.content_rect().width() - 48.).max(240.)));
+            ui.heading(title);
+            ui.add_space(12.);
+            body(ui)
+        })
 }

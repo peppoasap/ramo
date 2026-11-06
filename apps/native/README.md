@@ -19,7 +19,7 @@ Open through the native directory picker, or pass an explicit repository:
 cargo run --manifest-path apps/native/Cargo.toml --locked -- --repository /path/to/repository
 ```
 
-`--state-dir /path/to/isolated-state` isolates recents and explicit merge drafts
+`--state-dir /path/to/isolated-state` isolates recents, commit-message drafts and explicit merge drafts
 for testing. The default native state directory is separate from the released
 app's WebView records. Existing beta drafts are not migrated or removed.
 
@@ -70,8 +70,23 @@ have the existing core timeouts; native progress/Stop is still missing.
 The editor has a reviewed Save and stage action; typing and local draft save do
 not change Git. The original editor fingerprint is checked before resolution.
 Git conflicts/failures refresh the authoritative snapshot and preserve the error;
-no automatic mutation retry. No native installer is published yet. Amend, richer menus, drag/drop, comparison, clone/remotes/worktree UI,
-AI routes and native commit-message draft persistence remain migration tasks.
+no automatic mutation retry. Commit context menus copy IDs/subjects, create branches/tags at a commit, review
+eligible local amend, detached checkout, cherry-pick and revert. Branch menus
+include rename and remote tracking. Supported cherry-pick/revert operations expose
+Continue, Skip and Abort; conflicts still require resolution first. Amend uses
+only the staged index and retains a recovery ref; published/merge commits are
+refused. Its dialog text is session-only.
+
+The main commit composer saves repository-scoped messages locally after a350ms
+debounce, recovers on reopening, and clears the saved message after a successful
+normal commit. Repository switching and ordinary window/Quit closing wait for
+pending saves. Competing writers/storage errors preserve copies and offer explicit
+retry/copy/reload actions. macOS Cmd-Q routes through the same close guard.
+Force kill, OS shutdown and filesystem crash durability are not guaranteed.
+Messages are plaintext, limited to32KiB, separate from merge drafts and beta storage.
+
+No native installer is published yet. Drag/drop, comparison, clone/remotes/worktree
+UI and contextual AI routes remain migration tasks.
 
 Workers serialize the existing backend. Replies are scoped to repository
 generation and selection request, and stale pagination fails until refresh.

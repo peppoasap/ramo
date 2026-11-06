@@ -91,3 +91,36 @@ close the full completion ledger or establish native platform GUI parity.
 Native partial controls are disabled for clipped previews (over12,000 lines or
 4,096 characters per line) and during an active Git operation, with a visible
 whole-file fallback reason. Complete working files are never rewritten by staging.
+
+
+## Composer, object actions and guarded Quit — 6 November 2026
+
+Local macOS arm64:22 native tests passed; native all-target nodeps clippy, format,
+266 dependency notices and developer-bundle build/signature checks passed. The five
+additional tests cover composer acknowledgements/clear, storage restart/competition,
+staged amend preserving unstaged work and cherry-pick conflict resolution/continue
+preserving untracked data. Core source is unchanged in this slice; its131-test local
+result above is prior evidence. Previous staging revision5ed20e9 passed native/core
+CI on all three OS in run42119232111; new changes require a separate run.
+
+Actual GUI on a disposable repository amended the eligible local HEAD with a new
+full message. Git independently confirmed the previous HEAD recovery ref, staged
+content in the rewritten commit and unchanged unstaged file bytes. Main-composer
+text survived amend. A deliberate immediate Unicode paste/Cmd-Q test first exposed
+lost typing in eframe's macOS termination route. After routing this app's Quit menu
+through the cancellable close event, exact text survived termination/restart;
+HEAD, logical index entries, status and working bytes were preserved.
+
+A subsequent GUI stage and normal commit used that recovered message. Independent
+Git assertions confirmed the exact Unicode commit message, clean status/index,
+expected working bytes and an empty persisted commit draft. The latest modal was
+visually inspected after correcting light-system palette selection; Escape closes
+it and mutations unavailable with dirty data remain disabled.
+
+![Actual native branch dialog on synthetic history](images/native-branch-modal.png)
+
+Image is3024×1836 after removing only the62px OS strip from the raw3024×1898
+capture; no mock composition. It illustrates the dialog, not dense-history parity.
+Repository-switch/error-reload GUI paths, dirty-merge Quit, Windows/Linux runtime,
+IME and force-kill/shutdown durability are not established by these checks.
+No hosted-account inference or installer acceptance was performed.

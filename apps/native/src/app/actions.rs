@@ -8,16 +8,26 @@ pub(super) struct PendingAction {
     fingerprint: String,
     repo: String,
 }
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub(super) enum FormKind {
     Branch,
     Stash,
+    BranchAt(String),
+    TagAt(String),
+    Rename(String),
+    Track(String),
+    Amend(String),
 }
 impl FormKind {
-    fn title(self) -> &'static str {
+    fn title(&self) -> &'static str {
         match self {
             Self::Branch => "Create branch",
             Self::Stash => "Save stash",
+            Self::BranchAt(_) => "Branch from commit",
+            Self::TagAt(_) => "Tag commit",
+            Self::Rename(_) => "Rename branch",
+            Self::Track(_) => "Track remote branch",
+            Self::Amend(_) => "Amend latest commit",
         }
     }
 }
@@ -75,60 +85,128 @@ impl App {
             self.action = Some(action);
             return;
         }
-        self.action_request = Some(self.send(Work::Mutate {
+        let id = self.send(Work::Mutate {
             repo: action.repo.clone(),
             fingerprint: action.fingerprint.clone(),
             action: action.action.clone(),
-        }));
+        });
+        self.action_request = self.pending.contains(&id).then_some(id);
         self.action = Some(action);
     }
     pub(super) fn action_dialogs(&mut self, ctx: &egui::Context) {
         if let Some(mut form) = self.form.take() {
             let mut submit = false;
             let mut cancel = false;
-            egui::Window::new(form.kind.title())
-                .collapsible(false)
-                .resizable(false)
-                .anchor(egui::Align2::CENTER_CENTER, [0., 0.])
-                .show(ctx, |ui| {
-                    ui.label(if form.kind == FormKind::Branch {
-                        "Branch name"
-                    } else {
-                        "Stash message (optional)"
-                    });
-                    ui.add(TextEdit::singleline(&mut form.text).desired_width(360.));
-                    ui.horizontal(|ui| {
-                        cancel = ui.button("Cancel").clicked();
-                        submit = ui
-                            .add_enabled(
-                                form.kind != FormKind::Branch || !form.text.trim().is_empty(),
-                                egui::Button::new(form.kind.title()),
-                            )
-                            .clicked();
-                    });
+            let response = theme::modal(ctx, "native_action_form", form.kind.title(), 440., |ui| {
+                ui.label(match &form.kind {
+                    FormKind::Stash => "Stash message (optional)",
+                    FormKind::TagAt(_) => "Tag name",
+                    FormKind::Amend(_) => "Commit message",
+                    _ => "Local branch name",
                 });
+                match &form.kind {
+                    FormKind::BranchAt(target)
+                    | FormKind::TagAt(target)
+                    | FormKind::Amend(target) => {
+                        ui.monospace(target);
+                    }
+                    FormKind::Rename(name) | FormKind::Track(name) => {
+                        ui.label(name);
+                    }
+                    _ => {}
+                }
+                if matches!(&form.kind, FormKind::Amend(_)) {
+                    ui.label("Rewrite the latest eligible local commit using the staged index. Unstaged files are preserved; a recovery ref is kept.");
+                    ui.add(
+                        TextEdit::multiline(&mut form.text)
+                            .desired_rows(5)
+                            .desired_width(420.),
+                    );
+                } else {
+                    ui.add(TextEdit::singleline(&mut form.text).desired_width(360.));
+                }
+                ui.add_space(12.);
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    submit = theme::primary(
+                        ui,
+                        form.kind.title(),
+                        form.kind == FormKind::Stash || !form.text.trim().is_empty(),
+                    )
+                    .clicked();
+                    cancel = ui.button("Cancel").clicked();
+                });
+            });
+            cancel |= response.should_close();
             if submit {
-                let (action, detail) = if form.kind == FormKind::Branch {
-                    (
+                let (action, detail) = match &form.kind {
+                    FormKind::Branch => (
                         Action::CreateBranch {
                             name: form.text.clone(),
                         },
-                        format!("Create and switch to {} from the current HEAD.", form.text),
-                    )
-                } else {
-                    (
+                        format!("Create and switch to {} from current HEAD.", form.text),
+                    ),
+                    FormKind::Stash => (
                         Action::Stash {
                             message: form.text.clone(),
                         },
                         "Save tracked and untracked changes in a stash.".into(),
-                    )
+                    ),
+                    FormKind::BranchAt(target) => (
+                        Action::CreateBranchAt {
+                            name: form.text.clone(),
+                            target: target.clone(),
+                        },
+                        format!(
+                            "Create {} at {}. Current checkout stays in place.",
+                            form.text,
+                            short(target)
+                        ),
+                    ),
+                    FormKind::TagAt(target) => (
+                        Action::CreateTag {
+                            name: form.text.clone(),
+                            target: target.clone(),
+                        },
+                        format!("Create local tag {} at {}.", form.text, short(target)),
+                    ),
+                    FormKind::Rename(name) => (
+                        Action::RenameBranch {
+                            name: name.clone(),
+                            new_name: form.text.clone(),
+                        },
+                        format!("Rename {name} to {}.", form.text),
+                    ),
+                    FormKind::Track(remote_branch) => (
+                        Action::TrackBranch {
+                            name: form.text.clone(),
+                            remote_branch: remote_branch.clone(),
+                        },
+                        format!(
+                            "Create and switch to {} tracking {remote_branch}.",
+                            form.text
+                        ),
+                    ),
+                    FormKind::Amend(head) => (
+                        Action::Amend {
+                            head: head.clone(),
+                            message: form.text.clone(),
+                        },
+                        format!(
+                            "Rewrite {} with the staged index and the message you edited. A recovery ref retains the previous commit. Published or merge commits are refused.",
+                            short(head)
+                        ),
+                    ),
                 };
                 self.request_action(
                     action,
                     form.kind.title(),
                     detail,
-                    form.kind != FormKind::Branch,
+                    matches!(
+                        &form.kind,
+                        FormKind::Stash | FormKind::Track(_) | FormKind::Amend(_)
+                    ),
                 );
+                return; // Show any resulting review modal on the next frame.
             } else if !cancel {
                 self.form = Some(form);
             }
@@ -149,19 +227,37 @@ impl App {
         let repo = action.repo.clone();
         let mut apply = false;
         let mut cancel = false;
-        egui::Window::new(title).collapsible(false).resizable(false).default_width(440.).anchor(egui::Align2::CENTER_CENTER,[0.,0.]).show(ctx,|ui|{
+        let response = theme::modal(ctx, "native_action_review", &title, 440., |ui| {
             if !trusted {
                 ui.label("Git hooks, filters and credential helpers can run local programs. Trust lasts until closing this repository or the app.");
-                if let Some(s)=&self.snapshot {ui.monospace(&s.repo.path);}
-            }else{ui.label(detail);}
-            ui.add_space(12.);
-            ui.horizontal(|ui|{cancel=ui.button("Cancel").clicked();apply=ui.button(if trusted {"Continue"}else{"Trust repository"}).clicked();});
+                if let Some(s) = &self.snapshot {
+                    ui.monospace(&s.repo.path);
+                }
+            } else {
+                ui.label(detail);
+            }
+            ui.add_space(16.);
+            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                apply = theme::primary(
+                    ui,
+                    if trusted {
+                        title.trim_end_matches('…')
+                    } else {
+                        "Trust repository"
+                    },
+                    true,
+                )
+                .clicked();
+                cancel = ui.button("Cancel").clicked();
+            });
         });
+        cancel |= response.should_close();
         if cancel {
             self.action = None;
         } else if apply {
             if !trusted {
-                self.action_request = Some(self.send(Work::Trust(repo)));
+                let id = self.send(Work::Trust(repo));
+                self.action_request = self.pending.contains(&id).then_some(id);
             } else if let Some(mut a) = self.action.take() {
                 a.review = false;
                 self.run_action(a);

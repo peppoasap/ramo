@@ -178,16 +178,26 @@ impl App {
         egui::CentralPanel::default().frame(egui::Frame::NONE).show_inside(ui,|ui|{
             egui::TopBottomPanel::bottom("commit_composer").resizable(true).default_height(155.).show_inside(ui,|ui|{
                 ui.strong("Commit message");
-                ui.add(TextEdit::multiline(&mut self.commit_message).hint_text("Describe your staged changes").desired_rows(3).desired_width(f32::INFINITY));
+                if ui.add_enabled(self.composer.ready,TextEdit::multiline(&mut self.composer.text).hint_text("Describe your staged changes").desired_rows(3).desired_width(f32::INFINITY)).changed(){self.composer.changed();}
+                self.composer_status(ui);
                 ui.horizontal(|ui|{
                     let conflicts=snapshot.files.iter().any(git::is_conflicted);
                     let staged=snapshot.files.iter().any(|f|!f.index.trim().is_empty()&&f.index!="?");
                     let merge=snapshot.operation.as_deref()==Some("Merge in progress");
-                    if ui.add_enabled(!busy&&!conflicts&&(staged||merge)&&!self.commit_message.trim().is_empty(),egui::Button::new(if merge {"Complete merge"}else{"Commit staged changes"})).clicked(){
-                        self.request_action(Action::Commit{message:self.commit_message.clone()},"Commit staged changes","Commit only the index using this message.",false);
+                    if theme::primary(ui,if merge {"Complete merge"}else{"Commit staged changes"},!busy&&!conflicts&&(snapshot.operation.is_none()||merge)&&(staged||merge)&&!self.composer.text.trim().is_empty()).clicked(){
+                        self.request_action(Action::Commit{message:self.composer.text.clone()},"Commit staged changes","Commit only the index using this message.",false);
                     }
                     if merge&&ui.add_enabled(!busy,egui::Button::new("Abort merge…")).clicked(){self.request_action(Action::AbortMerge,"Abort merge","Abort the merge and restore the pre-merge state. Review local work first.",true);}
                     if conflicts {ui.label(theme::caption("Resolve each conflicted file before committing."));}
+                    let sequence=match snapshot.operation.as_deref(){Some("Cherry-pick in progress")=>Some(git::SequenceKind::CherryPick),Some("Revert in progress")=>Some(git::SequenceKind::Revert),_=>None};
+                    if let Some(operation)=sequence {
+                        let ready=!busy&&!conflicts&&!snapshot.files.iter().any(|f|f.index!="?"&&f.worktree!=" ");
+                        for (label,step,enabled) in [("Continue operation",git::SequenceStep::Continue,ready),("Skip current commit…",git::SequenceStep::Skip,!busy),("Abort operation…",git::SequenceStep::Abort,!busy)] {
+                            if ui.add_enabled(enabled,egui::Button::new(label)).on_disabled_hover_text("Resolve and stage tracked changes before continuing.").clicked(){
+                                self.request_action(Action::Sequence{operation,step},label,match step {git::SequenceStep::Continue=>"Continue the reviewed sequence using the staged resolution.",git::SequenceStep::Skip=>"Skip the current commit and discard its tracked resolution changes; the next step can conflict.",git::SequenceStep::Abort=>"Abort the whole sequence and restore its starting state. Review local work first."},step!=git::SequenceStep::Continue);
+                            }
+                        }
+                    }
                 });
             });
             if let Some(path)=&self.file {ui.label(theme::caption(format!("{} · {path}",if self.staged_view {"Staged"}else{"Working"})));}
