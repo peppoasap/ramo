@@ -3,7 +3,10 @@ use super::*;
 use crate::gestures::{Drag, Intent};
 impl App {
     pub(super) fn guard_drag(&mut self, ctx: &egui::Context) {
-        let busy = self.action_request.is_some() || self.action.is_some() || self.editor.is_some();
+        let busy = self.action_request.is_some()
+            || self.action.is_some()
+            || self.editor.is_some()
+            || self.modal_open();
         tick_drag(
             ctx,
             self.snapshot.as_ref(),
@@ -16,7 +19,10 @@ impl App {
         let Some(snapshot) = &self.snapshot else {
             return;
         };
-        let busy = self.action_request.is_some() || self.action.is_some() || self.editor.is_some();
+        let busy = self.action_request.is_some()
+            || self.action.is_some()
+            || self.editor.is_some()
+            || self.modal_open();
         match drag.intent(snapshot, target, busy) {
             Ok(Intent::Compare { from, to }) => {
                 self.compare_pair(from, to);

@@ -35,6 +35,16 @@ installs into Applications nor publishes a release.
 ## What works in this slice
 
 - Real repository registration, snapshot, branches and linked-worktree listing.
+- Clone by HTTPS/SSH URL, provider shortcut or native-picked local source. A
+  native-picked parent and immutable one-shot review protect destinations; failed
+  clones are not retried or cleaned up automatically. Opens the new checkout
+  through the ordinary draft-preserving route, with fresh write trust.
+- Explicit GitHub/GitHub Enterprise catalog through installed signed-in `gh`:
+  organization scope, page filter and up to20 pages of100 entries. Other providers
+  are URL shortcuts, not account connections. No automatic login/install or tokens.
+- Inspect sanitized remote endpoints and review ordinary HTTPS/SSH additions and
+  edits. Existing trust/fingerprint guards apply; saving never fetches or pushes.
+  Local/custom transports, multiple URLs and separate push URLs are protected.
 - Actual parent-derived history, initial300-commit pages, explicit/near-bottom
   pagination up to the core's100k loaded-history limit; no fabricated history.
 - Virtual row rendering, compact22px or comfortable30px density, adjustable side
@@ -99,8 +109,11 @@ retry/copy/reload actions. macOS Cmd-Q routes through the same close guard.
 Force kill, OS shutdown and filesystem crash durability are not guaranteed.
 Messages are plaintext, limited to32KiB, separate from merge drafts and beta storage.
 
-No native installer is published yet. Clone/remotes/worktree
-UI and contextual AI routes remain migration tasks.
+No native installer is published yet. Worktree management UI and contextual AI routes remain migration tasks.
+Clone shows a pending state and120-second core deadline; native Stop/streamed
+progress, shallow/sparse options, additional account catalogs and live hosted
+clone/authentication acceptance remain open. Remote removal, upstream controls
+and richer endpoint configuration are separate unfinished workflows.
 
 Workers serialize the existing backend. Replies are scoped to repository
 generation and selection request, and stale pagination fails until refresh.

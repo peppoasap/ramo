@@ -160,14 +160,16 @@ The released beta still uses Tauri/React/TypeScript. A first
 [Rust-native development workbench](apps/native/README.md) now browses real Git
 history with compact22px virtual rows and evaluates a native merge editor with
 local drafts. It now also exposes guarded daily Git writes and reviewed merge
-completion and individual-line/hunk staging through the existing Rust core. Full native workflow parity is still
-in progress; the released beta remains available. Installed Git remains a dependency; a Rust Git
+completion and individual-line/hunk staging through the existing Rust core.
+Repository-scoped commit drafts, object menus, revision comparison, reviewed graph
+gestures, local/URL clone and guarded remote URL configuration are also available
+in this development workbench. Full native workflow parity is still in progress; the released beta remains available. Installed Git remains a dependency; a Rust Git
 engine is a separate capability track. See the [migration plan](docs/RUST-NATIVE-PLAN.md)
 and [six-screen design concept](docs/design/rust-native/README.md).
 
 | Next step | Planned work |
 | --- | --- |
-| **Finish the daily essentials** | Individual-line staging, reviewed discard with a recoverable backup, file history and blame. |
+| **Finish the daily essentials** | Remaining native workflow parity, reviewed discard with a recoverable backup, file history and blame. |
 | **Make recovery easier** | Reflog browsing, reviewed reset/recovery and guided rebase with conflict continuation. |
 | **Broaden integration and delivery** | More provider catalogs, smoother hosted authentication, file watching and Windows/Linux installation acceptance. |
 

@@ -24,8 +24,14 @@ impl App {
                         .on_hover_text(&snapshot.repo.path);
                     }
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        if self.modal_open() || self.action_request.is_some() {
+                            ui.disable();
+                        }
                         if theme::button(ui, icon::FOLDER_OPEN, "Open repository").clicked() {
                             self.ask_open();
+                        }
+                        if theme::button(ui, icon::CLOUD_ARROW_DOWN, "Clone").clicked() {
+                            self.ask_clone();
                         }
                         ui.label(theme::caption("Native preview"));
                     });
@@ -33,6 +39,7 @@ impl App {
             });
         egui::TopBottomPanel::top("commands").exact_height(40.).frame(egui::Frame::new().fill(theme::PANEL).inner_margin(egui::Margin::symmetric(14,5))).show(ctx,|ui| {
             ui.horizontal(|ui| {
+                if self.modal_open()||self.action_request.is_some(){ui.disable();}
                 ui.label(RichText::new(icon::GIT_BRANCH).color(theme::MINT));
                 let branch_target=ui.strong(self.snapshot.as_ref().map_or("No repository",|s|s.branch.as_str()));
                 self.branch_drop_rect=Some(branch_target.rect.expand2(egui::vec2(8.,5.)));
@@ -44,7 +51,8 @@ impl App {
                 }
                 if theme::button(ui,icon::ARROWS_CLOCKWISE,"Refresh").clicked(){self.refresh();}
                 ui.separator();
-                let ready=self.snapshot.is_some()&&self.action_request.is_none()&&self.action.is_none()&&self.editor.is_none();
+                if ui.add_enabled(self.snapshot.is_some()&&!self.clone_busy(),egui::Button::new(format!("{} Remotes",icon::GIT_BRANCH)).frame(false)).clicked(){self.open_remotes();}
+                let ready=self.snapshot.is_some()&&!self.clone_busy()&&self.action_request.is_none()&&self.action.is_none()&&self.editor.is_none();
                 for (glyph,label,action,detail) in [
                     (icon::ARROW_DOWN,"Fetch",Action::Fetch,"Fetch updates from configured remotes."),
                     (icon::ARROW_DOWN,"Pull",Action::Pull,"Fast-forward the current branch from its upstream. Divergence is refused."),
@@ -106,6 +114,7 @@ impl App {
         };
         egui::SidePanel::left("objects").resizable(true).default_width(215.).width_range(170.0..=360.0)
             .frame(egui::Frame::new().fill(theme::PANEL).inner_margin(12.)).show(ctx,|ui| {
+            if self.action_request.is_some()||self.modal_open(){ui.disable();}
             ui.add(TextEdit::singleline(&mut self.branch_filter).hint_text("Filter branches").desired_width(f32::INFINITY));
             ui.add_space(10.);
             ScrollArea::vertical().show(ui,|ui|{
@@ -116,7 +125,7 @@ impl App {
                         for branch in branches {
                             let selected=!branch.remote&&branch.name==snapshot.branch;
                             let response=ui.add(egui::Button::selectable(selected,format!("{}  {}",icon::GIT_BRANCH,branch.name)).sense(Sense::click_and_drag()).min_size(egui::vec2(ui.available_width(),28.)).truncate());
-                            if self.action.is_none() && self.action_request.is_none() && self.editor.is_none() && let Some(origin)=gestures::press_origin(ui.ctx()).filter(|p|response.rect.intersect(ui.clip_rect()).contains(*p)) {
+                            if !self.modal_open() && self.action_request.is_none() && self.editor.is_none() && let Some(origin)=gestures::press_origin(ui.ctx()).filter(|p|response.rect.intersect(ui.clip_rect()).contains(*p)) {
                                 let candidate=crate::gestures::Candidate{drag:crate::gestures::Drag::new(&snapshot,crate::gestures::Source::Branch{oid:branch.oid.clone(),name:branch.name.clone(),remote:branch.remote}),origin:[origin.x,origin.y]};
                                 gestures::begin_drag(ui.ctx(),candidate,&mut self.drag_candidate,&mut self.drag_frame);
                             }

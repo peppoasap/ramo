@@ -8,6 +8,7 @@ use std::{
 };
 
 pub enum Work {
+    Connection(crate::connection_work::Job),
     Open(Option<PathBuf>),
     Refresh(String),
     Trust(String),
@@ -71,6 +72,7 @@ pub struct Request {
     pub work: Work,
 }
 pub enum Payload {
+    Connection(Result<crate::connection_work::Reply, String>),
     Opened {
         snapshot: Box<Snapshot>,
         commits: Vec<Commit>,
@@ -156,6 +158,7 @@ impl Worker {
 
 fn execute(backend: &mut Backend, state: &std::path::Path, work: Work) -> Result<Payload, String> {
     Ok(match work {
+        Work::Connection(job) => Payload::Connection(crate::connection_work::execute(backend, job)),
         Work::Open(path) => {
             let Some(path) = path.or_else(|| {
                 rfd::FileDialog::new()
@@ -349,6 +352,228 @@ mod tests {
             git(root, &["status", "--porcelain=v1", "-z"]),
             fs::read(root.join("search.txt")).unwrap(),
         ]
+    }
+    #[test]
+    fn native_local_clone_review_is_read_only_one_shot_and_collision_safe() {
+        use crate::connection_work::{Job, Reply};
+        let (temp, root, mut backend) = fixture();
+        fs::write(root.join("search.txt"), b"uncommitted source stays here\n").unwrap();
+        let original = backend.register(&root).unwrap();
+        let before = proof(&root);
+        // Connection jobs also work with no current/registered repository.
+        let mut backend = Backend::new(temp.path().join("fresh-native-state.json"));
+        let parent = temp.path().join("clones");
+        fs::create_dir(&parent).unwrap();
+        let grant = backend.authorize_clone_parent(&parent).unwrap();
+        let source = backend.authorize_clone_source(&root).unwrap();
+        let prepare = |directory: &str| {
+            Work::Connection(Job::Prepare {
+                parent: grant.id.clone(),
+                directory: directory.into(),
+                source: ramo_core::cloning::Source::Local {
+                    id: source.id.clone(),
+                },
+            })
+        };
+        let Payload::Connection(Ok(Reply::Plan(plan))) =
+            execute(&mut backend, temp.path(), prepare("meadow-copy")).unwrap()
+        else {
+            panic!("clone review expected")
+        };
+        assert!(!parent.join("meadow-copy").exists());
+        assert_eq!(proof(&root), before);
+        let Payload::Connection(Ok(Reply::Cloned(path))) = execute(
+            &mut backend,
+            temp.path(),
+            Work::Connection(Job::Clone(plan.id.clone())),
+        )
+        .unwrap() else {
+            panic!("local clone expected")
+        };
+        let cloned = PathBuf::from(path);
+        assert_eq!(
+            git(&cloned, &["rev-parse", "HEAD"]),
+            git(&root, &["rev-parse", "HEAD"])
+        );
+        assert_eq!(fs::read(cloned.join("search.txt")).unwrap(), b"base\n");
+        assert!(!backend.register(&cloned).unwrap().repo.trusted);
+        assert!(!original.repo.trusted);
+        assert_eq!(proof(&root), before);
+        assert!(matches!(
+            execute(
+                &mut backend,
+                temp.path(),
+                Work::Connection(Job::Clone(plan.id))
+            )
+            .unwrap(),
+            Payload::Connection(Err(_))
+        ));
+        let Payload::Connection(Ok(Reply::Plan(collision))) =
+            execute(&mut backend, temp.path(), prepare("collision")).unwrap()
+        else {
+            panic!("review expected")
+        };
+        fs::create_dir(parent.join("collision")).unwrap();
+        fs::write(parent.join("collision/keep.txt"), b"keep me").unwrap();
+        assert!(matches!(
+            execute(
+                &mut backend,
+                temp.path(),
+                Work::Connection(Job::Clone(collision.id))
+            )
+            .unwrap(),
+            Payload::Connection(Err(_))
+        ));
+        assert_eq!(
+            fs::read(parent.join("collision/keep.txt")).unwrap(),
+            b"keep me"
+        );
+        assert!(matches!(
+            execute(
+                &mut backend,
+                temp.path(),
+                Work::Connection(Job::Prepare {
+                    parent: "forged-grant".into(),
+                    directory: "other".into(),
+                    source: ramo_core::cloning::Source::Url {
+                        url: "https://github.com/meadow/search.git".into()
+                    }
+                })
+            )
+            .unwrap(),
+            Payload::Connection(Err(_))
+        ));
+        assert_eq!(proof(&root), before);
+    }
+    #[test]
+    fn native_remote_jobs_reuse_trust_freshness_redaction_and_preserve_local_work() {
+        use crate::connection_work::{Job, Reply};
+        let (temp, root, mut backend) = fixture();
+        fs::write(root.join("search.txt"), b"staged local\n").unwrap();
+        git(&root, &["add", "search.txt"]);
+        fs::write(root.join("search.txt"), b"unstaged local\n").unwrap();
+        let snapshot = backend.register(&root).unwrap();
+        let before = proof(&root);
+        let action = || ramo_core::git::Action::ConfigureRemote {
+            name: "origin".into(),
+            url: "https://github.com/meadow/search.git".into(),
+            existing: false,
+        };
+        assert!(matches!(
+            execute(
+                &mut backend,
+                temp.path(),
+                Work::Mutate {
+                    repo: snapshot.repo.id.clone(),
+                    fingerprint: snapshot.fingerprint.clone(),
+                    action: action()
+                }
+            )
+            .unwrap(),
+            Payload::Changed { error: Some(_), .. }
+        ));
+        let trusted = backend.trust(&snapshot.repo.id).unwrap();
+        let Payload::Changed {
+            snapshot: saved,
+            error: None,
+            ..
+        } = execute(
+            &mut backend,
+            temp.path(),
+            Work::Mutate {
+                repo: trusted.repo.id.clone(),
+                fingerprint: trusted.fingerprint.clone(),
+                action: action(),
+            },
+        )
+        .unwrap()
+        else {
+            panic!("remote saved")
+        };
+        let Payload::Connection(Ok(Reply::Remotes(rows))) = execute(
+            &mut backend,
+            temp.path(),
+            Work::Connection(Job::Remotes(snapshot.repo.id.clone())),
+        )
+        .unwrap() else {
+            panic!("remote list")
+        };
+        assert_eq!(rows.len(), 1);
+        assert!(rows[0].editable);
+        assert_eq!(rows[0].fetch, ["https://github.com/meadow/search.git"]);
+        assert!(matches!(
+            execute(
+                &mut backend,
+                temp.path(),
+                Work::Mutate {
+                    repo: snapshot.repo.id.clone(),
+                    fingerprint: trusted.fingerprint,
+                    action: ramo_core::git::Action::ConfigureRemote {
+                        name: "origin".into(),
+                        url: "https://github.com/meadow/other.git".into(),
+                        existing: true
+                    }
+                }
+            )
+            .unwrap(),
+            Payload::Changed { error: Some(_), .. }
+        ));
+        assert_ne!(saved.fingerprint, snapshot.fingerprint);
+        assert_eq!(proof(&root), before);
+        git(
+            &root,
+            &[
+                "config",
+                "remote.origin.pushurl",
+                "https://github.com/meadow/push.git",
+            ],
+        );
+        git(
+            &root,
+            &[
+                "remote",
+                "add",
+                "synthetic-secret",
+                "https://synthetic-token@github.com/meadow/private.git",
+            ],
+        );
+        let config = fs::read(root.join(".git/config")).unwrap();
+        let current = backend.snapshot(&snapshot.repo.id).unwrap();
+        let Payload::Connection(Ok(Reply::Remotes(rows))) = execute(
+            &mut backend,
+            temp.path(),
+            Work::Connection(Job::Remotes(snapshot.repo.id.clone())),
+        )
+        .unwrap() else {
+            panic!("remote list")
+        };
+        assert!(!rows.iter().find(|r| r.name == "origin").unwrap().editable);
+        assert!(
+            rows.iter()
+                .find(|r| r.name == "synthetic-secret")
+                .unwrap()
+                .fetch[0]
+                .starts_with("[Local, custom")
+        );
+        assert!(matches!(
+            execute(
+                &mut backend,
+                temp.path(),
+                Work::Mutate {
+                    repo: snapshot.repo.id,
+                    fingerprint: current.fingerprint,
+                    action: ramo_core::git::Action::ConfigureRemote {
+                        name: "origin".into(),
+                        url: "https://github.com/meadow/other.git".into(),
+                        existing: true
+                    }
+                }
+            )
+            .unwrap(),
+            Payload::Changed { error: Some(_), .. }
+        ));
+        assert_eq!(fs::read(root.join(".git/config")).unwrap(), config);
+        assert_eq!(proof(&root), before);
     }
     #[test]
     fn native_drag_intents_bind_source_context_and_never_mutate_git() {

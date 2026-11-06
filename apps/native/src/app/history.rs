@@ -64,7 +64,7 @@ impl App {
                 .iter()
                 .position(|&i| &self.commits[i].oid == oid)
         });
-        if !ui.ctx().wants_keyboard_input() && !self.visible.is_empty() {
+        if ui.is_enabled() && !ui.ctx().wants_keyboard_input() && !self.visible.is_empty() {
             let page = (ui.available_height() / row_height).floor().max(1.) as usize;
             let next = ui.input(|i| {
                 let current = selected_position.unwrap_or(0);
@@ -291,7 +291,7 @@ impl App {
                             false,
                         );
                         drop_targets.push((rect.intersect(ui.clip_rect()),commit.oid.clone()));
-                        if self.action.is_none() && self.action_request.is_none() && let Some(origin)=gestures::press_origin(ui.ctx()).filter(|p|rect.intersect(ui.clip_rect()).contains(*p)) && let Some(snapshot)=&self.snapshot {
+                        if !self.modal_open() && self.action_request.is_none() && let Some(origin)=gestures::press_origin(ui.ctx()).filter(|p|rect.intersect(ui.clip_rect()).contains(*p)) && let Some(snapshot)=&self.snapshot {
                             let source=if origin.x<rect.left()+150. && !labels.is_empty() {
                                 let branch=labels[0];crate::gestures::Source::Branch{oid:branch.oid.clone(),name:branch.name.clone(),remote:branch.remote}
                             } else {crate::gestures::Source::Commit{oid:commit.oid.clone(),parents:commit.parents.len(),subject:commit.subject.clone()}};

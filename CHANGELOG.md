@@ -5,6 +5,16 @@ only a published GitHub Release establishes an external release.
 
 ## Unreleased — Rust-native development (0.3.0-dev.1)
 
+- Clone from URL, provider shortcut or a native-picked local repository through
+  destination grants and immutable one-shot review. Opening the new checkout
+  preserves repository-scoped messages and starts with fresh write trust.
+- Add an explicitly loaded GitHub catalog via installed `gh`, with organization
+  scope/filter/pagination. Other providers remain URL shortcuts; no login/import.
+- Add native remote inspection and reviewed ordinary URL add/edit, preserving
+  complex/local configuration. Saving updates local settings without fetch/push.
+- Keep clone/remote dialogs compact, suggest unused remote names and disable
+  underlying workbench input while a dialog is open.
+
 - Native graph gestures compare commits/branches on drop, or open reviewed
   merge/cherry-pick onto the named current branch. Sidebar branches also drag.
   No automatic mutation, checkout or push; existing trust/freshness guards apply.

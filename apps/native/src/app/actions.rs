@@ -61,7 +61,7 @@ impl App {
         detail: impl Into<String>,
         review: bool,
     ) {
-        if self.action_request.is_some() || self.action.is_some() {
+        if self.action_request.is_some() || self.action.is_some() || self.clone_busy() {
             return;
         }
         let Some(s) = &self.snapshot else {

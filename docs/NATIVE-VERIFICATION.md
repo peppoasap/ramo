@@ -192,3 +192,56 @@ The final developer bundle was rebuilt after pointer-cancellation and bounded-
 overlay refinements; sidebar docs/update → current merge commit correctly opened
 the ordered comparison. This final read-only check used the resulting synthetic
 merge fixture; it did not repeat or reset the merge.
+
+
+## Native clone and remote configuration — 6 November 2026
+
+31 native tests, native clippy/fmt,266 dependency notices, developer-bundle
+build/strict signature and release metadata passed locally. New real-Git local
+clone jobs run with no registered current repository. The test proves review has no
+destination side effect, source bytes/index/HEAD are preserved, committed content
+is cloned with fresh trust, replay is refused and post-review directory collisions
+preserve existing files. Remote worker tests prove trust/freshness checks, staged/
+unstaged preservation, URL redaction and refusal to overwrite separate push config.
+Provider shortcut fixtures cover HTTPS/SSH/Azure and injected-host/path refusal.
+No native file picker or hosted-account behavior follows from fixture tests alone.
+
+Actual macOS GUI selected the disposable source and a new parent using native
+folder pickers. Review created no destination. Final clone opened automatically
+with matching committed HEAD and clean status; independent checks proved source
+HEAD, logical index entries, status and working bytes unchanged. A Unicode message
+saved before clone remained in the original repository's draft record; the clone
+composer was empty. Remote add then edit requested trust once for the new opening,
+showed exact URL reviews and updated only local configuration. Local origin was
+protected and retained. Independent Git checks confirmed the reviewed URLs and
+preserved commit/files; no fetch or push was run.
+
+Inspection found a vertical separator expanding the clone dialog beyond the
+viewport; a finite divider and bounded content height restored a visible footer.
+Later refinement blocks keyboard/pointer actions in underlying panels, suggests
+unused remote names and avoids unchanged-URL reviews. Actual final screenshots
+and late-bundle observations are recorded with the source handoff.
+
+Installed-Git/GitHub CLI account authentication, actual GitHub catalog loading,
+Windows/Linux GUI, clone Stop/streamed progress and shallow/sparse options remain
+separate gates. Other providers are URL shortcuts. No login/install, credential
+scraping, live AI, native installer or GitKraken speed claim occurred. Previous
+graph sourcedd26141 passed native/core CI42192129115 on all three OS; new connection
+source needs its own hosted run.
+
+
+Final bundle observations: clone/provider fields generate the expected HTTPS URL
+and folder suggestion for a synthetic owner/repository. Opening the optional
+catalog exposes its explicit Load button without making a request. Toolbar,
+sidebar, graph and inspector actions are disabled behind these dialogs. Remote
+Refresh was exercised after an external synthetic configuration change, followed
+by a successful reviewed URL update with unrelated remote/files preserved. This
+proves the repository snapshot also refreshes, rather than only the visible list.
+
+![Actual native provider shortcut form, no account/network load](images/native-clone.png)
+
+![Actual native remote manager on the cloned synthetic repository](images/native-remotes.png)
+
+Both are actual3024×1898 captures with only the62px OS strip removed. The clone
+image illustrates URL setup without a selected destination; it is not a hosted
+clone or connected-account claim. Native file-picker screenshots were not exported.

@@ -106,3 +106,20 @@ a confirmed merge completed with independently checked parents/content.
 Evidence: `docs/images/native-drag-merge-review.png`. No dense-history screenshot
 fidelity upgrade or OS cancellation/keyboard/accessibility certification is claimed.
 Headless cancellation tests and actual gesture observations are recorded separately.
+
+
+## Native clone/remotes — 2026-11-06
+
+Actual macOS dialogs inspected in the running Rust bundle. Clone uses flat provider
+navigation, compact source/destination fields and a fixed footer. A separator
+initially consumed the available viewport height and hid the footer; a finite
+260px divider and bounded360px content region fixed it. Provider URL/folder hints
+were observed without loading an account. Optional catalog loading stays explicit.
+
+Remotes separates sanitized existing endpoints from a short add/edit form, protects
+complex/local origin and suggests an unused name. Unchanged edits cannot proceed.
+Toolbar, graph, sidebar and inspector are disabled behind dialogs. Actual local
+clone/draft isolation, remote add/edit and Refresh after an external change were
+exercised independently of fixtures. Screenshots: `docs/images/native-clone.png`
+and `native-remotes.png`, synthetic data only. Narrow-window/platform accessibility
+and hosted-account acceptance remain open; these are runtime images, not mockups.

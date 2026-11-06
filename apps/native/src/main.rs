@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod app;
 mod commit_draft;
+mod connection_work;
 mod drafts;
 mod editor;
 mod gestures;
@@ -9,6 +10,7 @@ mod graph;
 mod macos_quit;
 mod merge;
 mod patch_view;
+mod repository_provider;
 mod theme;
 mod worker;
 

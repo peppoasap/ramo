@@ -1,10 +1,12 @@
 mod actions;
+mod cloning;
 mod comparison;
 mod composer;
 mod gestures;
 mod history;
 mod inspection;
 mod navigation;
+mod remotes;
 
 use crate::{
     drafts::Scope,
@@ -39,6 +41,8 @@ pub struct App {
     amend_request: u64,
     form: Option<actions::Form>,
     composer: crate::commit_draft::Composer,
+    clone_dialog: Option<cloning::CloneDialog>,
+    remote_dialog: Option<remotes::RemoteDialog>,
     comparison: comparison::CompareView,
     drag_candidate: Option<crate::gestures::Candidate>,
     drag_frame: bool,
@@ -94,6 +98,8 @@ impl App {
             amend_request: 0,
             form: None,
             composer: Default::default(),
+            clone_dialog: None,
+            remote_dialog: None,
             comparison: Default::default(),
             drag_candidate: None,
             drag_frame: false,
@@ -137,6 +143,12 @@ impl App {
         }
         app
     }
+    fn modal_open(&self) -> bool {
+        self.clone_dialog.is_some()
+            || self.remote_dialog.is_some()
+            || self.action.is_some()
+            || self.form.is_some()
+    }
     fn send(&mut self, work: Work) -> u64 {
         self.sequence += 1;
         let id = self.sequence;
@@ -158,6 +170,11 @@ impl App {
         id
     }
     fn open(&mut self, path: Option<PathBuf>) {
+        if self.clone_busy() {
+            self.error =
+                Some("Wait for cloning to finish before opening another repository.".into());
+            return;
+        }
         if self.composer.pending() || self.composer.dirty() {
             self.open_after_draft = Some(path);
             self.save_composer();
@@ -237,6 +254,31 @@ impl App {
     }
     fn pump(&mut self) {
         while let Ok(reply) = self.worker.receiver.try_recv() {
+            let clone_reply = self
+                .clone_dialog
+                .as_ref()
+                .is_some_and(|d| d.request == Some(reply.sequence));
+            let remote_reply = self
+                .remote_dialog
+                .as_ref()
+                .is_some_and(|d| d.request == Some(reply.sequence));
+            if clone_reply || remote_reply {
+                self.pending.remove(&reply.sequence);
+                let result = match reply.result {
+                    Ok(Payload::Connection(result)) => result,
+                    Err(error) => Err(error),
+                    _ => Err("Unexpected connection response.".into()),
+                };
+                if clone_reply {
+                    if let Some(path) = self.clone_dialog.as_mut().and_then(|d| d.receive(result)) {
+                        self.clone_dialog = None;
+                        self.open(Some(PathBuf::from(path)));
+                    }
+                } else if let Some(dialog) = &mut self.remote_dialog {
+                    dialog.receive(result);
+                }
+                continue;
+            }
             // Composer IO is scoped by its own unique request IDs. Mutations
             // invalidate Git reads via epoch changes, not an in-flight local save.
             if self.composer.load_request == Some(reply.sequence)
@@ -353,8 +395,16 @@ impl App {
                             self.editor = None;
                         }
                     }
+                    let remote_changed = error.is_none()
+                        && self
+                            .action
+                            .as_ref()
+                            .is_some_and(|a| matches!(a.action, Action::ConfigureRemote { .. }));
                     self.action = None;
                     self.error = error;
+                    if remote_changed {
+                        self.open_remotes();
+                    }
                     self.mode = if self
                         .snapshot
                         .as_ref()
@@ -387,7 +437,7 @@ impl App {
                         });
                     }
                 }
-                Ok(Payload::Compared(_) | Payload::ComparisonDiff(_)) => {}
+                Ok(Payload::Compared(_) | Payload::ComparisonDiff(_) | Payload::Connection(_)) => {}
                 Ok(Payload::Cancelled) => {}
                 Ok(Payload::Opened { snapshot, commits }) => {
                     if self.composer.repository.as_deref() != Some(&snapshot.repo.id) {
@@ -500,6 +550,10 @@ impl App {
         }
     }
     fn ask_open(&mut self) {
+        if self.clone_dialog.is_some() || self.remote_dialog.is_some() {
+            self.error = Some("Close the current dialog before opening another repository.".into());
+            return;
+        }
         if self.editor.as_ref().is_some_and(|e| e.dirty) {
             self.close_confirm = true;
             self.open_after_discard = true;
@@ -531,7 +585,9 @@ impl eframe::App for App {
             self.close_after_draft = true;
             self.save_composer();
         }
-        if self.action_request.is_some() && ctx.input(|i| i.viewport().close_requested()) {
+        if (self.action_request.is_some() || self.clone_busy())
+            && ctx.input(|i| i.viewport().close_requested())
+        {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             self.error = Some("Wait for the Git operation to finish before closing.".into());
         }
@@ -548,6 +604,8 @@ impl eframe::App for App {
         self.chrome(ctx);
         self.drag_overlay(ctx);
         self.action_dialogs(ctx);
+        self.clone_dialog_ui(ctx);
+        self.remote_dialog_ui(ctx);
         if self.editor.is_none() {
             self.sidebar(ctx);
             self.inspector(ctx);
@@ -556,13 +614,10 @@ impl eframe::App for App {
         egui::CentralPanel::default()
             .frame(egui::Frame::new().fill(theme::BASE).inner_margin(10.))
             .show(ctx, |ui| {
-                if self.action_request.is_some() || self.action.is_some() {
+                if self.action_request.is_some() || self.modal_open() {
                     ui.disable();
                 }
                 if let Some(editor) = &mut self.editor {
-                    if self.action_request.is_some() || self.action.is_some() {
-                        ui.disable();
-                    }
                     event = editor.ui(ctx, ui);
                     return;
                 }

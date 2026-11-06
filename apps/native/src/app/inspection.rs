@@ -11,6 +11,9 @@ impl App {
             .width_range(260.0..=600.0)
             .frame(egui::Frame::new().fill(theme::PANEL).inner_margin(14.))
             .show(ctx, |ui| {
+                if self.modal_open() || self.action_request.is_some() {
+                    ui.disable();
+                }
                 let commit = self
                     .selected
                     .as_ref()

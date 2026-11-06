@@ -617,12 +617,54 @@ legacy desktop builds passed all three OS in
 Those results cover composer/comparison source, not these newer gestures.
 No native installer, live inference or matched GitKraken performance claim.
 
+## Native clone and remote management — 2026-11-06
+
+Native Clone is independent of an open repository and supports ordinary URL,
+GitHub/Enterprise, GitLab, Bitbucket, Azure/other-server shortcuts and native-picked
+local sources. Parent/source grants and immutable one-shot plans reuse the core;
+review does not create a folder or contact a host. Final execution opens through
+the existing draft-flush route. The clone is untrusted for later writes, and close/
+open actions are blocked while clone executes. The UI exposes pending state, not Stop or
+streamed progress. Core timeout remains120 seconds; failures may leave a partial
+folder, with no auto-cleanup/retry.
+
+GitHub catalog loading is explicit through installed `gh`, with organization,
+page/filter and bounded results. No login, token import or fake Connected state.
+Other services are URL shortcuts. Native Remotes lists sanitized endpoints and
+reviews ordinary add/edit using existing ConfigureRemote trust/fingerprint checks.
+Complex/local/separate-push configurations remain protected; saving does not run
+network operations. Refresh also refreshes the repository snapshot, with dirty
+merge-editor protection. Dialogs block underlying input and keep footers visible;
+an actual oversized-divider defect was fixed during native inspection.
+
+Evidence:31 native tests, native clippy/fmt,266 notices, developer-bundle
+build/strict signature and release-metadata checks passed. Tests include real
+local clone/one-shot/collision preservation with no registered current repo,
+remote trust/stale/protected-config/redaction cases and URL-shortcut validation.
+Actual macOS GUI selected local source/parent with native pickers, reviewed and
+cloned a synthetic repo, then opened it automatically. Independent Git assertions
+confirmed unchanged source HEAD/index entries/status/file bytes, matching clone
+HEAD and clean checkout. Original Unicode composer text remained persisted; the
+new clone composer was empty. Remote Refresh after an external fixture config
+change allowed a fresh reviewed update without losing unrelated configuration.
+Native add/edit remote used one trust prompt for the
+opening, then exact reviewed local changes. Git independently confirmed URLs and
+unchanged content; no fetch/push/catalog/account inference was run. See
+[NATIVE-VERIFICATION.md](docs/NATIVE-VERIFICATION.md) and
+[ADR0028](docs/decisions/0028-native-connections.md).
+
+Previous graph revisiondd26141 native/core CI42192129115 passed all three OS.
+These results do not yet cover the new connection UI. Live hosted authentication,
+Windows/Linux GUI, forced-shutdown/long clone cancellation and additional provider
+catalogs remain unverified or unimplemented. No new native installer/release.
+
 ## Exact next task
 
 Keep [NATIVE-COMPLETION.md](docs/NATIVE-COMPLETION.md) as the full objective ledger.
-Next implement native clone and remote management using existing typed core
-operations, explicit destination selection and provider choices. Continue
-worktrees/tabs, contextual AI and broader graph/file menus. Preserve existing trust/fingerprint/preservation
+Next implement native worktree open/create/manage and repository navigation/tabs,
+reusing core grants and preserving dirty editors/messages on context changes.
+Continue contextual AI, clone progress/Stop, broader graph/file menus and deeper
+remote/upstream controls. Preserve existing trust/fingerprint/preservation
 semantics and finish editor IME/accessibility/CRLF/linked-scroll/large-file gates,
 R3/R4 depth and R5 packaging/cutover. Full native migration remains incomplete.
 Observe this slice's hosted runs before claiming cross-platform source checks;
